@@ -18,14 +18,18 @@ public class TestGuardian {
     private String name;
 
     @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = false)
     private String 관계;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime created_at;
 
     @Builder
-    public TestGuardian(String name, String 관계) {
+    public TestGuardian(String name, String email, String 관계) {
         this.name = name;
+        this.email = email;
         this.관계 = 관계;
     }
 

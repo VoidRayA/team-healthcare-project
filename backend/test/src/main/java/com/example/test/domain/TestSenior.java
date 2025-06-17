@@ -21,6 +21,9 @@ public class TestSenior {
     private long id;
 
     @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = false)
     private LocalDate 생년월일;
 
     @Column(nullable = false)

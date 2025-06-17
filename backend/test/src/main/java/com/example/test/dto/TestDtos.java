@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class TestDtos {
-    public record TestCreateRequesDto(long id){}
+    public record TestCreateRequestDto(long id){}
     public record TestUpdateRequestDto(Boolean completed) {}
 
     public record TestResponseDto(Long id, LocalDate 생년월일, char gender, String address,

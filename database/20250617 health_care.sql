@@ -1,28 +1,26 @@
--- MySQL dump 10.13  Distrib 8.0.19, for Win64 (x86_64)
---
--- Host: localhost    Database: health_care
--- ------------------------------------------------------
--- Server version	11.7.2-MariaDB
+-- --------------------------------------------------------
+-- 호스트:                          127.0.0.1
+-- 서버 버전:                        11.8.2-MariaDB - mariadb.org binary distribution
+-- 서버 OS:                        Win64
+-- HeidiSQL 버전:                  12.10.0.7000
+-- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
 /*!50503 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
---
--- Table structure for table `alerts`
---
 
-DROP TABLE IF EXISTS `alerts`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `alerts` (
+-- health_care 데이터베이스 구조 내보내기
+CREATE DATABASE IF NOT EXISTS `health_care` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */;
+USE `health_care`;
+
+-- 테이블 health_care.alerts 구조 내보내기
+CREATE TABLE IF NOT EXISTS `alerts` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '알림 고유 ID',
   `senior_id` int(11) NOT NULL COMMENT 'seniors 테이블 참조',
   `alert_type` varchar(30) NOT NULL COMMENT 'emergency/warning/info',
@@ -42,25 +40,11 @@ CREATE TABLE `alerts` (
   CONSTRAINT `alerts_ibfk_2` FOREIGN KEY (`related_vital_id`) REFERENCES `vital_signs` (`id`) ON DELETE SET NULL,
   CONSTRAINT `alerts_ibfk_3` FOREIGN KEY (`confirmed_by`) REFERENCES `guardians` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='알림 관리';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `alerts`
---
+-- 테이블 데이터 health_care.alerts:~0 rows (대략적) 내보내기
 
-LOCK TABLES `alerts` WRITE;
-/*!40000 ALTER TABLE `alerts` DISABLE KEYS */;
-/*!40000 ALTER TABLE `alerts` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `daily_activities`
---
-
-DROP TABLE IF EXISTS `daily_activities`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `daily_activities` (
+-- 테이블 health_care.daily_activities 구조 내보내기
+CREATE TABLE IF NOT EXISTS `daily_activities` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '활동 기록 ID',
   `senior_id` int(11) NOT NULL COMMENT 'seniors 테이블 참조',
   `activity_date` date NOT NULL COMMENT '활동 날짜',
@@ -74,25 +58,11 @@ CREATE TABLE `daily_activities` (
   UNIQUE KEY `uk_senior_date` (`senior_id`,`activity_date`),
   CONSTRAINT `daily_activities_ibfk_1` FOREIGN KEY (`senior_id`) REFERENCES `seniors` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='일일 활동 기록';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `daily_activities`
---
+-- 테이블 데이터 health_care.daily_activities:~0 rows (대략적) 내보내기
 
-LOCK TABLES `daily_activities` WRITE;
-/*!40000 ALTER TABLE `daily_activities` DISABLE KEYS */;
-/*!40000 ALTER TABLE `daily_activities` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `guardians`
---
-
-DROP TABLE IF EXISTS `guardians`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `guardians` (
+-- 테이블 health_care.guardians 구조 내보내기
+CREATE TABLE IF NOT EXISTS `guardians` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '보호자 고유 ID',
   `user_id` int(11) NOT NULL COMMENT 'users 테이블 참조',
   `relationship` varchar(30) DEFAULT NULL COMMENT '노인과의 관계',
@@ -101,25 +71,11 @@ CREATE TABLE `guardians` (
   UNIQUE KEY `uk_user_id` (`user_id`),
   CONSTRAINT `guardians_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='보호자 기본 정보';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `guardians`
---
+-- 테이블 데이터 health_care.guardians:~0 rows (대략적) 내보내기
 
-LOCK TABLES `guardians` WRITE;
-/*!40000 ALTER TABLE `guardians` DISABLE KEYS */;
-/*!40000 ALTER TABLE `guardians` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `health_summaries`
---
-
-DROP TABLE IF EXISTS `health_summaries`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `health_summaries` (
+-- 테이블 health_care.health_summaries 구조 내보내기
+CREATE TABLE IF NOT EXISTS `health_summaries` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '요약 ID',
   `senior_id` int(11) NOT NULL COMMENT 'seniors 테이블 참조',
   `summary_date` date NOT NULL COMMENT '요약 기준일',
@@ -137,25 +93,11 @@ CREATE TABLE `health_summaries` (
   UNIQUE KEY `uk_summary` (`senior_id`,`summary_date`,`period_type`),
   CONSTRAINT `health_summaries_ibfk_1` FOREIGN KEY (`senior_id`) REFERENCES `seniors` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='건강 요약 리포트';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `health_summaries`
---
+-- 테이블 데이터 health_care.health_summaries:~0 rows (대략적) 내보내기
 
-LOCK TABLES `health_summaries` WRITE;
-/*!40000 ALTER TABLE `health_summaries` DISABLE KEYS */;
-/*!40000 ALTER TABLE `health_summaries` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `medication_schedules`
---
-
-DROP TABLE IF EXISTS `medication_schedules`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `medication_schedules` (
+-- 테이블 health_care.medication_schedules 구조 내보내기
+CREATE TABLE IF NOT EXISTS `medication_schedules` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '복약 일정 ID',
   `senior_id` int(11) NOT NULL COMMENT 'seniors 테이블 참조',
   `medication_name` varchar(100) NOT NULL COMMENT '약물명',
@@ -167,25 +109,11 @@ CREATE TABLE `medication_schedules` (
   KEY `idx_senior_active` (`senior_id`,`is_active`),
   CONSTRAINT `medication_schedules_ibfk_1` FOREIGN KEY (`senior_id`) REFERENCES `seniors` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='복약 일정';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `medication_schedules`
---
+-- 테이블 데이터 health_care.medication_schedules:~0 rows (대략적) 내보내기
 
-LOCK TABLES `medication_schedules` WRITE;
-/*!40000 ALTER TABLE `medication_schedules` DISABLE KEYS */;
-/*!40000 ALTER TABLE `medication_schedules` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `notification_settings`
---
-
-DROP TABLE IF EXISTS `notification_settings`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `notification_settings` (
+-- 테이블 health_care.notification_settings 구조 내보내기
+CREATE TABLE IF NOT EXISTS `notification_settings` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '설정 고유 ID',
   `guardian_id` int(11) NOT NULL COMMENT 'guardians 테이블 참조',
   `receive_emergency` tinyint(1) DEFAULT 1 COMMENT '응급 알림 수신',
@@ -198,55 +126,11 @@ CREATE TABLE `notification_settings` (
   UNIQUE KEY `uk_guardian_id` (`guardian_id`),
   CONSTRAINT `notification_settings_ibfk_1` FOREIGN KEY (`guardian_id`) REFERENCES `guardians` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='알림 수신 설정';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `notification_settings`
---
+-- 테이블 데이터 health_care.notification_settings:~0 rows (대략적) 내보내기
 
-LOCK TABLES `notification_settings` WRITE;
-/*!40000 ALTER TABLE `notification_settings` DISABLE KEYS */;
-/*!40000 ALTER TABLE `notification_settings` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `senior_guardian_relations`
---
-
-DROP TABLE IF EXISTS `senior_guardian_relations`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `senior_guardian_relations` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '관계 고유 ID',
-  `senior_id` int(11) NOT NULL COMMENT 'seniors 테이블 참조',
-  `guardian_id` int(11) NOT NULL COMMENT 'guardians 테이블 참조',
-  `is_primary` tinyint(1) DEFAULT 0 COMMENT '주 보호자 여부',
-  `created_at` datetime DEFAULT current_timestamp() COMMENT '관계 설정일',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_senior_guardian` (`senior_id`,`guardian_id`),
-  KEY `guardian_id` (`guardian_id`),
-  CONSTRAINT `senior_guardian_relations_ibfk_1` FOREIGN KEY (`senior_id`) REFERENCES `seniors` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `senior_guardian_relations_ibfk_2` FOREIGN KEY (`guardian_id`) REFERENCES `guardians` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='노인-보호자 연결 관계';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `senior_guardian_relations`
---
-
-LOCK TABLES `senior_guardian_relations` WRITE;
-/*!40000 ALTER TABLE `senior_guardian_relations` DISABLE KEYS */;
-/*!40000 ALTER TABLE `senior_guardian_relations` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `seniors`
---
-
-DROP TABLE IF EXISTS `seniors`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `seniors` (
+-- 테이블 health_care.seniors 구조 내보내기
+CREATE TABLE IF NOT EXISTS `seniors` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '노인 고유 ID',
   `user_id` int(11) NOT NULL COMMENT 'users 테이블 참조',
   `birth_date` date NOT NULL COMMENT '생년월일',
@@ -262,25 +146,27 @@ CREATE TABLE `seniors` (
   KEY `idx_birth_date` (`birth_date`),
   CONSTRAINT `seniors_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='독거노인 기본정보';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `seniors`
---
+-- 테이블 데이터 health_care.seniors:~0 rows (대략적) 내보내기
 
-LOCK TABLES `seniors` WRITE;
-/*!40000 ALTER TABLE `seniors` DISABLE KEYS */;
-/*!40000 ALTER TABLE `seniors` ENABLE KEYS */;
-UNLOCK TABLES;
+-- 테이블 health_care.senior_guardian_relations 구조 내보내기
+CREATE TABLE IF NOT EXISTS `senior_guardian_relations` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '관계 고유 ID',
+  `senior_id` int(11) NOT NULL COMMENT 'seniors 테이블 참조',
+  `guardian_id` int(11) NOT NULL COMMENT 'guardians 테이블 참조',
+  `is_primary` tinyint(1) DEFAULT 0 COMMENT '주 보호자 여부',
+  `created_at` datetime DEFAULT current_timestamp() COMMENT '관계 설정일',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_senior_guardian` (`senior_id`,`guardian_id`),
+  KEY `guardian_id` (`guardian_id`),
+  CONSTRAINT `senior_guardian_relations_ibfk_1` FOREIGN KEY (`senior_id`) REFERENCES `seniors` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `senior_guardian_relations_ibfk_2` FOREIGN KEY (`guardian_id`) REFERENCES `guardians` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='노인-보호자 연결 관계';
 
---
--- Table structure for table `users`
---
+-- 테이블 데이터 health_care.senior_guardian_relations:~0 rows (대략적) 내보내기
 
-DROP TABLE IF EXISTS `users`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `users` (
+-- 테이블 health_care.users 구조 내보내기
+CREATE TABLE IF NOT EXISTS `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '사용자 고유 ID',
   `login_id` varchar(50) NOT NULL COMMENT '로그인 아이디',
   `login_pw` varchar(255) NOT NULL COMMENT '암호화된 비밀번호',
@@ -295,25 +181,11 @@ CREATE TABLE `users` (
   UNIQUE KEY `uk_login_id` (`login_id`),
   KEY `idx_user_type` (`user_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='시스템 사용자 통합 관리';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `users`
---
+-- 테이블 데이터 health_care.users:~0 rows (대략적) 내보내기
 
-LOCK TABLES `users` WRITE;
-/*!40000 ALTER TABLE `users` DISABLE KEYS */;
-/*!40000 ALTER TABLE `users` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `vital_signs`
---
-
-DROP TABLE IF EXISTS `vital_signs`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `vital_signs` (
+-- 테이블 health_care.vital_signs 구조 내보내기
+CREATE TABLE IF NOT EXISTS `vital_signs` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '측정 고유 ID',
   `senior_id` int(11) NOT NULL COMMENT 'seniors 테이블 참조',
   `measurement_time` datetime NOT NULL COMMENT '측정 시각',
@@ -329,17 +201,11 @@ CREATE TABLE `vital_signs` (
   KEY `idx_senior_time` (`senior_id`,`measurement_time`),
   CONSTRAINT `vital_signs_ibfk_1` FOREIGN KEY (`senior_id`) REFERENCES `seniors` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='생체신호 기록';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `vital_signs`
---
+-- 테이블 데이터 health_care.vital_signs:~0 rows (대략적) 내보내기
 
-LOCK TABLES `vital_signs` WRITE;
-/*!40000 ALTER TABLE `vital_signs` DISABLE KEYS */;
-/*!40000 ALTER TABLE `vital_signs` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Dumping routines for database 'health_care'
---
+/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
+/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
+/*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;

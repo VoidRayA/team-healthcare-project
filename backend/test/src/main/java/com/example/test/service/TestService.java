@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class TestService {
+
     private final TestGuardianRepository guardianRepository;
     private final TestSeniorRepository seniorRepository;
     private final TestRelationsRepository relationsRepository;
@@ -37,13 +38,13 @@ public class TestService {
     public List<TestDtos.TestResponseDto> findMySenior(String userEmail) {
         TestGuardian guardian = findByEmail(userEmail);
         return guardianRepository.findByOrderByIdDesc(guardian).stream()
-        // guardianRepository.findByGuardianOrderByIdDesc(guardian)
                 .map(TestDtos.TestResponseDto::new)
                 .collect(Collectors.toList());
     }
 
     public TestDtos.TestResponseDto toggleSenior(Long id, String userEmail) {
         TestSenior senior = findByIdAndUserEmail(id, userEmail);
+        // 아직 구현되지 않음
+        return null;
     }
-
 }

@@ -5,28 +5,41 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@EnableJpaAuditing
 @Entity
 @Data
 @NoArgsConstructor
 @Getter
-public class Guardian extends User {
+public class Guardian {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(nullable = false, updatable = false)
+    private long id;
+
     @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
-    private String 관계;
+    private String guardianEmail;
 
+    @Column(nullable = false)
+    private String relationship; // 관계
+
+    @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime created_at;
 
     @Builder
-    public Guardian(String name, String 관계) {
+    public Guardian(String name, String email, String relationship) {
         this.name = name;
-        this.관계 = 관계;
+        this.guardianEmail = email;
+        this.relationship = relationship;
     }
 
     @ManyToMany

@@ -10,18 +10,18 @@ public class UserDtos {
     public record UserCreateRequestDto(Long id){}
     public record UserUpdateRequestDto(Boolean completed) {}
 
-    public record UserResponseDto(Long id, LocalDate 생년월일, char gender, String address,
-                                  String emergency_contact, String 지병, String 복용중인약물,
+    public record UserResponseDto(Long id, LocalDate birthdate, char gender, String address,
+                                  String emergency_contact, String illness, String medication,
                                   String notes, LocalDateTime created_at){
         public UserResponseDto(Senior entity) {
             this(
                     entity.getId(),
-                    entity.get생년월일(),
+                    entity.getbirthdate(),
                     entity.getGender(),
                     entity.getAddress(),
                     entity.getEmergency_contact(),
-                    entity.get지병(),
-                    entity.get복용중인약물(),
+                    entity.getillness(),
+                    entity.getmedication(),
                     entity.getNotes(),
                     entity.getCreated_at()
             );

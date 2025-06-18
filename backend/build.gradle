@@ -1,0 +1,57 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// Spring Data JPA
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	// Spring Security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// Spring Web
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	implementation 'org.springframework.boot:spring-boot-starter-json'
+	// lombok
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	// JWT 토큰 인증
+	implementation 'io.jsonwebtoken:jjwt:0.9.1'
+	// H2 or MySQL DB
+	runtimeOnly 'com.h2database:h2' // 개발용
+	runtimeOnly 'com.mysql:mysql-connector-j' // 운영용
+	// Validation (DTO @Valid)
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// Swagger (API 문서용)
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
+	// WebSocket (알림용, 선택사항)
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

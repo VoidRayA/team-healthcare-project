@@ -1,10 +1,14 @@
-import React from 'react';
-import Login from './Login';
+import Login from "./components/Login";
+import CenteredLoginBoxImage from './components/CenteredLoginBoxImage';
+
 
 const App = () => {
   return (
     <div className="App">
-      <Login />
+      <img src="/images/image2.png" alt="image" />
+      <Login/>
+
+      <CenteredLoginBoxImage/>
     </div>
   );
 };

@@ -1,11 +1,21 @@
+body::before {
+  content: "CSS loaded";
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: yellow;
+  color: black;
+  z-index: 9999;
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: black !important;
+  background-color: rgb(23, 154, 172) !important;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -67,3 +77,4 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+

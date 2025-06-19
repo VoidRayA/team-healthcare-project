@@ -2,7 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import Stack from '@mui/material/Stack';
-
+import lock_icon from '../images/lock_icon.png';
 
 const Login = () => {
   const [user, setUser] = useState({ userid: '', password: '' });
@@ -40,64 +40,62 @@ const Login = () => {
   };
 
   return (
-      <Stack spacing={2} alignItems="center" mt={2}>
-        <Container component="main" maxWidth="xs">
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 8 }}>
-            <Box sx={{ display:'flex', alignItems:'center', gap: 1 }}>
-            <img src="/images/lock_icon.png" alt="lock_icon" style={{width: 30, height:30}}/>
+    <Stack spacing={2} alignItems="center" mt={2}
+      sx={{
+        position: 'relative',
+        zIndex: 1, // 이미지 위에 오도록 설정
+      }}
+    >
+      <Container component="main" maxWidth="xs">
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 8 }}>
+          <Box sx={{ display:'flex', alignItems:'center', gap: 1 }}>
+            <img src={lock_icon} alt=" " style={{width: 30, height:30}}/>
             <Typography component="h1" variant="h5" color='black'>로그인</Typography>
-            </Box>
-
-            <div>
-            <TextField
-              variant="outlined"
-              margin="normal"
-              required
-              fullWidth
-              label="아이디"
-              name="userid"
-              value={user.userid}
-              onChange={handleChange}
-              autoFocus
-            />
-            <img src="/images/id_box.png" alt="아이디 입력창"  style={{ marginTop: 10, maxWidth: '100%' }}/>
-            </div>
-
-            <div>
-            <TextField
-              variant="outlined"
-              margin="normal"
-              required
-              fullWidth
-              label="비밀번호"
-              name="password"
-              type="password"
-              value={user.password}
-              onChange={handleChange}
-            />
-            <img src="/images/pw_box.png" alt="비밀번호 입력창" style={{ marginTop: 10, maxWidth: '100%' }}/>
-            </div>
-
-            <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-              onClick={handleLogin}
-              disabled={loading}
-              sx={{ mt: 3, mb: 2 }}
-            >
-              <img src="/images/login_button.png" alt="loginButton" style={{marginTop: 10, maxWidth: '100%'}} />
-              {loading ? '로그인 중...' : '로그인'}
-            </Button>
-
-            {error && (
-              <Typography color="error" variant="body2">
-                {error}
-              </Typography>
-            )}
           </Box>
-        </Container>
-      </Stack>
+
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            label="아이디"
+            name="userid"
+            value={user.userid}
+            onChange={handleChange}
+            autoFocus
+          />
+
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            label="비밀번호"
+            name="password"
+            type="password"
+            value={user.password}
+            onChange={handleChange}
+          />
+
+          <Button
+            fullWidth
+            variant="contained"
+            color="primary"
+            onClick={handleLogin}
+            disabled={loading}
+            sx={{ mt: 3, mb: 2 }}
+          >
+            {loading ? '로그인 중...' : '로그인'}
+          </Button>
+
+          {error && (
+            <Typography color="error" variant="body2">
+              {error}
+            </Typography>
+          )}
+        </Box>
+      </Container>
+    </Stack>
   );
 };
 

@@ -31,7 +31,6 @@ const Login = () => {
       if (jwtToken) {
         sessionStorage.setItem('jwt', jwtToken);
         alert('로그인 성공!');
-        // 예: 홈 페이지 이동
       }
     } catch (err) {
       setError('아이디 또는 비밀번호가 잘못되었습니다.');
@@ -44,7 +43,10 @@ const Login = () => {
       <Stack spacing={2} alignItems="center" mt={2}>
         <Container component="main" maxWidth="xs">
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 8 }}>
+            <Box sx={{ display:'flex', alignItems:'center', gap: 1 }}>
+            <img src="/images/lock_icon.png" alt="lock_icon" style={{width: 30, height:30}}/>
             <Typography component="h1" variant="h5" color='black'>로그인</Typography>
+            </Box>
 
             <div>
             <TextField
@@ -84,6 +86,7 @@ const Login = () => {
               disabled={loading}
               sx={{ mt: 3, mb: 2 }}
             >
+              <img src="/images/login_button.png" alt="loginButton" style={{marginTop: 10, maxWidth: '100%'}} />
               {loading ? '로그인 중...' : '로그인'}
             </Button>
 

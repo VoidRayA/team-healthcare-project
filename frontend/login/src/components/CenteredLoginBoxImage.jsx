@@ -1,23 +1,34 @@
 import login_box from '../images/login_box.png';
+import './styles.css';
 
 function CenteredLoginBoxImage() {
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: '50%',
-      transform: 'translateX(-50%)',
-      width: '100vw',
-      height: '100vh',
-      zIndex: 0,
-    }}>
-      <img 
-        src= {login_box}
-        alt="Login Box" 
-        style={{ width: '100%',          
-          height: 'auto', // 세로는 비율에 맞게 자동
-          maxHeight: '100vh', // 세로 크기가 100vh를 넘지 않도록 제한
-          objectFit: 'cover' }} 
+    <div
+      style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '80vw',
+        height: '80vh',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 0 20px rgba(0,0,0,0.2)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+      }}
+    >
+      <img
+        src={login_box}
+        alt="Login Box"
+        style={{
+          maxWidth: '80%',
+          maxHeight: '80%',
+          objectFit: 'contain',
+          alignItems: 'center'
+        }}
       />
     </div>
   );

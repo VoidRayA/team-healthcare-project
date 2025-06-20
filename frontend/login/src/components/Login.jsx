@@ -30,7 +30,7 @@ const Login = () => {
       const jwtToken = response.headers.authorization;
       if (jwtToken) {
         sessionStorage.setItem('jwt', jwtToken);
-        alert('로그인 성공!');
+        alert('로그인 성공');
       }
     } catch (err) {
       setError('아이디 또는 비밀번호가 잘못되었습니다.');
@@ -40,17 +40,17 @@ const Login = () => {
   };
 
   return (
-    <Stack spacing={2} alignItems="center" mt={2}
+    <Stack spacing={3} alignItems="center" mt={2}
       sx={{
         position: 'relative',
         zIndex: 1, // 이미지 위에 오도록 설정
       }}
     >
-      <Container component="main" maxWidth="xs">
+      <Container component="main" maxWidth="xs" sx={{width: '100%'}}>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 8 }}>
-          <Box sx={{ display:'flex', alignItems:'center', gap: 1 }}>
-            <img src={lock_icon} alt=" " style={{width: 30, height:30}}/>
-            <Typography component="h1" variant="h5" color='black'>로그인</Typography>
+          <Box sx={{ display:'flex', alignItems:'center', gap: 2 }}>
+            <img src={lock_icon} alt=" " style={{width: 80, height:80}}/>
+            <Typography component="h1" variant="h1" color='black' sx={{ fontWeight: 600 }}>로그인</Typography>
           </Box>
 
           <TextField
@@ -63,6 +63,7 @@ const Login = () => {
             value={user.userid}
             onChange={handleChange}
             autoFocus
+            sx={{fontSize: '2rem', padding: '14px 12px'}}
           />
 
           <TextField
@@ -75,6 +76,7 @@ const Login = () => {
             type="password"
             value={user.password}
             onChange={handleChange}
+            sx={{fontSize: '2rem', padding: '14px 12px'}}
           />
 
           <Button
@@ -83,13 +85,13 @@ const Login = () => {
             color="primary"
             onClick={handleLogin}
             disabled={loading}
-            sx={{ mt: 3, mb: 2 }}
+            sx={{ mt: 3, mb: 2, fontSize: '2rem', padding: '20px', height: '60px'}}
           >
             {loading ? '로그인 중...' : '로그인'}
           </Button>
 
           {error && (
-            <Typography color="error" variant="body2">
+            <Typography color="error" variant="body2" sx={{fontSize: '1rem'}}>
               {error}
             </Typography>
           )}

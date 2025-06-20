@@ -1,5 +1,5 @@
 import Login from './Login';
-import image2 from '../images/image2.png';
+import image3 from '../images/image3.png';
 
 
 const LoginPage = () => {
@@ -16,7 +16,7 @@ const LoginPage = () => {
     >
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
         <img
-          src={image2}
+          src={image3}
           alt=" "
           style={{
             width: 800,

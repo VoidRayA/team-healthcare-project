@@ -6,7 +6,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class UserDtos {
-    public record UserCreateRequestDto(
+    // 그럼 요기서 기존 User어쩌구를 Senior로 바꾼뒤(0) Guardian어쩌구들 추가. 이런식?
+    public record SeniorCreateRequestDto(
             Long id,
             String name,
             LocalDate birthdate,
@@ -17,12 +18,12 @@ public class UserDtos {
             String medication,
             String notes
     ){}
-    public record UserUpdateRequestDto(Boolean completed) {}
+    public record SeniorUpdateRequestDto(Boolean completed) {}
 
-    public record UserResponseDto(Long id, LocalDate birthdate, String name , char gender, String address,
-                                  String emergency_contact, String illness, String medication,
-                                  String notes, LocalDateTime created_at){
-        public UserResponseDto(Senior entity) {
+    public record SeniorResponseDto(Long id, LocalDate birthdate, String name , char gender, String address,
+                                    String emergency_contact, String illness, String medication,
+                                    String notes, LocalDateTime created_at){
+        public SeniorResponseDto(Senior entity) {
             this(
                     entity.getId(),
                     entity.getBirthdate(),

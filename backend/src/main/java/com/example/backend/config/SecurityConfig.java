@@ -24,15 +24,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authz -> authz
-                                .anyRequest().permitAll()
+                .authorizeHttpRequests(authz ->
+                                authz.anyRequest().permitAll()
                         // preflight 요청(OPTION 메서드)은 인증 없이 모두 허용
 
 //                        authz.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 //                                // /api 관련 경로는 인증된 사용자만 접근 가능하도록 변경
 //                                .requestMatchers("/api/**").authenticated() // .permitAll()에서 수정
 //                                .anyRequest().authenticated()
-
                 );
 //                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 

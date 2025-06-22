@@ -1,4 +1,4 @@
-import loginBoxImage from './login_image/login_box.png';
+import loginBoxImage from '../assets/images/login_box.png';
 
 function CenteredLoginBoxImage() {
   return (

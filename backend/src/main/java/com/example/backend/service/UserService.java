@@ -22,7 +22,7 @@ public class UserService {
 
     // 사용자 조회 및 생성
     @Transactional
-    public UserDtos.UserResponseDto createUser(UserDtos.UserCreateRequestDto dto, String userEmail) {
+    public UserDtos.SeniorResponseDto createUser(UserDtos.SeniorCreateRequestDto dto, String userEmail) {
         Guardian guardian = guardianRepository.findByGuardianEmail(userEmail)
                 .orElseGet(() -> guardianRepository.save(Guardian.builder()
                         .name(userEmail.split("@")[0])
@@ -46,21 +46,21 @@ public class UserService {
 
         seniorRepository.save(senior);
 
-        return new UserDtos.UserResponseDto(senior); // 생성된 Senior를 Dto로 리턴
+        return new UserDtos.SeniorResponseDto(senior); // 생성된 Senior를 Dto로 리턴
     }
     // 사용자 정보 목록 조회 서비스
-    public List<UserDtos.UserResponseDto> findMySenior(String userName) {
+    public List<UserDtos.SeniorResponseDto> findMySenior(String userName) {
         Guardian guardian = guardianRepository.findByName(userName)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보호자"));
         return guardian.getSeniors().stream()
-                .map(UserDtos.UserResponseDto::new)
+                .map(UserDtos.SeniorResponseDto::new)
                 .collect(Collectors.toList());
     }
     // 약물 복용 여부 확인 토글 서비스
-    public UserDtos.UserResponseDto toggleSenior(Long id, String userEmail) {
+    public UserDtos.SeniorResponseDto toggleSenior(Long id, String userEmail) {
         Senior senior = findByIdAndUserEmail2(id, userEmail);
         senior.setCompleted(!senior.isCompleted());
-        return new UserDtos.UserResponseDto(senior);
+        return new UserDtos.SeniorResponseDto(senior);
     }
     // 사용자 정보 삭제 서비스
     // senior 삭제

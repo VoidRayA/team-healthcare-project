@@ -18,38 +18,33 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Senior {
+public class Seniors {
     @Id
     private long id;
 
-    @OneToOne
-    @MapsId
-    @JoinColumn(name = "id")
-    private Guardian guardian;
+    @Column(name = "guardian_id", nullable = false, unique = true)
+    private Integer guardianId;
 
     @Column(nullable = false)
-    private String name;
+    private String senior_name;
 
     @Column(nullable = false)
-    private String email;
+    private LocalDate birth_date;
 
-    @Column(nullable = false)
-    private LocalDate birthdate;
-
-    @Column(nullable = false)
+    @Column
     private char gender;
 
-    @Column(nullable = false)
+    @Column
     private String address;
 
-    @Column(nullable = false)
+    @Column
     private String emergency_contact;
 
-    @Column(nullable = false)
-    private String illness; // 지병
+    @Column
+    private String chronic_diseases; // 지병
 
-    @Column(nullable = false)
-    private String medication;  // 복용중인약물
+    @Column
+    private String medications;  // 복용중인약물
 
     @Column
     private String notes;
@@ -58,8 +53,16 @@ public class Senior {
     @Column(nullable = false, updatable = false)
     private LocalDateTime created_at;
 
-    @ManyToMany(mappedBy = "seniors")
-    private List<Guardian> guardians;
+    @ManyToMany
+    @JoinTable(
+            name = "guardians",
+            joinColumns = @JoinColumn(name = "id")
+//            inverseJoinColumns = @JoinColumn(name = "guardian_id")
+    )
+    private List<Seniors> guardians;
+
+//    @ManyToMany(mappedBy = "seniors")
+//    private List<Guardians> guardians;
 
     @Column(nullable = false)
     @Builder.Default

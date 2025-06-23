@@ -27,7 +27,7 @@ dependencies {
 	// Spring Data JPA
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	// Spring Security
-	implementation 'org.springframework.boot:spring-boot-starter-security'
+//	implementation 'org.springframework.boot:spring-boot-starter-security'
 	// Spring Web
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
@@ -36,10 +36,12 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	// JWT 토큰 인증
-	implementation 'io.jsonwebtoken:jjwt:0.9.1'
+//	implementation 'io.jsonwebtoken:jjwt:0.9.1'
 	// H2 or MySQL DB
 	runtimeOnly 'com.h2database:h2' // 개발용
 	runtimeOnly 'com.mysql:mysql-connector-j' // 운영용
+	// MariaDB
+	implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.3' // 3.0.0
 	// Validation (DTO @Valid)
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	// Swagger (API 문서용)
@@ -51,7 +53,7 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	// Google Oauth2 관련 의존성들
+//	// Google Oauth2 관련 의존성들
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 

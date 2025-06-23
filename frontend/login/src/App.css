@@ -52,3 +52,158 @@
   height: 100%;
   object-fit: cover;
 }
+
+
+
+
+
+
+
+/* 로그인 및 회원가입 */
+/* 
+position: relative;
+width: 1920px;
+height: 1080px;
+
+background: linear-gradient(178.21deg, #007CFF 2.96%, #00BCFF 99.96%);
+*/
+
+
+
+/* login_box */
+/* 
+position: absolute;
+width: 1400px;
+height: 900px;
+left: calc(50% - 1400px/2);
+top: calc(50% - 900px/2);
+
+background: #FFFFFF;
+border-radius: 30px;
+*/
+
+
+
+
+/* image3 1 */
+/* 
+position: absolute;
+width: 552px;
+height: 585px;
+left: 334px;
+top: 244px;
+
+background: url(image3.png);
+*/
+
+
+
+
+/* Group 1 */
+/* position: absolute;
+width: 282px;
+height: 88px;
+left: 1035px;
+top: 261px;
+*/
+
+
+
+
+/* lock_icon 1 */
+/* position: absolute;
+width: 75px;
+height: 88px;
+left: 1035px;
+top: 261px;
+
+background: url(lock_icon.png);
+*/
+
+
+
+
+/* 로그인 */
+/* position: absolute;
+width: 175px;
+height: 83px;
+left: 1142px;
+top: 264px;
+
+font-family: 'NanumHuman OTF';
+font-style: normal;
+font-weight: 800;
+font-size: 65px;
+line-height: 83px;
+
+color: #00458B;
+ */
+
+
+
+
+
+/* Id_box */
+/* box-sizing: border-box;
+
+position: absolute;
+width: 500px;
+height: 65px;
+left: 1031px;
+top: 388px;
+
+background: #FFFFFF;
+border: 3px solid #00BCFF;
+border-radius: 20px;
+ */
+
+
+
+
+
+/* Pw_box */
+/* 
+box-sizing: border-box;
+
+position: absolute;
+width: 500px;
+height: 65px;
+left: 1031px;
+top: 483px;
+
+background: #FFFFFF;
+border: 3px solid #00BCFF;
+border-radius: 20px;
+*/
+
+
+
+
+
+
+/* login_button */
+/* position: absolute;
+width: 500px;
+height: 70px;
+left: 1031px;
+top: 602px;
+
+background: #3399FF;
+border-radius: 20px;
+ */
+
+
+
+
+
+
+/* join_button */
+/* position: absolute;
+width: 500px;
+height: 70px;
+left: 1031px;
+top: 695px;
+
+background: #00458B;
+border-radius: 20px;
+*/

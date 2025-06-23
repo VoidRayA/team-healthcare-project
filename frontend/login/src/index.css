@@ -24,7 +24,6 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  /* background: linear-gradient(to bottom, #ccccff, #b6d9fd) !important; */
   background: linear-gradient(to bottom, #007bff, #00bfff) !important;
 }
 

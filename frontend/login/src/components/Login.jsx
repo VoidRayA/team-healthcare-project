@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { TextField, Button, Container, Typography, Box } from '@mui/material';
-import Stack from '@mui/material/Stack';
-import lock_icon from '../images/lock_icon.png';
+import { TextField, Typography } from '@mui/material';
+import '../components/Login.css';
+import lockicon from '../images/lock_icon.png';
 
 const Login = () => {
   const [user, setUser] = useState({ userid: '', password: '' });
@@ -40,64 +40,86 @@ const Login = () => {
   };
 
   return (
-    <Stack spacing={3} alignItems="center" mt={2}
-      sx={{
-        position: 'relative',
-        zIndex: 1, // 이미지 위에 오도록 설정
-      }}
-    >
-      <Container component="main" maxWidth="xs" sx={{width: '100%'}}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 8 }}>
-          <Box sx={{ display:'flex', alignItems:'center', gap: 2 }}>
-            <img src={lock_icon} alt=" " style={{width: 80, height:80}}/>
-            <Typography component="h1" variant="h1" color='black' sx={{ fontWeight: 600 }}>로그인</Typography>
-          </Box>
+    <div className="login-page">
+      {/* 왼쪽 배경 이미지 영역 */}
+      <div className="login-image"></div>
 
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            label="아이디"
-            name="userid"
-            value={user.userid}
-            onChange={handleChange}
-            autoFocus
-            sx={{fontSize: '2rem', padding: '14px 12px'}}
-          />
+        <div className="login-box">
+          {/* 자물쇠 아이콘 + 로그인 텍스트 */}
+          <div className="login-header">
+            {/* <div className="lock-icon"></div> */}
+            <div className="login-title"><img src={lockicon}/>로그인</div>
+          </div>
 
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            label="비밀번호"
-            name="password"
-            type="password"
-            value={user.password}
-            onChange={handleChange}
-            sx={{fontSize: '2rem', padding: '14px 12px'}}
-          />
+          {/* 아이디 입력 박스 */}
+          <div className="id-box">
+            <TextField
+              variant="standard"
+              placeholder="아이디"
+              name="userid"
+              fullWidth
+              value={user.userid}
+              onChange={handleChange}
+              InputProps={{ disableUnderline: true }}
+              sx={{
+                paddingLeft: '15px',
+                paddingTop: '5px',
+                '& .MuiInputBase-input': {
+                  fontSize: '18px',
+                  color: '#333'
+                }
+              }}
+            />
+          </div>
 
-          <Button
-            fullWidth
-            variant="contained"
-            color="primary"
-            onClick={handleLogin}
-            disabled={loading}
-            sx={{ mt: 3, mb: 2, fontSize: '2rem', padding: '20px', height: '60px'}}
-          >
-            {loading ? '로그인 중...' : '로그인'}
-          </Button>
+          {/* 비밀번호 입력 박스 */}
+          <div className="pw-box">
+            <TextField
+              variant="standard"
+              placeholder="비밀번호"
+              name="password"
+              type="password"
+              fullWidth
+              value={user.password}
+              onChange={handleChange}
+              InputProps={{ disableUnderline: true }}
+              sx={{
+                paddingLeft: '15px',
+                paddingTop: '5px',
+                '& .MuiInputBase-input': {
+                  fontSize: '18px',
+                  color: '#333'
+                }
+              }}
+            />
+          </div>
 
-          {error && (
-            <Typography color="error" variant="body2" sx={{fontSize: '1rem'}}>
-              {error}
+          {/* 로그인 버튼 */}
+          <button className="login-button" onClick={handleLogin} disabled={loading}>
+            <Typography sx={{ color: 'white', fontSize: '20px', fontWeight: 'bold' }}>
+              {loading ? '로그인 중...' : '로그인'}
             </Typography>
-          )}
-        </Box>
-      </Container>
-    </Stack>
+          </button>
+
+          {/* 회원가입 버튼 */}
+          <button className="join-button">
+            <Typography sx={{ color: 'white', fontSize: '20px', fontWeight: 'bold' }}>
+              회원가입
+            </Typography>
+          </button>
+          {/* 오류 메시지 */}
+          {error && (
+          <Typography className='loginError'
+            color="error"
+            variant="body2"
+          >
+            {error}
+          </Typography>
+        )}
+        </div>
+
+        
+    </div>
   );
 };
 

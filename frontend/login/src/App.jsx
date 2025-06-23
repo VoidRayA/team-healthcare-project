@@ -1,10 +1,8 @@
-import LoginPage from "./components/LoginPage";
-import './App.css';
-
+import Login from './components/Login';
 
 const App = () => {
   return (
-    <LoginPage/>
+    <Login/>
   );
 };
 

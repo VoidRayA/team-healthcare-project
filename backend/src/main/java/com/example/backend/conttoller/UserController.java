@@ -16,40 +16,6 @@ public class UserController {
     private final UserService userService;
 
     // senior 조회
-<<<<<<< HEAD
-    @GetMapping
-    public ResponseEntity<List<UserDtos.SeniorResponseDto>> getMySenior(
-            @AuthenticationPrincipal Jwt principal){
-        return ResponseEntity.ok(userService.findMySenior(principal.getClaimAsString("email"))); // 이부분 해석 필요
-    }
-    // senior 추가
-
-//    @PostMapping
-//    public ResponseEntity<UserDtos.UserResponseDto> createSenior(
-//            @RequestBody UserDtos.UserCreateRequestDto requestDto,
-//            @AuthenticationPrincipal Jwt principal) {
-//        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(
-//                requestDto,
-//                principal.getClaimAsString("email")
-//
-//        ));
-//    }
-    @PostMapping
-    public ResponseEntity<UserDtos.SeniorResponseDto> createSenior(
-            @RequestBody UserDtos.SeniorCreateRequestDto requestDto,
-            @AuthenticationPrincipal Jwt principal) {
-        String email = principal.getClaimAsString("email");
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(userService.createUser(requestDto, email));
-    }
-    // senior 약 복용 완료 / 미완료 토글
-    @PatchMapping("/{id}")
-    public ResponseEntity<UserDtos.SeniorResponseDto > toggleSenior(
-            @PathVariable Long id,
-            @AuthenticationPrincipal Jwt principal){
-        return ResponseEntity.ok(userService.toggleSenior(id, principal.getClaimAsString("email")));
-    }
-=======
     @GetMapping("/senior")
     public ResponseEntity<List<UserDtos.SeniorResponseDto>> getMySenior(){
         String userName = "박가을";
@@ -71,7 +37,6 @@ public class UserController {
 //            @AuthenticationPrincipal Jwt principal){
 //        return ResponseEntity.ok(userService.toggleSenior(id, principal.getClaimAsString("email")));
 //    }
->>>>>>> e685af81ca3c0b5e5441c16c8f342b586eb3dd50
     // senior 삭제
 //    @DeleteMapping("/{id}")
 //    public ResponseEntity<Void> deleteSenior(

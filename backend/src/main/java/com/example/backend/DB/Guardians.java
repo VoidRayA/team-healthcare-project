@@ -69,6 +69,7 @@ public class Guardians {
         this.role = role;
     }
 
-    @ManyToMany
-    private List<Seniors> seniors;
+//    @ManyToMany
+//    private List<Seniors> seniors;
 }
+

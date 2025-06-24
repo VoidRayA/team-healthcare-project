@@ -36,18 +36,36 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // DaoAuthenticationProvider는 DB 기반 인증을 처리하는 객체
-    // 우리가 만든 UserDetailsService와 비밀번호 인코더 등록
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService((UserDetailsService) customUserDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
-        return provider;
-    }
-    // 비밀번호 암호화
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+//    @Bean
+//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+//                .csrf(csrf -> csrf.disable())
+//                .sessionManagement(session ->
+//                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//                .authorizeHttpRequests(authz -> authz
+//                                .anyRequest().permitAll()
+//                        // preflight 요청(OPTION 메서드)은 인증 없이 모두 허용
+//
+////                        authz.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+////                                // /api 관련 경로는 인증된 사용자만 접근 가능하도록 변경
+////                                .requestMatchers("/api/**").authenticated() // .permitAll()에서 수정
+////                                .anyRequest().authenticated()
+//
+//                );
+////                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+//
+//        return http.build();
+//    }
+//
+//    @Bean
+//    public CorsConfigurationSource corsConfigurationSource(){
+//        CorsConfiguration configuration = new CorsConfiguration();
+//        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:3306"));
+//        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+//        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+//        configuration.setAllowCredentials(true);
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", configuration);
+//        return  source;
+//    }
 }

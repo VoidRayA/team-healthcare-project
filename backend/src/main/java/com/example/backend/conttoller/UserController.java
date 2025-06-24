@@ -19,22 +19,22 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-    private final CustomUserDetails userDetails;
+//    private final CustomUserDetails userDetails;
 
-//    // senior 조회
-//    @GetMapping("/senior")
-//    public ResponseEntity<List<UserDtos.SeniorResponseDto>> getMySenior(){
-////        String userName = "김춘자";
-////        return ResponseEntity.ok(userService.findMySenior(userName));
-//        try {
-//            String userName = "김춘자";
-//            List<UserDtos.SeniorResponseDto> result = userService.findMySenior(userName);
-//            return ResponseEntity.ok(result);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return ResponseEntity.badRequest().body(Collections.emptyList());
-//        }
-//    }
+    // senior 조회
+    @GetMapping("/senior")
+    public ResponseEntity<List<UserDtos.SeniorResponseDto>> getMySenior(){
+//        String userName = "김춘자";
+//        return ResponseEntity.ok(userService.findMySenior(userName));
+        try {
+            String userName = "김춘자";
+            List<UserDtos.SeniorResponseDto> result = userService.findMySenior(userName);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Collections.emptyList());
+        }
+    }
     // guardian 조회
     @GetMapping("/guardian")
     public ResponseEntity<List<UserDtos.GuardianResponseDto>> getMyGuardian(){

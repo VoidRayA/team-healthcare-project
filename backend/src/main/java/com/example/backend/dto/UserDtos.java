@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public class UserDtos {
     // Senior dtos
     public record SeniorCreateRequestDto(
-            Long id,
+            Integer id,
             Integer guardianId,
             String senior_name,
             LocalDate birth_date,
@@ -22,14 +22,14 @@ public class UserDtos {
     ){}
     public record SeniorUpdateRequestDto(Boolean completed) {}
 
-    public record SeniorResponseDto(Long id, Integer guardianId , String senior_name, LocalDate birth_date, char gender, String address,
+    public record SeniorResponseDto(Integer id, Integer guardianId , String senior_name, LocalDate birth_date, char gender, String address,
                                     String emergency_contact, String chronic_diseases, String medications,
                                     String notes, LocalDateTime created_at){
         public SeniorResponseDto(Seniors entity) {
             this(
                     entity.getId(),
                     entity.getGuardianId(),
-                    entity.getSenior_name(),
+                    entity.getSeniorName(),
                     entity.getBirth_date(),
                     entity.getGender(),
                     entity.getAddress(),
@@ -43,7 +43,7 @@ public class UserDtos {
     }
     // Guardian dtos
     public record GuardianCreateRequestDto(
-            Long id,
+            Integer id,
             String loginId,
             String guardianName,
             String phone,
@@ -53,7 +53,7 @@ public class UserDtos {
     ){}
     public record GuardianUpdateRequestDto(Boolean completed) {}
 
-    public record GuardianResponseDto(Long id,String loginId, String guardianName,String phone,
+    public record GuardianResponseDto(Integer id,String loginId, String guardianName,String phone,
                                       String email, Boolean isActive, String relationship,
                                       LocalDateTime created_at, LocalDateTime update_at){
         public GuardianResponseDto(Guardians entity) {
@@ -66,7 +66,7 @@ public class UserDtos {
                     entity.getIsActive(),
                     entity.getRelationship(),
                     entity.getCreated_at(),
-                    entity.getUpdate_at()
+                    entity.getUpdated_at()
             );
         }
     }

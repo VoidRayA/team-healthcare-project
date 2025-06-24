@@ -30,8 +30,8 @@ public class UserService {
                         .role(Role.USER)
                         .build()));
         Seniors seniors = Seniors.builder()
-                .guardian(guardian) // 핵심: 여기서 연결
-                .guardianId(Math.toIntExact(dto.userId()))
+                .guardians((List<Seniors>) guardian) // 핵심: 여기서 연결
+                .guardianId(Math.toIntExact(dto.guardianId()))
                 .senior_name(dto.senior_name())
                 .birth_date(dto.birth_date())
                 .gender(dto.gender())
@@ -44,7 +44,7 @@ public class UserService {
 
         seniorRepository.save(seniors);
 
-        return new UserDtos.SeniorResponseDto(seniors); // 생성된 Senior를 Dto로 리턴
+        return new UserDtos.SeniorResponseDto(seniors);
     }
     // 사용자 정보 목록 조회 서비스
     public List<UserDtos.SeniorResponseDto> findMySenior(String userName) {

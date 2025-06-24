@@ -21,7 +21,7 @@ public class Guardians {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false, updatable = false)
-    private long id;
+    private Integer id;
 
     @Column(name = "login_id", nullable = false)
     private String loginId;
@@ -49,8 +49,8 @@ public class Guardians {
     private LocalDateTime created_at;
 
     @UpdateTimestamp
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime update_at;
+    @Column(name = "updated_at", nullable = false, updatable = false)
+    private LocalDateTime updated_at;
 
 //    @Enumerated(EnumType.STRING)
 //    @Column(nullable = false)

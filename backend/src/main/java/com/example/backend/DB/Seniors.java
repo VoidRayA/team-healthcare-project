@@ -20,13 +20,13 @@ import java.util.List;
 @Builder
 public class Seniors {
     @Id
-    private long id;
+    private Integer id;
 
     @Column(name = "guardian_id", nullable = false, unique = true)
     private Integer guardianId;
 
-    @Column(nullable = false)
-    private String senior_name;
+    @Column(name = "senior_name", nullable = false)
+    private String seniorName;
 
     @Column(nullable = false)
     private LocalDate birth_date;
@@ -64,7 +64,7 @@ public class Seniors {
 //    @ManyToMany(mappedBy = "seniors")
 //    private List<Guardians> guardians;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean completed = false;
+//    @Column(nullable = false)
+//    @Builder.Default
+//    private boolean completed = false;
 }

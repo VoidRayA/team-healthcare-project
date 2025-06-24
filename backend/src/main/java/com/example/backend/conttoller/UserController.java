@@ -1,9 +1,12 @@
 package com.example.backend.conttoller;
 
+import java.util.Collections;
 import com.example.backend.dto.UserDtos;
 import com.example.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,18 +21,47 @@ public class UserController {
     // senior 조회
     @GetMapping("/senior")
     public ResponseEntity<List<UserDtos.SeniorResponseDto>> getMySenior(){
-        String userName = "박가을";
-        return ResponseEntity.ok(userService.findMySenior(userName));
+//        String userName = "김춘자";
+//        return ResponseEntity.ok(userService.findMySenior(userName));
+        try {
+            String userName = "김춘자";
+            List<UserDtos.SeniorResponseDto> result = userService.findMySenior(userName);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Collections.emptyList());
+        }
+    }
+    // guardian 조회
+    @GetMapping("/guardian")
+    public ResponseEntity<List<UserDtos.GuardianResponseDto>> getMyGuardian(){
+        try {
+            String userName = "김가을";
+            List<UserDtos.GuardianResponseDto> result = userService.findMyGuardian(userName);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Collections.emptyList());
+        }
     }
     // senior 추가
     @PostMapping("/senior")
     public ResponseEntity<UserDtos.SeniorResponseDto> createSenior(
-            @RequestBody UserDtos.SeniorCreateRequestDto dto) {
-                Integer userId = 1;
-                String userName = "박가을";
-        UserDtos.SeniorResponseDto responseDto = userService.createUser(dto, userId, userName);
-        return ResponseEntity.ok(responseDto);
+            @RequestBody UserDtos.SeniorCreateRequestDto dto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Integer id = userDetails.getUserId();
+        String name = userDetails.getUsername();
+        return ResponseEntity.ok(userService.createUser(dto, id, name));
     }
+    // guardian 추가
+    @PostMapping("/guardian")
+    public ResponseEntity<UserDtos.GuardianResponseDto> createGuardian(
+            @RequestBody UserDtos.GuardianCreateRequestDto dto,
+            @AuthenticationPrincipal UserDetails userDetails){
+
+        return ResponseEntity.ok();
+    }
+
     // senior 약 복용 완료 / 미완료 토글
 //    @PatchMapping("/{id}")
 //    public ResponseEntity<UserDtos.SeniorResponseDto> toggleSenior(

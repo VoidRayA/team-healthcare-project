@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface GuardianRepository extends JpaRepository<Guardians, Long> {
     List<Guardians> findByGuardianName(String guardianName);
     Optional<Guardians> findById(Integer id);
+    Optional<Guardians> findByLoginId(String loginId);
 }

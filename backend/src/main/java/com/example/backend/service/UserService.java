@@ -22,20 +22,11 @@ public class UserService {
 
     // 사용자 조회 및 생성
     @Transactional
-<<<<<<< HEAD
-    public UserDtos.SeniorResponseDto createUser(UserDtos.SeniorCreateRequestDto dto, String userEmail) {
-        Guardian guardian = guardianRepository.findByGuardianEmail(userEmail)
-                .orElseGet(() -> guardianRepository.save(Guardian.builder()
-                        .name(userEmail.split("@")[0])
-                        .guardianEmail(userEmail)
-                        .relationship("보호자")   //임시값
-=======
     public UserDtos.SeniorResponseDto createUser(UserDtos.SeniorCreateRequestDto dto, Integer userId, String name) {
         Guardians guardian = guardianRepository.findByUserId(userId)
                 .orElseGet(() -> guardianRepository.save(Guardians.builder()
                         .name(name)
                         .relationship("보호자")
->>>>>>> e685af81ca3c0b5e5441c16c8f342b586eb3dd50
                         .role(Role.USER)
                         .build()));
         Seniors seniors = Seniors.builder()
@@ -53,19 +44,11 @@ public class UserService {
 
         seniorRepository.save(seniors);
 
-<<<<<<< HEAD
-        return new UserDtos.SeniorResponseDto(senior); // 생성된 Senior를 Dto로 리턴
-    }
-    // 사용자 정보 목록 조회 서비스
-    public List<UserDtos.SeniorResponseDto> findMySenior(String userName) {
-        Guardian guardian = guardianRepository.findByName(userName)
-=======
         return new UserDtos.SeniorResponseDto(seniors); // 생성된 Senior를 Dto로 리턴
     }
     // 사용자 정보 목록 조회 서비스
     public List<UserDtos.SeniorResponseDto> findMySenior(String userName) {
         Guardians guardian = guardianRepository.findByGuardianName(userName)
->>>>>>> e685af81ca3c0b5e5441c16c8f342b586eb3dd50
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 보호자"));
         return guardian.getSeniors().stream()
                 .map(UserDtos.SeniorResponseDto::new)
@@ -73,15 +56,9 @@ public class UserService {
     }
     // 약물 복용 여부 확인 토글 서비스
     public UserDtos.SeniorResponseDto toggleSenior(Long id, String userEmail) {
-<<<<<<< HEAD
-        Senior senior = findByIdAndUserEmail2(id, userEmail);
-        senior.setCompleted(!senior.isCompleted());
-        return new UserDtos.SeniorResponseDto(senior);
-=======
         Seniors seniors = findByIdAndUserEmail2(id, userEmail);
         seniors.setCompleted(!seniors.isCompleted());
         return new UserDtos.SeniorResponseDto(seniors);
->>>>>>> e685af81ca3c0b5e5441c16c8f342b586eb3dd50
     }
     // 사용자 정보 삭제 서비스
     // senior 삭제

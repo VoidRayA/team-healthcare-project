@@ -1,22 +1,7 @@
-html, body {
-  background-color: #61dafbaa !important;
-  color: black !important;
-  margin: 0;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#root {
-  background-color: #61dafbaa;
-  max-width: 1280px;
-  width: 100%;
-  padding: 2rem;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* #root {
+  margin: 0px;
+  padding: 0px;
+  text-align: center;
 }
 
 .logo {
@@ -32,22 +17,22 @@ html, body {
 
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
-}
+} */
 
-@keyframes logo-spin {
+/* @keyframes logo-spin {
   from {
     transform: rotate(0deg);
   }
   to {
     transform: rotate(360deg);
   }
-}
-
+} */
+/* 
 @media (prefers-reduced-motion: no-preference) {
   a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;
   }
-}
+} */
 
 .card {
   padding: 2em;
@@ -58,8 +43,8 @@ html, body {
 }
 
 .centered-image {
-  max-width: 65%;
-  max-height: 80%;
+  display: block;
   width: 100%;
-  object-fit: contain;
+  height: 100%;
+  object-fit: cover;
 }

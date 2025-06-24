@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="0b30e73e-8875-49d7-a44c-34d05d1cdafa" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/docs/mockups/web_based_mockups.html" beforeDir="false" afterPath="$PROJECT_DIR$/docs/mockups/web_based_mockups.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/login/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/App.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/login/src/App.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/login/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/assets/images/id_box.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/assets/images/image.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/assets/images/image2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/assets/images/image3.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/assets/images/lock_icon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/assets/images/login_box.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/assets/images/login_button.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/assets/images/pw_box.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/components/CenteredLoginBoxImage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/components/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/login/src/components/Login.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/components/LoginPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/login/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/login/src/index.css" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 2
+}]]></component>
+  <component name="ProjectId" id="2ytw07kdW8KP6PbehZpUDyOyIuf" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "dev",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/jihyeon/team-healthcare-project/backend"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="0b30e73e-8875-49d7-a44c-34d05d1cdafa" name="Changes" comment="" />
+      <created>1750666951731</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1750666951731</updated>
+    </task>
+    <servers />
+  </component>
+</project>

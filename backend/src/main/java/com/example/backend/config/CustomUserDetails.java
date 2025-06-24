@@ -1,7 +1,7 @@
 package com.example.backend.config;
 
 import com.example.backend.DB.Guardians;
-//import com.example.backend.DB.Seniors;
+import com.example.backend.DB.Seniors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;

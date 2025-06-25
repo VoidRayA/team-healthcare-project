@@ -30,7 +30,7 @@ public class UserService {
                         .role(Role.USER)
                         .build()));
         Seniors seniors = Seniors.builder()
-                .guardian(guardian) // 핵심: 여기서 연결
+                .guardians(guardian) // 핵심: 여기서 연결
                 .guardianId(Math.toIntExact(dto.userId()))
                 .senior_name(dto.senior_name())
                 .birth_date(dto.birth_date())

@@ -1,9 +1,13 @@
-package com.example.backend.conttoller;
+package com.example.backend.controller;
 
+import java.util.Collections;
+
+import com.example.backend.config.CustomUserDetails;
 import com.example.backend.dto.UserDtos;
 import com.example.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,42 +16,82 @@ import java.util.List;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class UserController {
+
     private final UserService userService;
 
-    // 모든 보호자 조회
-    @GetMapping("/guardians")
-    public ResponseEntity<List<UserDtos.GuardianResponseDto>> getAllGuardians(){
-        List<UserDtos.GuardianResponseDto> result = userService.findAllGuardians();
-        return ResponseEntity.ok(result);
+    // senior 조회
+    @GetMapping("/senior")
+    public ResponseEntity<List<UserDtos.SeniorResponseDto>> getMySenior(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        try {
+            String userName = userDetails.getSeniors().getSeniorName();
+            List<UserDtos.SeniorResponseDto> result = userService.findMySenior(userName);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Collections.emptyList());
+        }
     }
 
-    // 특정 보호자 조회 (loginId로)
-    @GetMapping("/guardians/{loginId}")
-    public ResponseEntity<UserDtos.GuardianResponseDto> getGuardianByLoginId(@PathVariable String loginId) {
-        return userService.findByLoginId(loginId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    // guardian 조회
+    @GetMapping("/guardian")
+    public ResponseEntity<List<UserDtos.GuardianResponseDto>> getMyGuardian(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        try {
+            String userName = userDetails.getGuardians().getGuardianName();
+            List<UserDtos.GuardianResponseDto> result = userService.findMyGuardian(userName);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Collections.emptyList());
+        }
     }
 
-    // 보호자 존재 여부 확인 (POSTMAN 테스트용)
-    @GetMapping("/guardians/exists/{loginId}")
-    public ResponseEntity<Boolean> checkGuardianExists(@PathVariable String loginId) {
-        boolean exists = userService.existsByLoginId(loginId);
-        return ResponseEntity.ok(exists);
+    // senior 추가
+    @PostMapping("/senior")
+    public ResponseEntity<UserDtos.SeniorResponseDto> createSenior(
+            @RequestBody UserDtos.SeniorCreateRequestDto dto,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Integer id = userDetails.getSeniors().getId();
+        String name = userDetails.getUsername();
+        return ResponseEntity.ok(userService.createSenior(dto, id, name));
     }
 
-    // 보호자 생성
-    @PostMapping("/guardians")
+    // guardian 추가
+    @PostMapping("/guardian")
     public ResponseEntity<UserDtos.GuardianResponseDto> createGuardian(
-            @RequestBody UserDtos.GuardianCreateRequestDto dto) {
-        UserDtos.GuardianResponseDto result = userService.createGuardian(dto);
-        return ResponseEntity.ok(result);
+            @RequestBody UserDtos.GuardianCreateRequestDto dto,
+            @AuthenticationPrincipal CustomUserDetails userDetails){
+        Integer id = userDetails.getGuardians().getId();
+        String name = userDetails.getUsername();
+        return ResponseEntity.ok(userService.createGuardian(dto, id, name));
     }
 
-    // 보호자 삭제
-    @DeleteMapping("/guardians/{id}")
-    public ResponseEntity<Void> deleteGuardian(@PathVariable Integer id) {
-        userService.deleteGuardian(id);
-        return ResponseEntity.ok().build();
+    // senior 약 복용 완료 / 미완료 토글
+    @PatchMapping("/senior/{id}")
+    public ResponseEntity<UserDtos.SeniorResponseDto> toggleSenior(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal CustomUserDetails userDetails){
+        return ResponseEntity.ok(userService.toggleSenior(id, userDetails.getSeniors().getMedications()));
+    }
+
+    // senior 삭제
+    @DeleteMapping("/senior/{id}")
+    public ResponseEntity<Void> deleteSenior(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        userService.deleteSenior(id, userDetails.getSeniors().getSeniorName());
+        return ResponseEntity.noContent().build();
+    }
+
+    // guardian 삭제
+    @DeleteMapping("/guardian/{id}")
+    public ResponseEntity<Void> deleteGuardian(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        userService.deleteGuardian(id, userDetails.getGuardians().getEmail());
+        return ResponseEntity.noContent().build();
     }
 }

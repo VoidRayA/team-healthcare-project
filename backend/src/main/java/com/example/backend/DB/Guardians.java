@@ -21,7 +21,7 @@ public class Guardians {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false, updatable = false)
-    private long id;
+    private Integer id;
 
     @Column(name = "login_id", nullable = false)
     private String loginId;
@@ -49,20 +49,27 @@ public class Guardians {
     private LocalDateTime created_at;
 
     @UpdateTimestamp
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime update_at;
+    @Column(name = "updated_at", nullable = false, updatable = false)
+    private LocalDateTime updated_at;
 
-//    @Enumerated(EnumType.STRING)
-//    @Column(nullable = false)
-//    private Role role;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 
     @Builder
-    public Guardians(String name, String relationship, Role role) {
+    public Guardians(Integer id, String loginId, String loginPw, String name,
+                     String phone, String email, String relationship, Role role) {
+        this.id = id;
+        this.loginId = loginId;
+        this.loginPw = loginPw;
         this.guardianName = name;
+        this.phone = phone;
+        this.email = email;
         this.relationship = relationship;
-//        this.role = role;
+        this.role = role;
     }
 
-    @ManyToMany
-    private List<Seniors> seniors;
+//    @ManyToMany
+//    private List<Seniors> seniors;
 }
+

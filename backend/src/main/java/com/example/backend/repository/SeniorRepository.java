@@ -9,6 +9,8 @@ import java.util.Optional;
 
 public interface SeniorRepository extends JpaRepository<Seniors, Long> {
 //    Optional<Seniors> findByEmail(String email);
+    List<Seniors> findBySeniorName(String seniorName);
     List<Seniors> findByGuardiansContains(Guardians guardian);
-    Optional<Seniors> findById(Long id);
+    Optional<Seniors> findById(Integer id);
+    Optional<Seniors> findByGuardianId(Integer guardianId); // 추가
 }

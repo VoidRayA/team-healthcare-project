@@ -1,10 +1,7 @@
 package com.example.backend.DB;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
@@ -20,15 +17,15 @@ import java.util.List;
 @Builder
 public class Seniors {
     @Id
-    private long id;
+    private Integer id;
 
     @Column(name = "guardian_id", nullable = false, unique = true)
     private Integer guardianId;
 
-    @Column(nullable = false)
-    private String senior_name;
+    @Column(name = "senior_name", nullable = false)
+    private String seniorName;
 
-    @Column(nullable = false)
+    @Column(name = "birth_date", nullable = false)
     private LocalDate birth_date;
 
     @Column
@@ -66,5 +63,7 @@ public class Seniors {
 
     @Column(nullable = false)
     @Builder.Default
+    @Setter
+    @Getter
     private boolean completed = false;
 }

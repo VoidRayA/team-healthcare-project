@@ -16,7 +16,8 @@ import java.util.List;
 public class CustomUserDetails implements UserDetails {
 
     private final Guardians guardians;
-//    private final Seniors seniors;
+    private final Seniors seniors;
+
 
     @Override
     public String getUsername() {

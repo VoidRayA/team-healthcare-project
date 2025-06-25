@@ -88,16 +88,16 @@ public class UserService {
                 .map(UserDtos.GuardianResponseDto::new)
                 .collect(Collectors.toList());
     }
-//    // 약물 복용 여부 확인 토글 서비스
-//    public UserDtos.SeniorResponseDto toggleSenior(Integer id, String userEmail) {
-//        Seniors seniors = findByIdAndUserEmail2(id, userEmail);
-//        seniors.setCompleted(!seniors.isCompleted());
-//        return new UserDtos.SeniorResponseDto(seniors);
-//    }
+    // 약물 복용 여부 확인 토글 서비스
+    public UserDtos.SeniorResponseDto toggleSenior(Integer id, String userName) {
+        Seniors seniors = findByIdAndUserEmail2(id, userName);
+        seniors.setCompleted(!seniors.isCompleted());
+        return new UserDtos.SeniorResponseDto(seniors);
+    }
     // 사용자 정보 삭제 서비스
     // senior 삭제
-    public void deleteSenior(Integer id, String userEmail) {
-        Seniors seniors = findByIdAndUserEmail2(id, userEmail);
+    public void deleteSenior(Integer id, String userName) {
+        Seniors seniors = findByIdAndUserEmail2(id, userName);
         seniorRepository.delete(seniors);
     }
     // guardian 삭제

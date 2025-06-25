@@ -1,10 +1,7 @@
 package com.example.backend.DB;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
@@ -28,7 +25,7 @@ public class Seniors {
     @Column(name = "senior_name", nullable = false)
     private String seniorName;
 
-    @Column(nullable = false)
+    @Column(name = "birth_date", nullable = false)
     private LocalDate birth_date;
 
     @Column
@@ -64,7 +61,9 @@ public class Seniors {
 //    @ManyToMany(mappedBy = "seniors")
 //    private List<Guardians> guardians;
 
-//    @Column(nullable = false)
-//    @Builder.Default
-//    private boolean completed = false;
+    @Column(nullable = false)
+    @Builder.Default
+    @Setter
+    @Getter
+    private boolean completed = false;
 }

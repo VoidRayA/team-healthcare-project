@@ -1,5 +1,11 @@
+body  {
+  margin: 0px;
+  padding: 0px;
+  background-color: #01b1ff;
+}
 
-:root {
+
+/* :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -21,10 +27,8 @@ a:hover {
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background: linear-gradient(to bottom, #007bff, #00bfff) !important;
+  margin: 0px;
+  padding: 0px;
 }
 
 h1 {
@@ -49,7 +53,7 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-}
+} */
 /* 
 @media (prefers-color-scheme: light) {
   :root {

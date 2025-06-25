@@ -12,4 +12,5 @@ public interface SeniorRepository extends JpaRepository<Seniors, Long> {
     List<Seniors> findBySeniorName(String seniorName);
     List<Seniors> findByGuardiansContains(Guardians guardian);
     Optional<Seniors> findById(Integer id);
+    Optional<Seniors> findByGuardianId(Integer guardianId); // 추가
 }

@@ -34,6 +34,7 @@ public class UserService {
                 .guardians((List<Seniors>) guardian) // 핵심: 여기서 연결
                 .guardianId(Math.toIntExact(dto.guardianId()))
                 .seniorName(dto.senior_name())
+
                 .birth_date(dto.birth_date())
                 .gender(dto.gender())
                 .address(dto.address())

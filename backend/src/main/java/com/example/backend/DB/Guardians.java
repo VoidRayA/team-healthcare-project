@@ -1,75 +1,74 @@
 package com.example.backend.DB;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
-@EnableJpaAuditing
+/**
+ * 보호자 정보를 저장하는 JPA 엔티티
+ */
 @Entity
-@Data
-@NoArgsConstructor
+@Table(name = "guardians")
 @Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Guardians {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, updatable = false)
-    private Integer id;
+    private Long id;
 
-    @Column(name = "login_id", nullable = false)
+    @Column(name = "login_id", unique = true, nullable = false, length = 50)
     private String loginId;
 
     @Column(name = "login_pw", nullable = false)
     private String loginPw;
 
-    @Column(name = "guardian_name", nullable = false)
+    @Column(name = "guardian_name", nullable = false, length = 50)  // 테이블 스키마에 맞게 길이 수정
     private String guardianName;
 
-    @Column
+    @Column(length = 20)
     private String phone;
 
-    @Column
+    @Column(length = 100)  // unique 제거 (테이블 스키마에 없음)
     private String email;
 
-    @Column
-    private Boolean isActive; // 계정활성화 상태 확인
-
-    @Column
-    private String relationship; // 관계
-
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime created_at;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false, updatable = false)
-    private LocalDateTime updated_at;
+    @Column(length = 30)  // 테이블 스키마에 맞게 길이 수정
+    private String relationship;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private Role role;
 
-    @Builder
-    public Guardians(Integer id, String loginId, String loginPw, String name,
-                     String phone, String email, String relationship, Role role) {
-        this.id = id;
-        this.loginId = loginId;
-        this.loginPw = loginPw;
-        this.guardianName = name;
-        this.phone = phone;
-        this.email = email;
-        this.relationship = relationship;
-        this.role = role;
+    @Column(name = "is_active")  // 컬럼명 매핑 추가
+    @Builder.Default
+    private Boolean isActive = true;
+
+    @Column(name = "created_at", nullable = false, updatable = false)  // 핵심: created_at으로 매핑
+    private LocalDateTime registeredAt;
+
+    @Column(name = "updated_at")  // 컬럼명 매핑 추가
+    private LocalDateTime updatedAt;
+
+    /**
+     * 엔티티 저장 전 실행되는 메서드
+     */
+    @PrePersist
+    protected void onCreate() {
+        registeredAt = LocalDateTime.now();
+        if (isActive == null) {
+            isActive = true;
+        }
     }
 
-//    @ManyToMany
-//    private List<Seniors> seniors;
+    /**
+     * 엔티티 업데이트 전 실행되는 메서드
+     */
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
-

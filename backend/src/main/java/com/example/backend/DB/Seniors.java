@@ -1,70 +1,79 @@
 package com.example.backend.DB;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
-@EnableJpaAuditing
 @Entity
+@Table(name = "seniors")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class Seniors {
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "guardian_id", nullable = false, unique = true)
-    private Integer guardianId;
+    // Guardian과의 관계 - ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "guardian_id", nullable = false)
+    private Guardians guardian;
 
-    @Column(name = "senior_name", nullable = false)
+    @Column(name = "senior_name", nullable = false, length = 30)
     private String seniorName;
 
-    @Column(nullable = false)
-    private LocalDate birth_date;
+    @Column(name = "birth_date", nullable = false)
+    private LocalDate birthDate; // birth_date -> birthDate (camelCase)
 
-    @Column
-    private char gender;
+    @Column(length = 1)
+    private Character gender; // CHAR(1) -> Character
 
-    @Column
+    @Column(length = 255)
     private String address;
 
-    @Column
-    private String emergency_contact;
+    @Column(name = "emergency_contact", length = 20)
+    private String emergencyContact;
 
-    @Column
-    private String chronic_diseases; // 지병
+    @Column(name = "chronic_diseases", columnDefinition = "TEXT")
+    private String chronicDiseases;
 
-    @Column
-    private String medications;  // 복용중인약물
+    @Column(columnDefinition = "TEXT")
+    private String medications;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @Column(length = 20)
+    private String phone;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
+
     @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime created_at;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    @ManyToMany
-    @JoinTable(
-            name = "guardians",
-            joinColumns = @JoinColumn(name = "id")
-//            inverseJoinColumns = @JoinColumn(name = "guardian_id")
-    )
-    private List<Seniors> guardians;
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-//    @ManyToMany(mappedBy = "seniors")
-//    private List<Guardians> guardians;
+    /**
+     * 엔티티 저장 전 실행되는 메서드들은 아래에 작성
+     */
+    //========================== 엔티티 저장 전 ==========================
 
-//    @Column(nullable = false)
-//    @Builder.Default
-//    private boolean completed = false;
+
+    /**
+     * 엔티티 업데이트 전 실행되는 메서드들은 아래에 작성
+     */
+    //========================== 엔티티 업데이트 전 ==========================
 }

@@ -1,0 +1,114 @@
+package com.example.backend.dto;
+
+import com.example.backend.DB.Seniors;
+import lombok.Builder;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+/**
+ * Senior 관련 DTO 클래스
+ */
+public class SeniorDto {
+
+    /**
+     * Senior 생성 요청 DTO
+     */
+    @Builder
+    public record SeniorCreateRequestDto(
+            String seniorName,
+            LocalDate birthDate,
+            Character gender,           // M/F
+            String address,
+            String emergencyContact,
+            String chronicDiseases,     // 지병
+            String medications,         // 복용 약물
+            String notes,              // 특이사항
+            String phone               // 노인 본인 연락처
+    ) {}
+
+    /**
+     * Senior 수정 요청 DTO
+     */
+    @Builder
+    public record SeniorUpdateRequestDto(
+            String seniorName,
+            Character gender,
+            String address,
+            String emergencyContact,
+            String chronicDiseases,
+            String medications,
+            String notes,
+            String phone,
+            Boolean isActive           // 활성 상태 변경
+    ) {}
+
+    /**
+     * Senior 응답 DTO
+     */
+    @Builder
+    public record SeniorResponseDto(
+            Integer id,
+            Integer guardianId,        // Long -> Integer로 수정 (Entity와 일치)
+            String guardianName,       // Guardian 이름 (편의상)
+            String seniorName,
+            LocalDate birthDate,
+            Character gender,
+            String address,
+            String emergencyContact,
+            String chronicDiseases,
+            String medications,
+            String notes,
+            String phone,
+            Boolean isActive,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
+        /**
+         * Seniors Entity를 SeniorResponseDto로 변환
+         */
+        public static SeniorResponseDto from(Seniors entity) {
+            return SeniorResponseDto.builder()
+                    .id(entity.getId())
+                    .guardianId(entity.getGuardian().getId().intValue())  // Long을 Integer로 변환
+                    .guardianName(entity.getGuardian().getGuardianName())
+                    .seniorName(entity.getSeniorName())
+                    .birthDate(entity.getBirthDate())
+                    .gender(entity.getGender())
+                    .address(entity.getAddress())
+                    .emergencyContact(entity.getEmergencyContact())
+                    .chronicDiseases(entity.getChronicDiseases())
+                    .medications(entity.getMedications())
+                    .notes(entity.getNotes())
+                    .phone(entity.getPhone())
+                    .isActive(entity.getIsActive())
+                    .createdAt(entity.getCreatedAt())
+                    .updatedAt(entity.getUpdatedAt())
+                    .build();
+        }
+    }
+
+    /**
+     * Senior 간단 정보 DTO (목록 조회용)
+     */
+    @Builder
+    public record SeniorSimpleDto(
+            Integer id,
+            String seniorName,
+            LocalDate birthDate,
+            Character gender,
+            String phone,
+            Boolean isActive
+    ) {
+        public static SeniorSimpleDto from(Seniors entity) {
+            return SeniorSimpleDto.builder()
+                    .id(entity.getId())
+                    .seniorName(entity.getSeniorName())
+                    .birthDate(entity.getBirthDate())
+                    .gender(entity.getGender())
+                    .phone(entity.getPhone())
+                    .isActive(entity.getIsActive())
+                    .build();
+        }
+    }
+}

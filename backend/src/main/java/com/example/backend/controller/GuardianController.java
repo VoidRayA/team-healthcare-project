@@ -256,7 +256,7 @@ public class GuardianController {
                 .phone(guardian.getPhone())
                 .email(guardian.getEmail())
                 .relationship(guardian.getRelationship())
-                .role(guardian.getRole().getKey())        // ✅ Role의 key 사용
+                .role(guardian.getRole().getKey())
                 .isActive(guardian.getIsActive())
                 .registeredAt(guardian.getRegisteredAt())
                 .updatedAt(guardian.getUpdatedAt())

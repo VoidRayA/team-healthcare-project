@@ -38,13 +38,13 @@ public interface SeniorRepository extends JpaRepository<Seniors, Integer> {
      * Guardian ID로 Senior 목록 조회 (활성화된 것만)
      */
     @Query("SELECT s FROM Seniors s WHERE s.guardian.id = :guardianId AND s.isActive = true")
-    List<Seniors> findByGuardianIdAndIsActiveTrue(@Param("guardianId") Long guardianId);  // Integer -> Long으로 수정
+    List<Seniors> findByGuardianIdAndIsActiveTrue(@Param("guardianId") Integer guardianId);  // Integer -> Long으로 수정
 
     /**
      * Guardian ID로 특정 Senior 조회 (본인 소유 확인용)
      */
     @Query("SELECT s FROM Seniors s WHERE s.id = :seniorId AND s.guardian.id = :guardianId AND s.isActive = true")
-    Optional<Seniors> findByIdAndGuardianId(@Param("seniorId") Integer seniorId, @Param("guardianId") Long guardianId);  // Integer -> Long으로 수정
+    Optional<Seniors> findByIdAndGuardianId(@Param("seniorId") Integer seniorId, @Param("guardianId") Integer guardianId);  // Integer -> Long으로 수정
 
     // ===== 검색 기능 =====
 

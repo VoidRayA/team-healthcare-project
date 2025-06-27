@@ -18,7 +18,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return guardians.getLoginId();        // ✅ loginId 반환
+        return guardians.getLoginId();
     }
 
     public String getGuardianName() {

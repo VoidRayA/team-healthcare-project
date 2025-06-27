@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class GuardianDto {
 
-    private Long id;
+    private Integer id;
     private String loginId;
     private String guardianName;
     private String phone;

@@ -20,7 +20,7 @@ public class Seniors {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id; // DB가 INT이므로 Integer 사용
+    private Integer id;
 
     // Guardian과의 관계 - ManyToOne
     @ManyToOne(fetch = FetchType.LAZY)
@@ -40,10 +40,10 @@ public class Seniors {
     private String address;
 
     @Column(name = "emergency_contact", length = 20)
-    private String emergencyContact; // emergency_contact -> emergencyContact
+    private String emergencyContact;
 
     @Column(name = "chronic_diseases", columnDefinition = "TEXT")
-    private String chronicDiseases; // chronic_diseases -> chronicDiseases
+    private String chronicDiseases;
 
     @Column(columnDefinition = "TEXT")
     private String medications;
@@ -51,7 +51,6 @@ public class Seniors {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    // 새로 추가된 컬럼
     @Column(length = 20)
     private String phone;
 
@@ -66,4 +65,15 @@ public class Seniors {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    /**
+     * 엔티티 저장 전 실행되는 메서드들은 아래에 작성
+     */
+    //========================== 엔티티 저장 전 ==========================
+
+
+    /**
+     * 엔티티 업데이트 전 실행되는 메서드들은 아래에 작성
+     */
+    //========================== 엔티티 업데이트 전 ==========================
 }

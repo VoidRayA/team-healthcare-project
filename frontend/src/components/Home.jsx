@@ -16,38 +16,84 @@ import {
   Badge
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import user from '../images/user.png';
+import logout from '../images/logout.png';
+import IconImage from '../images/기록_아이콘2.png';
+import SpeedBox from '../images/빠른.png';
+import 대상자이미지 from '../images/대상자2.png';
+import 위치이미지 from '../images/location.png';
+import 알림이미지 from '../images/alert.png';
+import 일정이미지 from '../images/일정.png';
+
+
+
 
 // 스타일드 컴포넌트들
 const HomeContainer = styled(Box)({
   display: 'flex',
   minHeight: '100vh',
-  backgroundColor: '#f5f5f5'
+  backgroundColor: '#ffffff'
 });
 
+// 뒷 배경에 깔려있는 하늘색 창
+const Background = styled(Box)({
+  position: 'absolute',
+  display: 'flex',
+  width: '100vw',
+  height: '100vh',
+  left: '0px',
+  top: '0px',
+  background: 'linear-gradient(180deg, rgba(0, 124, 255, 0.2) 0%, rgba(0, 188, 255, 0.2) 100%)'
+});
+
+// 하얀색 보드판
+const MainBoard = styled(Box)({
+  position: 'absolute',
+  width: '95vw',
+  height: '95vh',
+  left: 'calc(80% - 1800px/2)',
+  top: 'calc(80% - 1000px/2)',
+  background: '#FFFFFF',
+  borderRadius: '10px',
+  });
+  
+
+
+
 const Sidebar = styled(Paper)({
-  width: '280px',
-  backgroundColor: '#6a5acd',
-  color: 'white',
+  position: 'absolute',
+  width: '237px', 
+  height: '100vh',
+  left: '0px',
+  top: '40px',
+  background: '#007CFF',
+  borderRadius: '0px 40px 40px 0px',
   display: 'flex',
   flexDirection: 'column',
   padding: '20px 0',
-  borderRadius: '0'
 });
 
-const SidebarHeader = styled(Box)({
-  padding: '0 20px 20px',
-  borderBottom: '1px solid rgba(255,255,255,0.1)',
-  marginBottom: '20px'
-});
-
-const SidebarTitle = styled(Typography)({
-  fontSize: '24px',
-  fontWeight: 'bold',
-  color: 'white',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '10px'
-});
+// Sidebar에 있는 사용자 아이콘
+const UserIconBox = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  width: '50.27px',
+  height: '50.27px',
+  left: '34.36px',
+  top: '30px',
+  '& img': {
+    width: '30px',
+    height: '30px',
+    filter: 'brightness(0) invert(1)'
+  },
+  [theme.breakpoints.down('sm')]: {
+    width: '40px',
+    height: '40px',
+    '& img': {
+      width: '24px',
+      height: '24px'
+    }
+  }
+}));
 
 const SidebarMenu = styled(List)({
   padding: '0',
@@ -57,18 +103,37 @@ const SidebarMenu = styled(List)({
     cursor: 'pointer',
     transition: 'all 0.3s ease',
     '&:hover': {
-      backgroundColor: 'rgba(255,255,255,0.1)'
+      backgroundColor: 'rgba(255,255,255,0.1)',
     },
     '&.active': {
       backgroundColor: 'rgba(255,255,255,0.2)',
-      borderRight: '4px solid white'
-    }
+      borderRight: '4px solid white',
+    },
   },
   '& .MuiListItemIcon-root': {
     color: 'white',
-    minWidth: '40px'
-  }
+    minWidth: '40px',
+  },
+  // Typography 스타일 추가 부분
+  '& .sidebar-title': {
+    position: 'absolute',
+    width: '50.27px',
+    height: '50.27px',
+    left: '38px',
+    top: '222.05px',
+    fontFamily: 'GyeonggiTitle',
+    fontStyle: 'normal',
+    fontWeight: 500,
+    fontSize: '25px',
+    lineHeight: '25px',
+    color: '#FFFFFF',
+  },
 });
+
+
+
+
+
 
 const MainContent = styled(Box)({
   flex: 1,
@@ -80,11 +145,94 @@ const HeaderSection = styled(Box)({
   marginBottom: '30px'
 });
 
+
 const WelcomeCard = styled(Card)({
-  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  background: '#ffffff',
   color: 'white',
   marginBottom: '20px'
 });
+
+const MainContentHello = styled(Typography)({
+  position: 'absolute',
+  width: '268px',
+  height: '53px',
+  left: '299px',
+  top: '191px',
+  fontFamily: 'SUITE',
+  fontStyle: 'normal',
+  fontWeight: 700,
+  fontSize: '35px',
+  lineHeight: '44px',
+  color: '#000000',
+});
+
+// "000" 스타일
+const MainContentNumber = styled(Typography)({
+  position: 'absolute',
+  width: '146px',
+  height: '71px',
+  left: '483px',
+  top: '173px',
+  fontFamily: 'SUITE',
+  fontStyle: 'normal',
+  fontWeight: 700,
+  fontSize: '55px',
+  lineHeight: '69px',
+  color: '#00458B',
+});
+
+// "님" 스타일
+const MainContentSuffix = styled(Typography)({
+  position: 'absolute',
+  width: '42px',
+  height: '68px',
+  left: '620px',
+  top: '174px',
+  fontFamily: 'SUITE',
+  fontStyle: 'normal',
+  fontWeight: 700,
+  fontSize: '55px',
+  lineHeight: '69px',
+  color: '#000000',
+});
+
+// "오늘도 소중한 분의 안전을 지키는 멋진 하루 되세요." 스타일
+const MainContentMessage = styled(Typography)({
+  position: 'absolute',
+  width: '597px',
+  height: '49px',
+  left: '299px',
+  top: '272px',
+  fontFamily: 'SUITE',
+  fontStyle: 'normal',
+  fontWeight: 600,
+  fontSize: '30px',
+  lineHeight: '37px',
+  color: '#000000',
+});
+
+
+
+
+
+
+
+
+
+
+const StateBox = styled(Box)({
+  boxSizing: 'border-box',
+  position: 'absolute',
+  width: '330px',
+  height: '533px',
+  left: '299px',
+  top: '436px',
+  background: '#00458B',
+  border: '0.5px solid #CCE5FF',
+  boxShadow: '0px 0px 0px rgba(0, 0, 0, 0.25)',
+  borderRadius: '13px',
+  });
+  
 
 const StatusCard = styled(Card)({
   height: '100%',
@@ -105,9 +253,37 @@ const StatusIcon = styled(Box)({
   marginBottom: '15px'
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const ActivityCard = styled(Paper)({
   padding: '20px',
   marginBottom: '20px'
+});
+
+const ActivityBoxIconBg = styled('div')({
+  position: 'absolute',
+  width: '28.8px',
+  height: '39.17px',
+  left: '730px',
+  top: '473px',
+  backgroundImage: `url(${IconImage})`,
+  backgroundSize: 'cover',
+  backgroundRepeat: 'no-repeat',
 });
 
 const ActivityItem = styled(Box)({
@@ -128,12 +304,21 @@ const Home = () => {
     role: 'GUARDIAN'
   });
 
+
+
+
+
+
+
+
+  
   // 예시 데이터들 (아이콘을 이모지로 변경)
   const statusData = [
     {
       title: '긴급 알림',
       count: 2,
       icon: '⚠️',
+      // icon: <EmergencyBox src="긴급.png" alt=" " />,
       color: '#ff4444',
       bgColor: '#ffebee',
       description: '즉시 확인이 필요한 알림'
@@ -163,6 +348,19 @@ const Home = () => {
       description: '연결된 IoT 장치'
     }
   ];
+
+  const ActivityBox = styled(Box)({
+    boxSizing: 'border-box',
+    position: 'absolute',
+    width: '330px',
+    height: '533px',
+    left: '644px',
+    top: '436px',
+    background: '#FFFFFF',
+    border: '0.5px solid #00458B',
+    boxShadow: '0px 0px 0px rgba(0, 0, 0, 0.25)',
+    borderRadius: '13px', 
+    });
 
   const recentActivities = [
     {
@@ -196,14 +394,32 @@ const Home = () => {
   ];
 
   const menuItems = [
-    { icon: '📊', text: '대시보드', badge: null },
-    { icon: '👤', text: '보호 대상자', badge: null },
-    { icon: '🔒', text: '안전 모니터링', badge: 2 },
-    { icon: '🔔', text: '알림 센터', badge: 5 },
-    { icon: '📅', text: '일정 관리', badge: null },
-    { icon: '💬', text: '메시지', badge: 3 },
-    { icon: '⚙️', text: '설정', badge: null }
+    { text: '대시보드', badge: null },
+    { text: '보호 대상자', badge: null },
+    { text: '안전 모니터링', badge: null },
+    { text: '알림 센터', badge: null },
+    { text: '일정 관리', badge: null },
+    { text: '메시지', badge: null },
+    { text: '설정', badge: null }
   ];
+
+  const SpeedImage = styled('img')({
+    position: 'absolute',
+    width: '24px',
+    height: '44px',
+    left: '1098px',
+    top: '477px',
+    background: 'url(빠른.png)'
+    });
+    
+
+    const New = styled('img')({
+      width: '31px',
+      height: '35px',
+    });
+
+
+  
 
   useEffect(() => {
     // 로컬 스토리지에서 사용자 정보 가져오기
@@ -231,227 +447,252 @@ const Home = () => {
     window.location.reload();
   };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   return (
     <HomeContainer>
-      {/* 사이드바 */}
-      <Sidebar elevation={0}>
-        <SidebarHeader>
-          <SidebarTitle>
-            🔒 건강지킴이
-          </SidebarTitle>
-          <Typography variant="body2" sx={{ opacity: 0.8, mt: 1 }}>
-            보호자 대시보드 📱
-          </Typography>
-        </SidebarHeader>
-
-        <SidebarMenu>
-          {menuItems.map((item, index) => (
-            <ListItem
-              key={index}
-              className={activeMenu === item.text ? 'active' : ''}
-              onClick={() => setActiveMenu(item.text)}
-            >
-              <ListItemIcon>
-                {item.badge ? (
-                  <Badge badgeContent={item.badge} color="error">
+      <Background>
+        <MainBoard>
+        {/* 사이드바 */}
+        <Sidebar elevation={0}>
+            <UserIconBox>
+            <img src={user} alt="user" />
+            </UserIconBox>
+            {/* <Typography variant="body2" sx={{ opacity: 0.8, mt: 1 }}>
+              보호자 대시보드 📱
+            </Typography> */}
+          <SidebarMenu>
+            {menuItems.map((item, index) => (
+              <ListItem
+                key={index}
+                className={activeMenu === item.text ? 'active' : ''}
+                onClick={() => setActiveMenu(item.text)}
+              >
+                <ListItemIcon>
+                  {item.badge ? (
+                    <Badge badgeContent={item.badge} color="error">
+                      <Typography sx={{fontSize: '20px'}} gutterBottom>{item.icon}</Typography>
+                    </Badge>
+                  ) : (
                     <Typography sx={{fontSize: '20px'}} gutterBottom>{item.icon}</Typography>
-                  </Badge>
-                ) : (
-                  <Typography sx={{fontSize: '20px'}} gutterBottom>{item.icon}</Typography>
-                )}
-              </ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItem>
-          ))}
-        </SidebarMenu>
+                  )}
+                </ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItem>
+            ))}
+          </SidebarMenu>
 
-        {/* 로그아웃 버튼 */}
-        <Box sx={{ mt: 'auto', p: '0 20px' }}>
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<span>🔌</span>}
-            onClick={handleLogout}
-            sx={{
-              color: 'white',
-              borderColor: 'rgba(255,255,255,0.3)',
-              '&:hover': {
-                borderColor: 'white',
-                backgroundColor: 'rgba(255,255,255,0.1)'
-              }
-            }}
-          >
-            로그아웃
-          </Button>
-        </Box>
-      </Sidebar>
+          {/* 로그아웃 버튼 */}
+          <Box sx={{ mt: 'auto', p: '0 20px' }}>
+            <Button
+              fullWidth
+              startIcon={<img src={logout} alt="logout"style={{ width: '25px', height: '25px' }} />}
+              onClick={handleLogout}
+              sx={{
+                color: 'white',
+                borderColor: 'rgba(255,255,255,0.3)',
+                '&:hover': {
+                  borderColor: 'white',
+                  backgroundColor: 'rgba(255,255,255,0.1)'
+                }
+              }}
+            >
+              로그아웃
+            </Button>
+          </Box>
+        </Sidebar>
 
-      {/* 메인 콘텐츠 */}
-      <MainContent>
-        {/* 헤더 섹션 */}
-        <HeaderSection>
-          <WelcomeCard>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
-                  <Typography variant="h4" gutterBottom>
-                    안녕하세요, {guardianInfo.name}님! 👋
+        {/* 메인 콘텐츠 */}
+        <MainContent>
+          {/* 헤더 섹션 */}
+          <HeaderSection>
+            <WelcomeCard>
+              <CardContent>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Box>
+                    <div>
+                      <MainContentHello>안녕하세요,</MainContentHello>
+                      <MainContentNumber>관리자</MainContentNumber>
+                      <MainContentSuffix>님</MainContentSuffix>
+                      <MainContentMessage>오늘도 소중한 분의 안전을 지켜주세요.</MainContentMessage>
+                    </div>
+                  </Box>
+                  <Avatar
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      bgcolor: 'rgba(255,255,255,0.2)',
+                      fontSize: '32px'
+                    }}
+                  >
+                    {guardianInfo.name.charAt(0)}
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </WelcomeCard>
+          </HeaderSection>
+
+          {/* 상태 카드들 */}
+          <StateBox>
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              {statusData.map((status, index) => (
+                <Grid item xs={12} sm={6} md={3} key={index}>
+                  <StatusCard>
+                    <CardContent sx={{ textAlign: 'center' }}>
+                      <StatusIcon sx={{ bgcolor: status.bgColor, color: status.color, mx: 'auto' }}>
+                        <span style={{ fontSize: '24px' }}>{status.icon}</span>
+                      </StatusIcon>
+                      <Typography variant="h4" color={status.color} fontWeight="bold">
+                        {status.count}
+                      </Typography>
+                      <Typography variant="h6" gutterBottom>
+                        {status.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {status.description}
+                      </Typography>
+                    </CardContent>
+                  </StatusCard>
+                </Grid>
+              ))}
+            </Grid>
+          </StateBox>
+
+          <Grid container spacing={3}>
+            {/* 최근 활동 */}
+            <ActivityBox>
+            <Grid item xs={12} md={8}>
+              <ActivityCard>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <ActivityBoxIconBg />
+                  <Typography variant="h6" fontWeight="bold">
+                    최근 활동 현황
                   </Typography>
-                  <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                    오늘도 소중한 분들의 안전을 지켜주세요.
+                  <Chip label="실시간" color="primary" size="small" />
+                </Box>
+                
+                {recentActivities.map((activity, index) => (
+                  <ActivityItem key={index}>
+                    <Box sx={{ mr: 2 }}>
+                      <span style={{ fontSize: '20px' }}>{activity.icon}</span>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body1" fontWeight="500">
+                        {activity.user}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {activity.activity}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {activity.time}
+                      </Typography>
+                      <Chip
+                        label={
+                          activity.status === 'warning' ? '주의' :
+                          activity.status === 'success' ? '정상' : '긴급'
+                        }
+                        color={activity.status === 'warning' ? 'warning' : 
+                                activity.status === 'success' ? 'success' : 'error'}
+                        size="small"
+                      />
+                    </Box>
+                  </ActivityItem>
+                ))}
+              </ActivityCard>
+            </Grid>
+            </ActivityBox>
+
+            {/* 빠른 작업 */}
+            <Grid item xs={12} md={4}>
+              <ActivityCard>
+                <SpeedImage src={SpeedBox} alt="빠른 응답" />
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  ⚡ 빠른 작업
+                </Typography>
+                
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<New src={대상자이미지} alt=" " />}
+                    sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                  >
+                    새 보호대상자 추가
+                  </Button>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<New src={위치이미지} alt=" " />}
+                    sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                  >
+                    안전구역 설정
+                  </Button>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<New src={알림이미지} alt=" " />}
+                    sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                  >
+                    알림 설정 변경
+                  </Button>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<New src={일정이미지} alt=" " />}
+                    sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                  >
+                    일정 등록
+                  </Button>
+                </Box>
+              </ActivityCard>
+
+              {/* 현재 날씨/시간 정보 */}
+              <ActivityCard sx={{ mt: 2 }}>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  🌤️ 오늘의 정보
+                </Typography>
+                
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <Typography variant="h3" color="primary" fontWeight="bold">
+                    23°C
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    맑음, 부산
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    {new Date().toLocaleDateString('ko-KR', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      weekday: 'long'
+                    })}
                   </Typography>
                 </Box>
-                <Avatar
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    bgcolor: 'rgba(255,255,255,0.2)',
-                    fontSize: '32px'
-                  }}
-                >
-                  {guardianInfo.name.charAt(0)}
-                </Avatar>
-              </Box>
-            </CardContent>
-          </WelcomeCard>
-        </HeaderSection>
-
-        {/* 상태 카드들 */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {statusData.map((status, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <StatusCard>
-                <CardContent sx={{ textAlign: 'center' }}>
-                  <StatusIcon sx={{ bgcolor: status.bgColor, color: status.color, mx: 'auto' }}>
-                    <span style={{ fontSize: '24px' }}>{status.icon}</span>
-                  </StatusIcon>
-                  <Typography variant="h4" color={status.color} fontWeight="bold">
-                    {status.count}
-                  </Typography>
-                  <Typography variant="h6" gutterBottom>
-                    {status.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {status.description}
-                  </Typography>
-                </CardContent>
-              </StatusCard>
+              </ActivityCard>
             </Grid>
-          ))}
-        </Grid>
-
-        <Grid container spacing={3}>
-          {/* 최근 활동 */}
-          <Grid item xs={12} md={8}>
-            <ActivityCard>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6" fontWeight="bold">
-                  📋 최근 활동 현황
-                </Typography>
-                <Chip label="실시간" color="primary" size="small" />
-              </Box>
-              
-              {recentActivities.map((activity, index) => (
-                <ActivityItem key={index}>
-                  <Box sx={{ mr: 2 }}>
-                    <span style={{ fontSize: '20px' }}>{activity.icon}</span>
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="body1" fontWeight="500">
-                      {activity.user}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {activity.activity}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {activity.time}
-                    </Typography>
-                    <Chip
-                      label={
-                        activity.status === 'warning' ? '주의' :
-                        activity.status === 'success' ? '정상' : '긴급'
-                      }
-                      color={activity.status === 'warning' ? 'warning' : 
-                             activity.status === 'success' ? 'success' : 'error'}
-                      size="small"
-                    />
-                  </Box>
-                </ActivityItem>
-              ))}
-            </ActivityCard>
           </Grid>
-
-          {/* 빠른 작업 */}
-          <Grid item xs={12} md={4}>
-            <ActivityCard>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                ⚡ 빠른 작업
-              </Typography>
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<span>👤</span>}
-                  sx={{ justifyContent: 'flex-start', py: 1.5 }}
-                >
-                  새 보호대상자 추가
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<span>🔒</span>}
-                  sx={{ justifyContent: 'flex-start', py: 1.5 }}
-                >
-                  안전구역 설정
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<span>🔔</span>}
-                  sx={{ justifyContent: 'flex-start', py: 1.5 }}
-                >
-                  알림 설정 변경
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<span>📅</span>}
-                  sx={{ justifyContent: 'flex-start', py: 1.5 }}
-                >
-                  일정 등록
-                </Button>
-              </Box>
-            </ActivityCard>
-
-            {/* 현재 날씨/시간 정보 */}
-            <ActivityCard sx={{ mt: 2 }}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                🌤️ 오늘의 정보
-              </Typography>
-              
-              <Box sx={{ textAlign: 'center', py: 2 }}>
-                <Typography variant="h3" color="primary" fontWeight="bold">
-                  23°C
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  맑음, 부산
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  {new Date().toLocaleDateString('ko-KR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    weekday: 'long'
-                  })}
-                </Typography>
-              </Box>
-            </ActivityCard>
-          </Grid>
-        </Grid>
-      </MainContent>
+        </MainContent>
+        </MainBoard>
+      </Background>
     </HomeContainer>
   );
 };

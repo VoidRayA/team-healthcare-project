@@ -1,0 +1,836 @@
+/* backboard */
+
+position: absolute;
+width: 1920px;
+height: 1080px;
+left: 0px;
+top: 0px;
+background: linear-gradient(180deg, rgba(0, 124, 255, 0.2) 0%, rgba(0, 188, 255, 0.2) 100%);
+
+
+/* main board */
+position: absolute;
+width: 1800px;
+height: 1000px;
+left: calc(50% - 1800px/2);
+top: calc(50% - 1000px/2);
+
+background: #FFFFFF;
+border-radius: 10px;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const User = styled('img')({           //메뉴바 user 아이콘
+  position: 'absolute',
+  width: '50.27px',
+  height: '50.27px',
+  left: '34.36px',
+  top: '120.6px',
+  background: 'url(user.png)'
+});
+
+
+
+SidebarMenu
+/* 대시보드 */
+const Dashboard = styled(Typography)({
+  position: 'absolute',
+  width: '136px',
+  height: '26.32px',
+  left: '38px',
+  top: '222.05px',
+  fontFamily: 'GyeonggiTitle',
+  fontStyle: 'normal',
+  fontWeight: 500,
+  fontSize: '25px',
+  lineHeight: '25px',
+  color: '#FFFFFF'
+});
+/* 모니터링 */
+const Monitoring = styled(Typography)({
+position: 'absolute',
+width: '136px',
+height: '26.32px',
+left: '38px',
+top: '326px',
+fontFamily: 'GyeonggiTitle',
+fontStyle: 'normal',
+fontWeight: 500,
+fontSize: '25px',
+lineHeight: '25px',
+color: '#FFFFFF'
+});
+/* 보호 대상자 */
+const Protect = styled(Typography)({  
+position: 'absolute',
+width: '116px',
+height: '26.32px',
+left: '38px',
+top: '274px',
+fontFamily: 'GyeonggiTitle',
+fontStyle: 'normal',
+fontWeight: 500,
+fontSize: '25px',
+lineHeight: '25px',
+color: '#FFFFFF'
+});
+/* 알림 센터 */
+const Signal = styled(Typography)({ 
+position: 'absolute',
+width: '94px',
+height: '26.32px',
+left: '38px',
+top: '378px',
+fontFamily: 'GyeonggiTitle',
+fontStyle: 'normal',
+fontWeight: 500,
+fontSize: '25px',
+lineHeight:'25px',
+color: '#FFFFFF'
+});
+/* 일정 관리 */
+const Schedule = styled(Typography)({ 
+position: 'absolute',
+width: '116px',
+height: '26.32px',
+left: '38px',
+top: '430px',
+fontFamily: 'GyeonggiTitle',
+fontStyle: 'normal',
+fontWeight: 500,
+fontSize: '25px',
+lineHeight: '25px',
+color: '#FFFFFF'
+});
+/* 메시지 */
+const Message = styled(Typography)({ 
+position: 'absolute',
+width: '92px',
+height: '26.32px',
+left: '38px',
+top: '482px',
+fontFamily: 'GyeonggiTitle',
+fontStyle: 'normal',
+fontWeight: 500,
+fontSize: '25px',
+lineHeight: '25px',
+color: '#FFFFFF'
+});
+
+
+
+/* logout 1 */
+const Logout = styled('img')({
+  position: 'absolute',
+  width: '33.86px',
+  height: '34.88px',
+  left: '36.08px',
+  top: '935.19px'
+});
+/* 로그아웃 */
+const Logout = styled(Typography)({ 
+position: 'absolute',
+width: '104.65px',
+height: '32.83px',
+left: '83.27px',
+top: '936.22px',
+fontFamily: 'NanumHuman OTF',
+fontStyle: 'normal',
+fontWeight: 800,
+fontSize: '20px',
+lineHeight: '26px',
+color: '#FFFFFF'
+});
+
+
+/* setting */
+const Setting = styled('img')({
+position: 'absolute',
+width: '45.14px',
+height: '45.14px',
+left: '26.43px',
+top: '870.06px',
+background: 'url(setting.png)'
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* header */
+
+const MainContent = styled(Box)({
+  flex: 1,
+  padding: '30px',
+  overflow: 'auto'
+});
+
+/* //로고 만들거임
+// 임시 로고 */
+position: absolute;
+width: 331.08px;
+height: 284.32px;
+left: 985px;
+top: 105px;
+
+
+
+/* 안녕하세요, */
+const MainContent = styled(Typography)({ 
+position: 'absolute',
+width: '268px',
+height: '53px',
+left: '299px',
+top: '191px',
+fontFamily: 'SUITE',
+fontStyle: 'normal',
+fontWeight: 700,
+fontSize: '35px',
+lineHeight: '44px',
+color: '#000000'
+});
+
+
+/* 000 */
+const MainContent = styled(Typography)({ 
+position: 'absolute',
+width: '146px',
+height: '71px',
+left: '483px',
+top: '173px',
+fontFamily: 'SUITE',
+fontStyle: 'normal',
+fontWeight: 700,
+fontSize: '55px',
+lineHeight: '69px',
+color: '#00458B'
+});
+
+
+/* 님 */
+const MainContent = styled(Typography)({ 
+position: 'absolute',
+width: '42px',
+height: '68px',
+left: '620px',
+top: '174px',
+fontFamily: 'SUITE',
+fontStyle: 'normal',
+fontWeight: 700,
+fontSize: '55px',
+lineHeight: '69px',
+color: '#000000'
+});
+
+
+/* 오늘도 소중한 분의 안전을 지키는 멋진 하루 되세요. */
+const MainContent = styled(Typography)({ 
+position: 'absolute',
+width: '597px',
+height: '49px',
+left: '299px',
+top: '272px',
+fontFamily: 'SUITE',
+fontStyle: 'normal',
+fontWeight: 600,
+fontSize: '30px',
+lineHeight: '37px',
+color: '#000000'
+});
+
+
+
+
+
+
+
+
+
+
+
+
+/* 상태 박스 */
+const StateBox = styled(Box)({
+boxSizing: 'border-box',
+position: 'absolute',
+width: '330px',
+height: '533px',
+left: '299px',
+top: '436px',
+background: '#00458B',
+border: '0.5px solid #CCE5FF',
+boxShadow: '0px 0px 0px rgba(0, 0, 0, 0.25)',
+borderRadius: '13px',
+});
+
+
+
+/* 긴급 박스 */
+const EmergnecyBox = styled(Box)({
+position: 'absolute',
+width: '292px',
+height: '84px',
+left: '319px',
+top: '482px',
+background: '#FFFFFF',
+borderRadius: '20px'
+});
+
+/* 긴급 알림 */
+const EmergnecyBox = styled(Typography)({ 
+position: 'absolute',
+width: '85px',
+height: '27px',
+left: '439px',
+top: '512px',
+fontFamily: 'Pretendard',
+fontStyle: 'normal',
+fontWeight: 700,
+fontSize: '23px',
+lineHeight: '27px',
+color: '#000000'
+});
+
+/* 긴급 1 */
+const EmergnecyBox = styled('img')({
+position: 'absolute',
+width: '63px'
+height: '57px',
+left: '343px',
+top: '496px',
+background: 'url(긴급.png)'
+});
+
+
+
+/* 금일 박스 */
+const TodayBox = styled(Box)({
+position: 'absolute',
+width: '292px',
+height: '84px',
+left: '319px',
+top: '600px',
+background: '#FFFFFF',
+borderRadius: '20px'
+});
+
+/* 금일 대상자 */
+const TodayBox = styled(Typography)({
+position: 'absolute',
+width: '105px',
+height: '27px',
+left: '439px',
+top: '630px',
+fontFamily: 'Pretendard',
+fontStyle: 'normal',
+fontWeight: 700,
+fontSize: '23px',
+lineHeight: '27px',
+color: '#000000'
+});
+
+/* 대상자 4 */
+const TodayBox = styled('img')({
+position: 'absolute',
+width: '51px',
+height: '59px',
+left: '346px',
+top: '613px',
+background: 'url(대상자.png)'
+});
+
+
+
+
+/* 상태 박스 */
+const HealthBox = styled(Box)({
+position: 'absolute',
+width: '292px',
+height: '85px',
+left: '319px',
+top: '718px',
+background: '#FFFFFF',
+borderRadius: '20px'
+});
+
+
+/* 건강 상태 */
+const HealthBox = styled(Typography)({ 
+position: 'absolute',
+width: '85px',
+height: '27px',
+left: '439px',
+top: '748px',
+fontFamily: 'Pretendard',
+fontStyle: 'normal',
+fontWeight: 700,
+fontSize: '23px',
+lineHeight: '27px',
+color: '#000000'
+});
+
+
+/* 지병 아이콘 1 */
+const HealthBox = styled('img')({
+position: 'absolute',
+width: '63px',
+height: '59px',
+left: '343px',
+top: '731px',
+background: 'url(지병 아이콘.png)'
+});
+
+
+
+
+
+/* 연결 박스 */
+const Conect = styled(Box)({
+position: 'absolute',
+width: '292px',
+height: '86px',
+left: '319px',
+top: '837px',
+background: '#FFFFFF',
+borderRadius: '20px'
+});
+
+
+/* 연결 장치 */
+const Conect = styled(Typography)({ 
+position: 'absolute',
+width: '85px',
+height: '27px',
+left: '439px',
+top: '868px',
+fontFamily: 'Pretendard',
+fontStyle: 'normal',
+fontWeight: 700,
+fontSize: '23px',
+lineHeight: '27px',
+color: '#000000'
+});
+
+
+/* 연결 1 */
+const Conect = styled('img')({
+position: 'absolute',
+width: '72px',
+height: '47px',
+left: '341px',
+top: '857px',
+background: 'url(연결.png)'
+});
+
+
+
+
+
+
+
+
+
+
+
+/* 활동 현황 박스 */
+const ActivityBox = styled(Box)({
+boxSizing: 'border-box',
+position: 'absolute',
+width: '330px',
+height: '533px',
+left: '644px',
+top: '436px',
+background: '#FFFFFF',
+border: '0.5px solid #00458B',
+boxShadow: '0px 0px 0px rgba(0, 0, 0, 0.25)',
+borderRadius: '13px', 
+});
+
+/* 최근 활동 현황 */
+const ActivityBox = styled(Typography)({ 
+position: 'absolute',
+width: '113px',
+height: '22px',
+left: '774px',
+top: '484px',
+
+fontFamily: 'Pretendard',
+fontStyle: 'normal',
+fontWeight: 700,
+fontSize: '20px',
+lineHeight: '24px',
+color: '#000000'
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* 빠른 작업 박스 */
+const SpeedBox = styled(Box)({
+boxSizing: 'border-box',
+position: 'absolute',
+width: '330px',
+height: '533px',
+left: '989px',
+top: '436px',
+background: '#FFFFFF',
+border: '0.5px solid #00458B',
+boxShadow: '0px 0px 0px rgba(0, 0, 0, 0.25)',
+borderRadius: '13px'
+});
+
+
+/* 빠른 작업 */
+const SpeedBox = styled(Typography)({ 
+position: 'absolute',
+width: '97px',
+height: '24px',
+left: '1135px',
+top: '487px',
+fontFamily: 'Pretendard',
+fontStyle: 'normal',
+fontWeight: 700,
+fontSize: '23px',
+lineHeight: '27px',
+color: '#000000'
+});
+
+
+/* 빠른 3 */
+const SpeedBox = styled('img')({
+position: 'absolute',
+width: '24px',
+height: '44px',
+left: '1098px',
+top: '477px',
+background: 'url(빠른.png)'
+});
+
+
+
+
+/* Rectangle 16 */
+const New = styled(Box)({
+boxSizing: 'border-box',
+position: 'absolute',
+width: '280px',
+height: '73px',
+left: '1014px',
+top: '540px',
+background: '#FFFFFF',
+border: '1.5px solid #00458B',
+});
+
+
+/* 대상자 5 */
+const New = styled('img')({
+position: 'absolute',
+width: '31px',
+height: '35px',
+left: '1037px',
+top: '559px',
+background: 'url(대상자.png)'
+});
+
+
+/* 새 보호대상자 추가 */
+const New = styled(Typography)({ 
+position: 'absolute',
+width: '148px',
+height: '24px',
+left: '1104px',
+top: '564px',
+fontFamily: 'Pretendard',
+fontStyle: 'normal',
+fontWeight: 700,
+fontSize: '20px',
+lineHeight: '24px',
+/* 상자 높이와 동일 */
+color: '#000000',
+});
+
+
+
+
+
+
+
+
+/* Rectangle 17 */
+const Safezone = styled(Box)({
+boxSizing: 'border-box',
+position: 'absolute',
+width: '280px',
+height: '73px',
+left: '1014px',
+top: '645px',
+background: '#FFFFFF',
+border: '1.5px solid #00458B'
+});
+
+/* 위치 1 */
+const Safezone = styled('img')({
+position: 'absolute',
+width: '22px',
+height: '42px',
+left: '1041px',
+top: '661px',
+background: 'url(위치.png)'
+});
+
+/* 안전구역 설정 */
+const Safezone = styled(Typography)({ 
+position: 'absolute',
+width: '109px',
+height: '24px',
+left: '1104px',
+top: '669px',
+fontFamily: 'Pretendard',
+fontStyle: 'normal',
+fontWeight: 700,
+fontSize: '20px',
+lineHeight: '24px',
+/* 상자 높이와 동일 */
+color: '#000000',
+});
+
+
+
+
+
+/* Rectangle 18 */
+const 알림설정 = styled(Typography)({ 
+box-sizing: border-box;
+
+position: absolute;
+width: 280px;
+height: 73px;
+left: 1014px;
+top: 750px;
+
+background: #FFFFFF;
+border: 1.5px solid #00458B;
+
+
+/* 알림 아이콘 2 2 */
+const 알림설정 = styled(img)({ 
+position: absolute;
+width: 34px;
+height: 40px;
+left: 1035px;
+top: 767px;
+
+background: url(알림 아이콘 2.png);
+
+
+/* 알림 설정 변경 */
+
+position: absolute;
+width: 113px;
+height: 24px;
+left: 1104px;
+top: 774px;
+
+font-family: 'Pretendard';
+font-style: normal;
+font-weight: 700;
+font-size: 20px;
+line-height: 24px;
+/* 상자 높이와 동일 */
+
+color: #000000;
+
+
+
+
+
+
+/* 일정 등록 */
+
+position: absolute;
+width: 280px;
+height: 73px;
+left: 1014px;
+top: 855px;
+
+/* Rectangle 19 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 280px;
+height: 73px;
+left: 1014px;
+top: 855px;
+
+background: #FFFFFF;
+border: 1.5px solid #00458B;
+
+
+/* 일정 1 */
+
+position: absolute;
+width: 38px;
+height: 34px;
+left: 1033px;
+top: 875px;
+
+background: url(일정.png);
+
+
+/* 일정 등록 */
+
+position: absolute;
+width: 74px;
+height: 24px;
+left: 1104px;
+top: 879px;
+
+font-family: 'Pretendard';
+font-style: normal;
+font-weight: 700;
+font-size: 20px;
+line-height: 24px;
+/* 상자 높이와 동일 */
+
+color: #000000;
+
+
+
+
+
+
+
+
+/* 최근 활동 현황 */
+
+position: absolute;
+width: 157px;
+height: 39.17px;
+left: 730px;
+top: 473px;
+
+
+
+/* 기록 아이콘2 */
+
+position: absolute;
+width: 28.8px;
+height: 39.17px;
+left: 730px;
+top: 473px;
+
+background: url(기록 아이콘2.png);
+
+
+
+
+
+
+
+
+
+
+
+
+const Safezone = styled('img')({
+  const Safezone = styled(Typography)({ 
+  const Safezone = styled(Box)({
+  
+  
+  
+  fontFamily: 'Pretendard',
+  fontStyle: 'normal',
+  fontWeight: 700,
+  fontSize: '23px',
+  lineHeight: '27px',
+  color: '#000000'
+  });
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* 날씨 및 캘린더 */
+
+position: absolute;
+width: 418px;
+height: 864px;
+left: 1380px;
+top: 105px;
+
+
+
+/* 일정 박스 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 418px;
+height: 864px;
+left: 1380px;
+top: 105px;
+
+background: #FDFDFD;
+border: 1px solid #D9D9D9;
+box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.25);
+border-radius: 13px;
+
+

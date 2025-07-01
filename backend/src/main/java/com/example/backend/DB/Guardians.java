@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 보호자 정보를 저장하는 JPA 엔티티
@@ -52,6 +55,18 @@ public class Guardians {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+
+    // senior 과의 관계 설정
+    @OneToMany(mappedBy = "guardian", cascade = CascadeType.ALL)
+    private List<GuardianSenior> guardianSeniors = new ArrayList<>();
+
+    // getSeniors() 도우미 메서드
+    public List<Seniors> getSeniors() {
+        return guardianSeniors.stream()
+                .map(GuardianSenior::getSenior)
+                .collect(Collectors.toList());
+    }
 
     /**
      * 엔티티 저장 전 실행되는 메서드들은 아래에 작성

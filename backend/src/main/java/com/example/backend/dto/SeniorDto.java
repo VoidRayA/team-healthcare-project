@@ -1,5 +1,6 @@
 package com.example.backend.dto;
 
+import com.example.backend.DB.DailyActivities;
 import com.example.backend.DB.Seniors;
 import lombok.Builder;
 
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 /**
  * Senior 관련 DTO 클래스
  */
+@Builder
 public class SeniorDto {
 
     /**
@@ -111,4 +113,21 @@ public class SeniorDto {
                     .build();
         }
     }
+
+    // 활동기록 조회용 seniorDto
+    @Builder
+    public record SeniorDailyDto(
+            Integer id,
+            String seniorName,
+            DailyActivities dailyActivities
+    ){
+        public static SeniorDailyDto find(Seniors entity) {
+            return SeniorDailyDto.builder()
+                    .id(entity.getId())
+                    .seniorName(entity.getSeniorName())
+                    .dailyActivities((DailyActivities) entity.getDailyActivities())
+                    .build();
+        }
+    }
+
 }

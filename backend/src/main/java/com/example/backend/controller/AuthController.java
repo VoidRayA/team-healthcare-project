@@ -2,7 +2,9 @@ package com.example.backend.controller;
 
 import com.example.backend.DB.Guardians;
 import com.example.backend.DB.Role;
+import com.example.backend.DB.Seniors;
 import com.example.backend.config.JwtTokenProvider;
+import com.example.backend.dto.SeniorDto;
 import com.example.backend.dto.login.AuthResponseDto;
 import com.example.backend.dto.login.AuthResponseDto;
 import com.example.backend.dto.login.LoginRequestDto;
@@ -20,8 +22,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 인증 관련 API를 처리하는 컨트롤러
@@ -106,12 +111,35 @@ public class AuthController {
                     )
             );
 
+
             // 인증 성공 시 JWT 토큰 생성
             String jwt = jwtTokenProvider.generateToken(loginRequest.getLoginId());
 
             // 사용자 정보 조회
             Guardians guardian = guardianRepository.findByLoginId(loginRequest.getLoginId())
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+            // senior 정보도 같이 조회
+            List<SeniorDto.SeniorResponseDto> seniorDto = new ArrayList<>();
+            List<Seniors> seniors = guardian.getSeniors();
+            if (seniors != null && !seniors.isEmpty()) {
+                seniorDto = seniors.stream()
+                        .map(seniors1 -> SeniorDto.SeniorResponseDto.builder()
+                                .id(seniors1.getId())
+                                .guardianName(seniors1.getGuardian().getGuardianName())
+                                .seniorName(seniors1.getSeniorName())
+                                .birthDate(seniors1.getBirthDate())
+                                .gender(seniors1.getGender())
+                                .address(seniors1.getAddress())
+                                .emergencyContact(seniors1.getEmergencyContact())
+                                .chronicDiseases(seniors1.getChronicDiseases())
+                                .medications(seniors1.getMedications())
+                                .notes(seniors1.getNotes())
+                                .phone(seniors1.getPhone())
+                                .isActive(seniors1.getIsActive())
+                                .build())
+                        .collect(Collectors.toList());
+            }
 
             // 응답 DTO 생성
             AuthResponseDto response = AuthResponseDto.builder()
@@ -120,7 +148,9 @@ public class AuthController {
                     .loginId(guardian.getLoginId())
                     .guardianName(guardian.getGuardianName())
                     .role(guardian.getRole().getKey())        // ✅ Role의 key 사용 (ROLE_GUARDIAN)
+                    .senior(seniorDto)  // nullable로 들어감
                     .build();
+
 
             log.info("로그인 성공: {}", loginRequest.getLoginId());
             return ResponseEntity.ok(response);

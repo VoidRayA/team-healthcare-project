@@ -8,6 +8,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "seniors")
@@ -65,6 +67,19 @@ public class Seniors {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "senior", cascade = CascadeType.ALL)
+    private List<GuardianSenior> guardianSeniors = new ArrayList<>();
+
+    // 활동기록 저장용 컬럼
+    @OneToMany(mappedBy = "senior", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<DailyActivities> dailyActivities = new ArrayList<>();
+
+    // 활동기록 저장용 도우미 메서드
+    public void addDailyActivity(DailyActivities dailyActivity) {
+        this.dailyActivities.add(dailyActivity);
+        dailyActivity.setSenior(this);
+    }
 
     /**
      * 엔티티 저장 전 실행되는 메서드들은 아래에 작성

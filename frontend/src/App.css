@@ -48,3 +48,14 @@
   height: 100%;
   object-fit: cover;
 }
+
+
+@font-face {
+  font-family: 'GyeonggiTitle';
+  src: url('/path/to/GyeonggiTitle-Regular.woff2') format('woff2'),
+        url('/path/to/GyeonggiTitle-Regular.woff') format('woff');
+}
+
+body {
+  font-family: 'GyeonggiTitle', sans-serif;
+}

@@ -374,7 +374,7 @@ const Home = () => {
                         activity.status === 'success' ? '정상' : '긴급'
                       }
                       color={activity.status === 'warning' ? 'warning' : 
-                             activity.status === 'success' ? 'success' : 'error'}
+                            activity.status === 'success' ? 'success' : 'error'}
                       size="small"
                     />
                   </Box>

@@ -2,6 +2,12 @@ body  {
   margin: 0px;
   padding: 0px;
   background-color: #01b1ff;
+  min-width: 1200px; /* 최소 너비 설정 */
+}
+
+html {
+  overflow: hidden; /* 전체 스크롤 차단 */
+  min-width: 1200px;
 }
 
 
@@ -68,3 +74,12 @@ button:focus-visible {
   }
 } */
 
+@font-face {
+  font-family: 'GyeonggiTitle';
+  src: url('/path/to/GyeonggiTitle-Regular.woff2') format('woff2'),
+        url('/path/to/GyeonggiTitle-Regular.woff') format('woff');
+}
+
+body {
+  font-family: 'GyeonggiTitle', sans-serif;
+}

@@ -72,12 +72,15 @@ public class Seniors {
     private List<GuardianSenior> guardianSeniors = new ArrayList<>();
 
     // 활동기록 저장용 컬럼
-    @OneToMany(mappedBy = "senior", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<DailyActivities> dailyActivities = new ArrayList<>();
+    @Column(name = "daily_activities")
+    private String dailyActivities;
+
+    @OneToMany(mappedBy = "senior", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<DailyActivities> activities = new ArrayList<>();
 
     // 활동기록 저장용 도우미 메서드
     public void addDailyActivity(DailyActivities dailyActivity) {
-        this.dailyActivities.add(dailyActivity);
+        this.activities.add(dailyActivity);
         dailyActivity.setSenior(this);
     }
 

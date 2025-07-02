@@ -14,8 +14,10 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class DailyActivitiesDto {
     private Integer id;
+    private Integer activitiesId;           // 고유 ID
     private Seniors senior;                 // senior 참조
     private LocalDate activityDate;         // 활동 날짜
     private int mealCount;                  // 식사 횟수

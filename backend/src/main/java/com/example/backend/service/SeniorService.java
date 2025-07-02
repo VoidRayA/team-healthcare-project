@@ -241,7 +241,7 @@ public class SeniorService {
         }
 
         Seniors senior = seniorOpt.get();
-        boolean oldStatus = senior.getIsActive();
+        boolean oldStatus = senior.getIsActive() == true;
         senior.setIsActive(!oldStatus);
         senior.setUpdatedAt(LocalDateTime.now());
 

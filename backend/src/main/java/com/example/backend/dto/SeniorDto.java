@@ -2,10 +2,13 @@ package com.example.backend.dto;
 
 import com.example.backend.DB.DailyActivities;
 import com.example.backend.DB.Seniors;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Senior 관련 DTO 클래스
@@ -62,9 +65,11 @@ public class SeniorDto {
             String medications,
             String notes,
             String phone,
+            String dailyActivities,
             Boolean isActive,
             LocalDateTime createdAt,
-            LocalDateTime updatedAt
+            LocalDateTime updatedAt,
+            List<ActivityResponseDto> activities
     ) {
         /**
          * Seniors Entity를 SeniorResponseDto로 변환
@@ -83,12 +88,70 @@ public class SeniorDto {
                     .medications(entity.getMedications())
                     .notes(entity.getNotes())
                     .phone(entity.getPhone())
+                    .dailyActivities(entity.getDailyActivities())
                     .isActive(entity.getIsActive())
                     .createdAt(entity.getCreatedAt())
                     .updatedAt(entity.getUpdatedAt())
+                    .activities(entity.getActivities() != null ?
+                            entity.getActivities().stream()
+                                    .map(ActivityResponseDto::from)
+                                    .collect(Collectors.toList()) : null)
                     .build();
         }
     }
+
+    /**
+     * Activity 응답 DTO
+     */
+    @Builder
+    public record ActivityResponseDto(
+            Integer id,
+            Integer seniorId,
+
+            @JsonFormat(pattern = "yyyy-MM-dd")
+            LocalDate activityDate,
+
+            Integer mealCount,
+            Byte medicationTaken,
+            Byte outdoorActivity,
+            String sleepQuality,
+            String dailyNotes,
+
+            @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+            LocalDateTime createdAt
+    ) {
+        /**
+         * DailyActivities Entity를 ActivityResponseDto로 변환
+         */
+        public static ActivityResponseDto from(DailyActivities entity) {
+            return ActivityResponseDto.builder()
+                    .id(entity.getId())
+                    .seniorId(entity.getSenior().getId())
+                    .activityDate(entity.getActivityDate())
+                    .mealCount(entity.getMealCount())
+                    .medicationTaken(entity.getMedicationTaken())
+                    .outdoorActivity(entity.getOutdoorActivity())
+                    .sleepQuality(entity.getSleepQuality())
+                    .dailyNotes(entity.getDailyNotes())
+                    .createdAt(entity.getCreatedAt())
+                    .build();
+        }
+    }
+
+    /**
+     * API 응답 Wrapper (JSON 구조 맞추기 위함)
+     */
+    @Builder
+    public record SeniorWithActivitiesResponse(
+            SeniorResponseDto senior
+    ) {
+        public static SeniorWithActivitiesResponse from(Seniors entity) {
+            return SeniorWithActivitiesResponse.builder()
+                    .senior(SeniorResponseDto.from(entity))
+                    .build();
+        }
+    }
+
 
     /**
      * Senior 간단 정보 DTO (목록 조회용)
@@ -115,19 +178,37 @@ public class SeniorDto {
     }
 
     // 활동기록 조회용 seniorDto
+    // 1인
     @Builder
     public record SeniorDailyDto(
             Integer id,
             String seniorName,
-            DailyActivities dailyActivities
+            List<ActivityResponseDto> dailyActivities
     ){
-        public static SeniorDailyDto find(Seniors entity) {
+        public static SeniorDailyDto from(Seniors entity) {
             return SeniorDailyDto.builder()
                     .id(entity.getId())
                     .seniorName(entity.getSeniorName())
-                    .dailyActivities((DailyActivities) entity.getDailyActivities())
+                    .dailyActivities(entity.getActivities() != null ?
+                            entity.getActivities().stream()
+                                    .map(ActivityResponseDto::from)
+                                    .collect(Collectors.toList()) : null)
                     .build();
         }
     }
+    // 여러명
+    @Builder
+    public record SeniorDailyListDto(
+            List<SeniorDailyDto> seniors
+    ){
+        public static SeniorDailyListDto from(List<Seniors> entities) {
+            return SeniorDailyListDto.builder()
+                    .seniors(entities.stream()
+                            .map(SeniorDailyDto::from)
+                            .toList())
+                    .build();
+        }
+    }
+
 
 }

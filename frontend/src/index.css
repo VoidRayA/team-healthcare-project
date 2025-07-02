@@ -2,6 +2,12 @@ body  {
   margin: 0px;
   padding: 0px;
   background-color: #01b1ff;
+  min-width: 1200px; /* 최소 너비 설정 */
+}
+
+html {
+  overflow: hidden; /* 전체 스크롤 차단 */
+  min-width: 1200px;
 }
 
 

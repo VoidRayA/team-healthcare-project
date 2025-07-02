@@ -22,21 +22,23 @@ import {
   WarningAmberOutlined,
   PersonAddOutlined,
   FavoriteOutlined,
-  DevicesOutlined,
-  AccountCircleOutlined,  
+  DevicesOutlined,  
   LocationOnOutlined,
   SettingsOutlined,
   AddOutlined
 } from '@mui/icons-material';
+import userImage from '../images/user.png';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 // 전체 컨테이너 - 연한 파란 배경
 const MainContainer = styled(Box)({
   width: '100vw',
   height: '100vh',
   backgroundColor: '#CCE5FF',
-  display: 'flex',
-  padding: '20px 20px 20px 0',
-  gap: '20px'
+  display: 'flex',  
+  gap: '0px',
+  overflow: 'hidden'
 });
 
 // 메인 컨테이너 - 하얀색
@@ -44,18 +46,28 @@ const ContentContainer = styled(Paper)({
   backgroundColor: '#ffffff',  
   flex: 1,
   display: 'flex',
-  overflow: 'hidden'
+  overflow: 'auto',
+  margin: '1vw 1vw 1vw 240px',
+  height: 'calc(100vh - 2vw)',
+  minHeight: 'calc(100vh - 2vw)'
 });
 
 // 왼쪽 사이드바
 const Sidebar = styled(Paper)({
   width: '240px',
+  height: '100vh',
   backgroundColor: '#1976d2',
   borderRadius: '0 20px 20px 0',
   display: 'flex',
   flexDirection: 'column',
   padding: '20px 0',
-  color: 'white'
+  color: 'white',
+  boxSizing: 'border-box',
+  flexShrink: 0,
+  position: 'fixed',
+  left: 0,
+  top: 0,
+  zIndex: 1000
 });
 
 const SidebarMenu = styled(List)({
@@ -83,7 +95,7 @@ const SidebarMenu = styled(List)({
 const MainContent = styled(Box)({
   flex: 1,
   display: 'flex',
-  padding: '30px',
+  padding: '30px 30px 30px 30px', // 오른쪽 여백 추가
   gap: '20px'
 });
 
@@ -91,27 +103,25 @@ const MainContent = styled(Box)({
 const LeftContent = styled(Box)({
   flex: 1,
   display: 'flex',
-  flexDirection: 'column',
-  // justifyContent: 'space-between' // 상단과 하단을 양쪽 끝으로 분리
+  flexDirection: 'column'
+  // justifyContent 제거해서 자연스러운 흐름으로
 });
 
 // 상단 헤더
 const HeaderSection = styled(Box)({
   display: 'flex',
-  alignItems: 'flex-start',
-  gap: '20px',
-  marginBottom: '40px', // 하단 여백 증가
-  paddingTop: '20px'    // 상단 여백 추가
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  height: '200px', // 헤더 높이 추가
+  marginBottom: '40px',
+  paddingTop: '20px'
 });
 
 const WelcomeText = styled(Box)({
   display: 'flex',
   flexDirection: 'column',
-  flex: 1
-});
-
-const ProfileSection = styled(Box)({
-  position: 'relative'
+  justifyContent: 'center', // 세로 중앙 정렬
+  flex: 1  
 });
 
 // 하단 3개 박스 컨테이너
@@ -119,10 +129,11 @@ const BottomBoxContainer = styled(Box)({
   display: 'grid',
   gridTemplateColumns: '1fr 1fr 1fr',
   gap: '15px',
-  height: '400px' // 박스 높이 제한
+  // height 제거 - 자연스러운 높이로
+  padding: '0 0 20px 0'
 });
 
-// 오른쪽 세로 긴 박스 - 전체 높이
+// 오른쪽 세로 긴 박스 - 왼쪽 박스들과 같은 높이
 const RightCalendarArea = styled(Paper)({
   width: '280px',
   backgroundColor: '#ffffff',
@@ -130,7 +141,9 @@ const RightCalendarArea = styled(Paper)({
   borderRadius: '15px',
   padding: '20px',
   display: 'flex',
-  flexDirection: 'column'
+  flexDirection: 'column',
+  height: '803px', // 고정 높이로 왼쪽과 정확히 맞춤
+  overflow: 'auto' // 내용이 넘치면 스크롤
 });
 
 // 왼쪽 박스 (상태 박스)
@@ -139,6 +152,7 @@ const StatusBox = styled(Paper)({
   border: '1px solid #e0e0e0',
   borderRadius: '15px',
   padding: '20px',
+  minHeight: '450px', // 더 긴 높이로 설정
   overflow: 'auto'
 });
 
@@ -148,6 +162,7 @@ const ActivityBox = styled(Paper)({
   border: '1px solid #e0e0e0',
   borderRadius: '15px',
   padding: '20px',
+  minHeight: '450px', // 더 긴 높이로 설정
   overflow: 'auto'
 });
 
@@ -157,6 +172,7 @@ const QuickActionBox = styled(Paper)({
   border: '1px solid #e0e0e0',
   borderRadius: '15px',
   padding: '20px',
+  minHeight: '450px', // 더 긴 높이로 설정
   overflow: 'auto'
 });
 
@@ -176,6 +192,13 @@ const Home = () => {
     name: '관리자',
     loginId: 'admin',
     role: 'ADMIN'
+  });
+  const [selectedDate, setSelectedDate] = useState(new Date()); // 달력 날짜 상태
+  const [weather, setWeather] = useState({
+    temperature: '22°C',
+    condition: '맑음',
+    humidity: '65%',
+    location: '부산'
   });
 
   useEffect(() => {
@@ -274,47 +297,91 @@ const Home = () => {
 
   return (
     <MainContainer>
-      <ContentContainer elevation={0}>
-        {/* 왼쪽 사이드바 */}
-        <Sidebar elevation={0}>
-          <SidebarMenu>
-            {menuItems.map((item, index) => {
-              const IconComponent = item.icon;
-              return (
-                <ListItem
-                  key={index}
-                  className={activeMenu === item.text ? 'active' : ''}
-                  onClick={() => setActiveMenu(item.text)}
-                >
-                  <ListItemIcon>
-                    <IconComponent />
-                  </ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItem>
-              );
-            })}
-          </SidebarMenu>
-
-          {/* 로그아웃 버튼 */}
-          <Box sx={{ px: 2 }}>
-            <ListItem
-              onClick={handleLogout}
-              sx={{
-                borderRadius: '12px',
-                color: 'white',
-                cursor: 'pointer',
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                }
+      {/* 왼쪽 사이드바 - 고정 위치 */}
+      <Sidebar elevation={0}>
+        {/* 사용자 정보 영역 */}
+        <Box sx={{ 
+          px: 2, 
+          py: 3, 
+          borderBottom: '1px solid rgba(255,255,255,0.2)',
+          mb: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center'
+        }}>
+          {/* 사용자 아이콘 */}
+          <Box sx={{
+            width: 60,
+            height: 60,
+            borderRadius: '50%',
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mb: 2,
+            overflow: 'hidden'
+          }}>
+            <img 
+              src={userImage} 
+              alt="User" 
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
               }}
-            >
-              <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
-                <LogoutOutlined />
-              </ListItemIcon>
-              <ListItemText primary="로그아웃" />
-            </ListItem>
+            />
           </Box>
-        </Sidebar>
+          
+          {/* 사용자 정보 */}
+          <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'white', mb: 0.5 }}>
+            {guardianInfo.name}
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>
+            {guardianInfo.role === 'ADMIN' ? '관리자' : '보호자'}
+          </Typography>
+        </Box>
+
+        <SidebarMenu>
+          {menuItems.map((item, index) => {
+            const IconComponent = item.icon;
+            return (
+              <ListItem
+                key={index}
+                className={activeMenu === item.text ? 'active' : ''}
+                onClick={() => setActiveMenu(item.text)}
+              >
+                <ListItemIcon>
+                  <IconComponent />
+                </ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItem>
+            );
+          })}
+        </SidebarMenu>
+
+        {/* 로그아웃 버튼 */}
+        <Box sx={{ px: 2 }}>
+          <ListItem
+            onClick={handleLogout}
+            sx={{
+              borderRadius: '12px',
+              color: 'white',
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.1)',
+              }
+            }}
+          >
+            <ListItemIcon sx={{ color: 'white', minWidth: '40px' }}>
+              <LogoutOutlined />
+            </ListItemIcon>
+            <ListItemText primary="로그아웃" />
+          </ListItem>
+        </Box>
+      </Sidebar>
+
+      <ContentContainer elevation={0}>
 
         {/* 중앙 메인 콘텐츠 */}
         <MainContent>
@@ -323,7 +390,7 @@ const Home = () => {
             {/* 상단 헤더 */}
             <HeaderSection>
               <WelcomeText>
-                <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 1, color: '#333' }}>
+                <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 5, color: '#333' }}>
                   안녕하세요, <span style={{ color: '#1976d2' }}>{guardianInfo.name}</span> 님
                 </Typography>
                 <Typography variant="h6" color="text.secondary">
@@ -331,54 +398,49 @@ const Home = () => {
                 </Typography>
               </WelcomeText>
               
-              <ProfileSection>
-                <Box
-                  sx={{ 
-                    width: '200px',
-                    height: '120px',
-                    border: '3px solid #bdbdbd',
-                    borderRadius: '15px',
-                    backgroundColor: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <AccountCircleOutlined sx={{ fontSize: 50, color: '#bdbdbd' }} />
-                </Box>
-              </ProfileSection>
             </HeaderSection>
 
             {/* 하단 3개 박스 */}
             <BottomBoxContainer>
               {/* 왼쪽 박스 - 상태 현황 */}
               <StatusBox elevation={0}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  📊 상태 현황
+                <Typography variant="h6" fontWeight="bold" gutterBottom>                  
                 </Typography>
                 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 2 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
                   {statusData.map((status, index) => {
                     const IconComponent = status.icon;
                     return (
-                      <Button
+                      <Paper
                         key={index}
-                        fullWidth
-                        variant="outlined"
-                        startIcon={<IconComponent sx={{ color: status.color }} />}
-                        endIcon={
-                          <Typography variant="h6" fontWeight="bold" sx={{ color: status.color }}>
-                            {status.count}
-                          </Typography>
-                        }
-                        sx={{ 
-                          justifyContent: 'space-between', 
-                          py: 1.5,
-                          textTransform: 'none'
+                        elevation={2}
+                        sx={{
+                          backgroundColor: '#1976D2',
+                          color: 'white',
+                          padding: '20px',
+                          borderRadius: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          minHeight: '80px',
+                          transition: 'transform 0.2s, box-shadow 0.2s',
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+                          }
                         }}
                       >
-                        {status.title}
-                      </Button>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <IconComponent sx={{ fontSize: 32 }} />
+                          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                            {status.title}
+                          </Typography>
+                        </Box>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                          {status.count}
+                        </Typography>
+                      </Paper>
                     );
                   })}
                 </Box>
@@ -453,32 +515,166 @@ const Home = () => {
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               📅 일정 관리
             </Typography>
+            
+            {/* 달력 컴포넌트 */}
             <Box sx={{ 
-              height: '200px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              border: '2px dashed #e0e0e0',
+              mb: 3,
+              border: '1px solid #e0e0e0',
               borderRadius: '10px',
-              color: '#999',
-              mb: 3
+              padding: '15px',
+              backgroundColor: '#fafafa',
+              '& .react-calendar': {
+                width: '100%',
+                border: 'none',
+                fontFamily: 'inherit',
+                backgroundColor: 'transparent'
+              },
+              '& .react-calendar__navigation': {
+                marginBottom: '10px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center'
+              },
+              '& .react-calendar__navigation button': {
+                minWidth: '32px',
+                height: '44px',
+                fontSize: '16px',
+                fontWeight: 'bold'
+              },
+              '& .react-calendar__navigation__label': {
+                fontSize: '16px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                flex: 1
+              },
+              '& .react-calendar__month-view__weekdays': {
+                borderBottom: '1px solid #e0e0e0',
+                paddingBottom: '5px',
+                marginBottom: '5px',
+                display: 'flex',
+                justifyContent: 'space-between'
+              },
+              '& .react-calendar__month-view__weekdays__weekday': {
+                padding: '8px 4px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: '#666',
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '35px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden'
+              },
+              '& .react-calendar__tile': {
+                padding: '8px',
+                fontSize: '0.85rem',
+                border: '1px solid #f0f0f0',
+                backgroundColor: 'white',
+                minHeight: '35px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                '&:hover': {
+                  backgroundColor: '#e3f2fd'
+                }
+              },
+              '& .react-calendar__tile--active': {
+                backgroundColor: '#1976d2 !important',
+                color: 'white',
+                border: '1px solid #1976d2'
+              },
+              '& .react-calendar__tile--now': {
+                backgroundColor: '#e3f2fd',
+                color: '#1976d2',
+                border: '1px solid #1976d2'
+              }
             }}>
-              달력 컴포넌트 영역
+              <Calendar
+                onChange={setSelectedDate}
+                value={selectedDate}
+                locale="ko-KR"
+                formatShortWeekday={(locale, date) => {
+                  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                  return weekdays[date.getDay()];
+                }}
+                formatDay={(locale, date) => date.getDate().toString()}
+              />
             </Box>
 
             <Typography variant="h6" fontWeight="bold" gutterBottom>
-              📋 추가 컴포넌트
+              🌦️ 날씨 정보
             </Typography>
             <Box sx={{ 
               flex: 1,
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              border: '2px dashed #e0e0e0',
+              border: '1px solid #e0e0e0',
               borderRadius: '10px',
-              color: '#999'
+              padding: '20px',
+              backgroundColor: '#f8f9fa',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '15px'
             }}>
-              추후 추가될 컴포넌트 영역
+              {/* 위치 정보 */}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                mb: 1
+              }}>
+                <Typography variant="h6" sx={{ color: '#666', fontWeight: 'bold' }}>
+                  {weather.location}
+                </Typography>
+              </Box>
+              
+              {/* 메인 날씨 정보 */}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '20px',
+                mb: 2
+              }}>
+                <Typography variant="h3" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+                  {weather.temperature}
+                </Typography>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h6" sx={{ color: '#333' }}>
+                    {weather.condition}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#666' }}>
+                    습도: {weather.humidity}
+                  </Typography>
+                </Box>
+              </Box>
+              
+              {/* 추가 정보 */}
+              <Box sx={{ 
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '10px',
+                pt: 2,
+                borderTop: '1px solid #e0e0e0'
+              }}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="body2" sx={{ color: '#666' }}>
+                    최고기온
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#d32f2f' }}>
+                    25°C
+                  </Typography>
+                </Box>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="body2" sx={{ color: '#666' }}>
+                    최저기온
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+                    18°C
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
           </RightCalendarArea>
         </MainContent>

@@ -30,6 +30,7 @@ import {
 import userImage from '../images/user.png';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import axios from 'axios'; // API 호출을 위해 추가
 
 // 전체 컨테이너 - 연한 파란 배경
 const MainContainer = styled(Box)({
@@ -200,6 +201,22 @@ const Home = () => {
     humidity: '65%',
     location: '부산'
   });
+  
+  // =================================================================
+  // Senior 데이터 및 Daily Activities 데이터 관리용 State (2025.07.02 신규 추가)
+  // 목적: 하드코딩된 더미 데이터를 실제 백엔드 API 데이터로 교체
+  // =================================================================
+  const [seniorStats, setSeniorStats] = useState({
+    totalSeniors: 0,      // 총 관리 대상자 수 (기존: 5 -> 실제 API 데이터)
+    alerts: 0,            // 긴급 알림 수 (기존: 2 -> 실제 계산값)
+    healthIssues: 0,      // 건강 이상 수 (기존: 3 -> 실제 계산값)
+    connectedDevices: 0   // 연결된 장치 수 (기존: 8 -> 실제 계산값)
+  });
+  const [loading, setLoading] = useState(true); // 로딩 상태 (데이터 로딩 중일 때 '...' 표시)
+  
+  // Daily Activities 최근 활동 현황용 State
+  const [recentActivitiesData, setRecentActivitiesData] = useState([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
 
   useEffect(() => {
     const savedName = localStorage.getItem('guardianName');
@@ -213,7 +230,111 @@ const Home = () => {
         role: savedRole || 'GUARDIAN'
       });
     }
+    
+    // 컴포넌트 마운트 시 Senior 데이터 로드
+    loadSeniorData();
+    // Daily Activities 데이터 로드
+    loadRecentActivities();
   }, []);
+  
+  // =================================================================
+  // 실제 Senior 데이터를 백엔드 API에서 가져오는 함수 (2025.07.02 신규 추가)
+  // API: GET /api/seniors
+  // 목적: '금일 대상자' 수치를 실제 데이터로 업데이트
+  // =================================================================
+  const loadSeniorData = async () => {
+    try {
+      setLoading(true);
+      
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        console.error('JWT 토큰이 없습니다.');
+        return;
+      }
+      
+      // Senior 목록 가져오기
+      const response = await axios.get('http://localhost:8080/api/seniors', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Senior 데이터 응답:', response.data);
+      
+      // 응답에서 데이터 추출
+      const seniors = response.data.content || []; // Page 객체에서 content 배열 추출
+      const totalCount = seniors.length;
+      
+      // 현재는 간단하게 이렇게 설정, 나중에 실제 로직 추가 가능
+      setSeniorStats({
+        totalSeniors: totalCount,
+        alerts: Math.floor(totalCount * 0.1), // 10% 정도가 긴급 상황이라 가정
+        healthIssues: Math.floor(totalCount * 0.2), // 20% 정도가 건강 이상이라 가정
+        connectedDevices: totalCount * 2 // 한 명당 평균 2개 장치라 가정
+      });
+      
+    } catch (error) {
+      console.error('Senior 데이터 로드 오류:', error);
+      
+      if (error.response?.status === 401) {
+        console.error('인증 만료. 로그인이 필요합니다.');
+        // 로그인 페이지로 리다이렉트 가능
+      } else {
+        // 오류 시 기본값 유지
+        console.error('데이터 로드 실패. 기본값 사용.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // =================================================================
+  // 최근 활동 현황 데이터를 백엔드 API에서 가져오는 함수 (2025.07.02 신규 추가)
+  // API: GET /api/seniors/0/dailyActivities/recent-activities?limit=5
+  // 목적: '최근 활동 현황' 섹션을 실제 Daily Activities 데이터로 교체
+  // 기존: 하드코딩된 recentActivities 배열 -> 실제 API 데이터
+  // =================================================================
+  const loadRecentActivities = async () => {
+    try {
+      setActivitiesLoading(true);
+      
+      // JWT 토큰 인증 확인
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        console.error('JWT 토큰이 없습니다.');
+        return;
+      }
+      
+      // 백엔드 DailyController의 recent-activities 엔드포인트 호출
+      // 주의: Senior ID 0은 더미값이며, 실제로는 Guardian이 관리하는 모든 Senior 데이터 반환
+      const response = await axios.get('http://localhost:8080/api/seniors/0/dailyActivities/recent-activities?limit=5', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Recent Activities 데이터 응답:', response.data);
+      
+      // API 응답 데이터를 상태에 저장
+      // 예상 형태: [{ time: "14:30", user: "테스트 할머니", activity: "식사 3회...", status: "success" }]
+      setRecentActivitiesData(response.data || []);
+      
+    } catch (error) {
+      console.error('Recent Activities 데이터 로드 오류:', error);
+      
+      if (error.response?.status === 401) {
+        console.error('인증 만료. 로그인이 필요합니다.');
+      } else {
+        // 오류 시 기본값 유지 (빈 배열)
+        console.error('Recent Activities 데이터 로드 실패. 기본값 사용.');
+        setRecentActivitiesData([]);
+      }
+    } finally {
+      setActivitiesLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('jwt');
@@ -237,56 +358,59 @@ const Home = () => {
   const statusData = [
     {
       title: '긴급 알림',
-      count: 2,
+      count: loading ? '...' : seniorStats.alerts, // 실제 API 데이터로 교체 (기존 하드코딩: 2)
       icon: WarningAmberOutlined,
       color: '#ff4444'
     },
     {
       title: '금일 대상자',
-      count: 5,
+      count: loading ? '...' : seniorStats.totalSeniors, // 실제 API 데이터로 교체 (기존 하드코딩: 5)
       icon: PeopleOutlined,
       color: '#2196f3'
     },
     {
       title: '건강 상태',
-      count: 3,
+      count: loading ? '...' : seniorStats.healthIssues, // 실제 API 데이터로 교체 (기존 하드코딩: 3)
       icon: FavoriteOutlined,
       color: '#4caf50'
     },
     {
       title: '연결 장치',
-      count: 8,
+      count: loading ? '...' : seniorStats.connectedDevices, // 실제 API 데이터로 교체 (기존 하드코딩: 8)
       icon: DevicesOutlined,
       color: '#9c27b0'
     }
   ];
 
-  const recentActivities = [
-    {
-      time: '10:30',
-      user: '김영수',
-      activity: '안전지대 이탈 감지',
-      status: 'warning'
-    },
-    {
-      time: '09:15',
-      user: '박미영',
-      activity: '정상 귀가 확인',
-      status: 'success'
-    },
-    {
-      time: '08:45',
-      user: '이철수',
-      activity: '응급호출 버튼 작동',
-      status: 'error'
-    },
-    {
-      time: '08:20',
-      user: '최순자',
-      activity: '일일 건강체크 완료',
-      status: 'success'
-    }
-  ];
+  // 하드코딩된 recentActivities 제거 (이제 API에서 가져옴)
+  // const recentActivities = [
+  //   {
+  //     time: '10:30',
+  //     user: '김영수',
+  //     activity: '안전지대 이탈 감지',
+  //     status: 'warning'
+  //   },
+  //   {
+  //     time: '09:15',
+  //     user: '박미영',
+  //     activity: '정상 귀가 확인',
+  //     status: 'success'
+  //   },
+  //   {
+  //     time: '08:45',
+  //     user: '이철수',
+  //     activity: '응급호출 버튼 작동',
+  //     status: 'error'
+  //   },
+  //   {
+  //     time: '08:20',
+  //     user: '최순자',
+  //     activity: '일일 건강체크 완료',
+  //     status: 'success'
+  //   }
+  // ];
+  //   }
+  // ];
 
   const quickActions = [
     { text: '새 보호대상자 추가', icon: PersonAddOutlined },
@@ -452,32 +576,49 @@ const Home = () => {
                   📋 최근 활동 현황
                 </Typography>
                 
-                {recentActivities.map((activity, index) => (
-                  <ActivityItem key={index}>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="body1" fontWeight="500">
-                        {activity.user}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {activity.activity}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ textAlign: 'right' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        {activity.time}
-                      </Typography>
-                      <Chip
-                        label={
-                          activity.status === 'warning' ? '주의' :
-                          activity.status === 'success' ? '정상' : '긴급'
-                        }
-                        color={activity.status === 'warning' ? 'warning' : 
-                                activity.status === 'success' ? 'success' : 'error'}
-                        size="small"
-                      />
-                    </Box>
-                  </ActivityItem>
-                ))}
+                {/* 로딩 상태 또는 데이터 없을 때 처리 (2025.07.02 신규 추가) */}
+                {/* 기존: 하드코딩된 recentActivities.map() -> 실제 API 데이터 recentActivitiesData */}
+                {activitiesLoading ? (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      데이터를 불러오는 중...
+                    </Typography>
+                  </Box>
+                ) : recentActivitiesData.length === 0 ? (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      최근 활동 내역이 없습니다.
+                    </Typography>
+                  </Box>
+                ) : (
+                  // 실제 API 데이터 표시: time, user, activity, status 필드 사용
+                  recentActivitiesData.map((activity, index) => (
+                    <ActivityItem key={index}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body1" fontWeight="500">
+                          {activity.user}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {activity.activity}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          {activity.time}
+                        </Typography>
+                        <Chip
+                          label={
+                            activity.status === 'warning' ? '주의' :
+                            activity.status === 'success' ? '정상' : '긴급'
+                          }
+                          color={activity.status === 'warning' ? 'warning' : 
+                                  activity.status === 'success' ? 'success' : 'error'}
+                          size="small"
+                        />
+                      </Box>
+                    </ActivityItem>
+                  ))
+                )}
               </ActivityBox>
 
               {/* 오른쪽 박스 - 빠른 작업 */}

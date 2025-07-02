@@ -76,6 +76,12 @@ public interface SeniorRepository extends JpaRepository<Seniors, Integer> {
      */
     long countByGuardianAndIsActiveTrue(Guardians guardian);
 
+    /**
+     * 활동 기록 중복 체크
+     */
+    @Query("SELECT COUNT(da) > 0 FROM DailyActivities da WHERE da.senior.id = :seniorId AND da.activityDate = :activityDate")
+    boolean existsDailyActivityBySeniorIdAndDate(@Param("seniorId") Integer seniorId, @Param("activityDate") java.time.LocalDate activityDate);
+
     // ===== 통계/분석용 (나중에 활용) =====
 
     /**

@@ -50,12 +50,13 @@
 }
 
 
-@font-face {
+/* 기존 GyeonggiTitle 폰트 제거 (파일이 없어서 404 오류 발생) */
+/* @font-face {
   font-family: 'GyeonggiTitle';
   src: url('/path/to/GyeonggiTitle-Regular.woff2') format('woff2'),
         url('/path/to/GyeonggiTitle-Regular.woff') format('woff');
-}
+} */
 
 body {
-  font-family: 'GyeonggiTitle', sans-serif;
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
 }

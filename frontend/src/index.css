@@ -2,12 +2,12 @@ body  {
   margin: 0px;
   padding: 0px;
   background-color: #01b1ff;
-  min-width: 1200px; /* 최소 너비 설정 */
+  /* minWidth 제거 */
 }
 
 html {
-  overflow: hidden; /* 전체 스크롤 차단 */
-  min-width: 1200px;
+  overflow: auto; /* 전체 스크롤 허용 */
+  /* minWidth 제거 */
 }
 
 
@@ -74,12 +74,13 @@ button:focus-visible {
   }
 } */
 
-@font-face {
+/* 기존 GyeonggiTitle 폰트 제거 (파일이 없어서 404 오류 발생) */
+/* @font-face {
   font-family: 'GyeonggiTitle';
   src: url('/path/to/GyeonggiTitle-Regular.woff2') format('woff2'),
         url('/path/to/GyeonggiTitle-Regular.woff') format('woff');
-}
+} */
 
-body {
-  font-family: 'GyeonggiTitle', sans-serif;
-}
+/* body {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+} */

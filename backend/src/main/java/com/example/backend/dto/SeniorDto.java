@@ -236,5 +236,6 @@ public class SeniorDto {
                     entity.getDailyNotes(),
                     entity.getUpdatedAt()
             );
+        }
     }
 }

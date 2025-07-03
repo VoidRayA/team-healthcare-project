@@ -7,6 +7,7 @@ import com.example.backend.config.CustomUserDetails;
 import com.example.backend.dto.SeniorDto;
 import com.example.backend.dto.seviceDto.DailyActivitiesDto;
 import com.example.backend.repository.SeniorRepository;
+import com.example.backend.service.SeniorService;
 import com.example.backend.service.daily.DailyActivitiesService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -167,7 +168,7 @@ public class DailyController {
             // ★ 핵심 추가 기능: 중복 기록 사전 체크
             // 이 부분이 AUTO_INCREMENT 낭비를 방지하는 핵심 로직
             boolean isDuplicate = dailyActivitiesService.isDuplicateRecord(seniorId, activityDate, guardian);
-            
+
             if (isDuplicate) {
                 // 중복이 발견되면 DB에 INSERT하지 않고 즉시 409 오류 반환
                 // 이로 인해 AUTO_INCREMENT 값이 소모되지 않음
@@ -230,5 +231,14 @@ public class DailyController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("활동 기록 삭제 중 오류가 발생했습니다.");
         }
+    }
+    // 활동기록 수정
+    @PutMapping("/{activityId}")
+    public ResponseEntity<SeniorDto.SeniorUpdateDailyDto> updateDailyActivity(
+            @PathVariable Integer seniorId,
+            @PathVariable Integer activityId,
+            @RequestBody SeniorDto.SeniorUpdateDailyDto updateDto){
+        SeniorDto.SeniorUpdateDailyDto result = dailyActivitiesService.updateDaily(seniorId, activityId, updateDto);
+        return ResponseEntity.ok(result);
     }
 }

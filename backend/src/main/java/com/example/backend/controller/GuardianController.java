@@ -90,7 +90,7 @@ public class GuardianController {
      * @return 보호자 정보
      */
     @GetMapping("/{id}")
-    public ResponseEntity<GuardianDto> getGuardianById(@PathVariable Long id) {
+    public ResponseEntity<GuardianDto> getGuardianById(@PathVariable Integer id) {
         try {
             Optional<Guardians> guardianOpt = guardianRepository.findById(id);
 

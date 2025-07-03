@@ -14,7 +14,7 @@ import java.util.Optional;
  * Guardian 엔티티에 대한 데이터 접근 계층
  */
 @Repository
-public interface GuardianRepository extends JpaRepository<Guardians, Long> {
+public interface GuardianRepository extends JpaRepository<Guardians, Integer> {
 
     /**
      * 로그인 ID로 보호자 조회

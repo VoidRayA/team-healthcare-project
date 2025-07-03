@@ -279,10 +279,9 @@ public class DailyActivitiesService {
         return convertToSeniorDailyDto(senior);
     }
 
-    /**
-     * Seniors Entity를 SeniorDailyDto로 변환하는 헬퍼 메서드
-     * 순환 참조를 방지하기 위해 Entity를 DTO로 변환
-     */
+        // Seniors Entity를 SeniorDailyDto로 변환하는 헬퍼 메서드
+        //  순환 참조를 방지하기 위해 Entity를 DTO로 변환
+
     private SeniorDto.SeniorDailyDto convertToSeniorDailyDto(Seniors senior) {
         // 활동 기록들을 DTO로 변환
         List<SeniorDto.ActivityResponseDto> activitiesDto = Optional.ofNullable(senior.getActivities())
@@ -307,5 +306,43 @@ public class DailyActivitiesService {
                 .seniorName(senior.getSeniorName())
                 .dailyActivities(activitiesDto) // Entity 대신 DTO 사용
                 .build();
+    }
+    // 업데이트 날 추가
+    public SeniorDto.SeniorUpdateDailyDto updateDaily(Integer seniorId, Integer activityId, SeniorDto.SeniorUpdateDailyDto updateDto) {
+        // senior 찾기
+        Seniors senior = seniorRepository.findById(seniorId)
+                .orElseThrow(() -> new RuntimeException("Senior not found"));
+        // senior의 활동기록 조회
+        List<DailyActivities> activities = Optional.ofNullable(senior.getActivities())
+                .orElse(new ArrayList<>());
+
+        DailyActivities targetActivity = activities.stream()
+                .filter(activity -> activity.getId().equals(activityId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Activity not found"));
+
+        // 활동 기록 수정 (null 체크 후 업데이트)
+        if (updateDto.mealCount() != 0) {
+            targetActivity.setMealCount(updateDto.mealCount());
+        }
+        if (updateDto.medicationTaken() != null) {
+            targetActivity.setMedicationTaken(updateDto.medicationTaken());
+        }
+        if (updateDto.outdoorActivity() != null) {
+            targetActivity.setOutdoorActivity(updateDto.outdoorActivity());
+        }
+        if (updateDto.sleepQuality() != null) {
+            targetActivity.setSleepQuality(updateDto.sleepQuality());
+        }
+        if (updateDto.dailyNotes() != null) {
+            targetActivity.setDailyNotes(updateDto.dailyNotes());
+        }
+        // 업데이트 시간 설정
+        targetActivity.setUpdatedAt(LocalDateTime.now());
+
+        seniorRepository.save(senior);
+
+        // DTO 변환 후 반환
+        return SeniorDto.SeniorUpdateDailyDto.from(targetActivity);
     }
 }

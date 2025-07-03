@@ -210,5 +210,31 @@ public class SeniorDto {
         }
     }
 
-
+    // 활동기록 수정용 DTO
+    public record SeniorUpdateDailyDto(
+            Integer id,
+            Integer activitiesId,           // 고유 ID
+            Seniors senior,                 // senior 참조
+            LocalDate activityDate,         // 활동 날짜
+            int mealCount,                  // 식사 횟수
+            Byte medicationTaken,           // 약 복용 여부
+            Byte outdoorActivity,           // 외출 여부
+            String sleepQuality,            // 수면상태
+            String dailyNotes,              // 일일 특이사항
+            LocalDateTime updatedAt
+    ){
+        public static SeniorUpdateDailyDto from(DailyActivities entity) {
+            return new SeniorUpdateDailyDto(
+                    entity.getId(),
+                    entity.getId(), // activitiesId
+                    entity.getSenior(),
+                    entity.getActivityDate(),
+                    entity.getMealCount(),
+                    entity.getMedicationTaken(),
+                    entity.getOutdoorActivity(),
+                    entity.getSleepQuality(),
+                    entity.getDailyNotes(),
+                    entity.getUpdatedAt()
+            );
+    }
 }

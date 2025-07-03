@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 import {
@@ -8,7 +9,10 @@ import {
   Typography,
   Paper,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Checkbox,
+  FormControlLabel,
+  Link
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import lockicon from '../images/lock_icon.png';
@@ -17,11 +21,21 @@ import image3 from '../images/image3.png';
 // 스타일드 컴포넌트들
 const LoginPage = styled(Box)({
   display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  height: '100vh', // minHeight에서 height로 변경
+  padding: '20px',
+  backgroundColor: '#01b1ff',
+  overflow: 'hidden' // 스크롤 방지
+});
+
+const LoginContent = styled(Box)({
+  display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  minHeight: '100vh',
-  padding: '20px',
-  backgroundColor: '#01b1ff'
+  flex: 1,
+  width: '100%'
 });
 
 const LoginContainer = styled(Paper)(({ theme }) => ({
@@ -34,29 +48,32 @@ const LoginContainer = styled(Paper)(({ theme }) => ({
   gap: '60px',
   boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
   maxWidth: '1000px',
-  width: '100%',
+  width: '90%', // 100%에서 90%로 변경
   [theme.breakpoints.down('lg')]: {
     padding: '40px',
-    gap: '40px'
+    gap: '40px',
+    maxWidth: '900px'
   },
   [theme.breakpoints.down('md')]: {
     flexDirection: 'column',
     padding: '30px 20px',
-    gap: '30px'
+    gap: '30px',
+    maxWidth: '600px'
   },
   [theme.breakpoints.down('sm')]: {
-    padding: '20px 15px'
+    padding: '20px 15px',
+    maxWidth: '95%',
+    borderRadius: '20px'
   }
 }));
 
 const LoginImage = styled(Box)(({ theme }) => ({
   backgroundImage: `url(${image3})`,
-  backgroundSize: 'cover',
+  backgroundSize: 'contain',
   backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
-  borderRadius: '20px',
-  width: '400px',
-  height: '500px',
+  backgroundRepeat: 'no-repeat',  
+  width: '500px',
+  height: '550px',
   flexShrink: 0,
   [theme.breakpoints.down('lg')]: {
     width: '350px',
@@ -64,8 +81,13 @@ const LoginImage = styled(Box)(({ theme }) => ({
   },
   [theme.breakpoints.down('md')]: {
     width: '100%',
-    maxWidth: '350px',
-    height: '250px'
+    maxWidth: '400px', // LoginBox와 비슷하게
+    height: '300px' // 높이 증가
+  },
+  [theme.breakpoints.down('sm')]: {
+    width: '100%',
+    maxWidth: '350px', // LoginBox sm 설정과 비슷하게
+    height: '250px' // 높이 증가
   }
 }));
 
@@ -74,7 +96,7 @@ const LoginBox = styled(Box)(({ theme }) => ({
   justifyContent: 'center',
   width: '400px',
   flexDirection: 'column',
-  gap: '20px',
+  gap: '15px',
   backgroundColor: 'transparent',
   [theme.breakpoints.down('lg')]: {
     width: '350px'
@@ -217,10 +239,86 @@ const ErrorBox = styled(Box)({
   margin: '10px 0'
 });
 
+// 푸터 스타일 컴포넌트 추가
+const Footer = styled(Box)(({ theme }) => ({
+  width: '100%',
+  padding: '20px',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '10px',
+  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  backdropFilter: 'blur(10px)',
+  borderRadius: '15px 15px 0 0',
+  marginTop: '20px',
+  boxShadow: '0 -5px 20px rgba(0, 0, 0, 0.1)',
+  [theme.breakpoints.down('sm')]: {
+    padding: '15px'
+  }
+}));
+
+const FooterLinks = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  gap: '20px',
+  flexWrap: 'wrap',
+  justifyContent: 'center',
+  [theme.breakpoints.down('sm')]: {
+    gap: '15px',
+    flexDirection: 'column',
+    alignItems: 'center'
+  }
+}));
+
+const FooterLink = styled(Link)({
+  color: '#00458B',
+  fontSize: '14px',
+  textDecoration: 'none',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    color: '#007CFF',
+    textDecoration: 'underline'
+  }
+});
+
+const CopyrightText = styled(Typography)({
+  color: '#666',
+  fontSize: '12px',
+  textAlign: 'center'
+});
+
 const Login = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState({ userid: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // 컴포넌트 마운트시 저장된 아이디/비밀번호 로드
+  useEffect(() => {
+    // 페이지 진입시 스크롤 방지 (강력하게)
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    document.body.style.height = '100vh';
+    
+    const savedUserId = localStorage.getItem('savedUserId');
+    const savedPassword = localStorage.getItem('savedPassword');
+    const isRemembered = localStorage.getItem('rememberMe') === 'true';
+    
+    if (isRemembered && savedUserId) {
+      setUser({
+        userid: savedUserId,
+        password: savedPassword || ''
+      });
+      setRememberMe(true);
+    }
+
+    // 컴포넌트 언마운트시 스크롤 복원
+    return () => {
+      document.documentElement.style.overflow = 'auto';
+      document.body.style.overflow = 'auto';
+      document.body.style.height = 'auto';
+    };
+  }, []);
 
   const handleChange = (event) => {
     setUser({
@@ -264,6 +362,17 @@ const Login = () => {
       const { accessToken, loginId, guardianName, role } = response.data;
       
       if (accessToken) {
+        // rememberMe 처리
+        if (rememberMe) {
+          localStorage.setItem('savedUserId', user.userid);
+          localStorage.setItem('savedPassword', user.password);
+          localStorage.setItem('rememberMe', 'true');
+        } else {
+          localStorage.removeItem('savedUserId');
+          localStorage.removeItem('savedPassword');
+          localStorage.removeItem('rememberMe');
+        }
+        
         // localStorage에 저장
         localStorage.setItem('jwt', accessToken);
         localStorage.setItem('loginId', loginId);
@@ -305,9 +414,13 @@ const Login = () => {
   };
 
 
+  const handleRememberMeChange = (event) => {
+    setRememberMe(event.target.checked);
+  };
+
   const handleJoin = () => {
-    // 회원가입 페이지로 이동하는 로직
-    console.log('회원가입 페이지로 이동');
+    // 회원가입 페이지로 이동
+    navigate('/register');
   };
 
   const handleKeyPress = (event) => {
@@ -318,79 +431,126 @@ const Login = () => {
 
   return (
     <LoginPage>
-      <LoginContainer elevation={0}>
-        {/* 왼쪽 배경 이미지 영역 */}
-        <LoginImage />
+      <LoginContent>
+        <LoginContainer elevation={0}>
+          {/* 왼쪽 배경 이미지 영역 */}
+          <LoginImage />
 
-        <LoginBox>
-          {/* 자물쇠 아이콘 + 로그인 텍스트 */}
-          <LoginHeader>
-            <LockIconBox>
-              <img src={lockicon} alt="lock" />
-            </LockIconBox>
-            <LoginTitle>로그인</LoginTitle>
-          </LoginHeader>
+          <LoginBox>
+            {/* 자물쇠 아이콘 + 로그인 텍스트 */}
+            <LoginHeader>
+              <LockIconBox>
+                <img src={lockicon} alt="lock" />
+              </LockIconBox>
+              <LoginTitle>로그인</LoginTitle>
+            </LoginHeader>
 
-          {/* 아이디 입력 박스 */}
-          <StyledTextField
-            variant="outlined"
-            placeholder="아이디를 입력하세요"
-            name="userid"
-            fullWidth
-            value={user.userid}
-            onChange={handleChange}
-            onKeyPress={handleKeyPress}
-          />
+            {/* 아이디 입력 박스 */}
+            <StyledTextField
+              variant="outlined"
+              placeholder="아이디를 입력하세요"
+              name="userid"
+              fullWidth
+              value={user.userid}
+              onChange={handleChange}
+              onKeyPress={handleKeyPress}
+            />
 
-          {/* 비밀번호 입력 박스 */}
-          <StyledTextField
-            variant="outlined"
-            placeholder="비밀번호를 입력하세요"
-            name="password"
-            type="password"
-            fullWidth
-            value={user.password}
-            onChange={handleChange}
-            onKeyPress={handleKeyPress}
-          />
+            {/* 비밀번호 입력 박스 */}
+            <StyledTextField
+              variant="outlined"
+              placeholder="비밀번호를 입력하세요"
+              name="password"
+              type="password"
+              fullWidth
+              value={user.password}
+              onChange={handleChange}
+              onKeyPress={handleKeyPress}
+            />
 
-          {/* 로그인 버튼 */}
-          <LoginButton
-            variant="contained"
-            fullWidth
-            onClick={handleLogin}
-            disabled={loading}
-            startIcon={loading && <CircularProgress size={20} color="inherit" />}
-          >
-            {loading ? '로그인 중...' : '로그인'}
-          </LoginButton>
+            {/* 아이디/비밀번호 저장 체크박스 */}
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={rememberMe}
+                  onChange={handleRememberMeChange}
+                  sx={{
+                    color: '#00BCFF',
+                    '&.Mui-checked': {
+                      color: '#007CFF',
+                    },
+                  }}
+                />
+              }
+              label="아이디/비밀번호 저장"
+              sx={{
+                color: '#666',
+                fontSize: '14px',
+                '& .MuiFormControlLabel-label': {
+                  fontSize: '14px'
+                }
+              }}
+            />
 
-          {/* 회원가입 버튼 */}
-          <JoinButton
-            variant="contained"
-            fullWidth
-            onClick={handleJoin}
-          >
-            회원가입
-          </JoinButton>
+            {/* 로그인 버튼 */}
+            <LoginButton
+              variant="contained"
+              fullWidth
+              onClick={handleLogin}
+              disabled={loading}
+              startIcon={loading && <CircularProgress size={20} color="inherit" />}
+            >
+              {loading ? '로그인 중...' : '로그인'}
+            </LoginButton>
 
-          {/* 오류 메시지 - 공간은 항상 확보, 내용은 조건부 표시 */}
-          <ErrorBox>
-            {error && (
-              <Alert 
-                severity="error" 
-                sx={{ 
-                  width: '100%',
-                  fontSize: '16px',
-                  borderRadius: '10px'
-                }}
-              >
-                {error}
-              </Alert>
-            )}
-          </ErrorBox>
-        </LoginBox>
-      </LoginContainer>
+            {/* 회원가입 버튼 */}
+            <JoinButton
+              variant="contained"
+              fullWidth
+              onClick={handleJoin}
+            >
+              회원가입
+            </JoinButton>
+
+            {/* 오류 메시지 - 공간은 항상 확보, 내용은 조건부 표시 */}
+            <ErrorBox>
+              {error && (
+                <Alert 
+                  severity="error" 
+                  sx={{ 
+                    width: '100%',
+                    fontSize: '16px',
+                    borderRadius: '10px'
+                  }}
+                >
+                  {error}
+                </Alert>
+              )}
+            </ErrorBox>
+          </LoginBox>
+        </LoginContainer>
+      </LoginContent>
+
+      {/* 푸터 추가 */}
+      <Footer>
+        <FooterLinks>
+          <FooterLink href="/terms">
+            이용약관
+          </FooterLink>
+          <FooterLink href="/privacy">
+            개인정보처리방침
+          </FooterLink>
+          <FooterLink href="/support">
+            고객센터
+          </FooterLink>
+          <FooterLink href="/about">
+            서비스 소개
+          </FooterLink>
+        </FooterLinks>
+        <CopyrightText>
+          © 2025 Healthcare Management System. All rights reserved.
+        </CopyrightText>
+      </Footer>
     </LoginPage>
   );
 };

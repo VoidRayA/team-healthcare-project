@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -25,9 +26,11 @@ import {
   DevicesOutlined,  
   LocationOnOutlined,
   SettingsOutlined,
-  AddOutlined
+  AddOutlined,
+  EditOutlined
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
+import { getWeatherInfo } from '../utils/weatherAPI';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import axios from 'axios'; // API 호출을 위해 추가
@@ -136,15 +139,15 @@ const BottomBoxContainer = styled(Box)({
 
 // 오른쪽 세로 긴 박스 - 왼쪽 박스들과 같은 높이
 const RightCalendarArea = styled(Paper)({
-  width: '280px',
+  width: '320px', // 280px에서 320px로 늘림
   backgroundColor: '#ffffff',
   border: '1px solid #e0e0e0',
   borderRadius: '15px',
-  padding: '20px',
+  padding: '15px', // 패딩 줄임
   display: 'flex',
   flexDirection: 'column',
   height: '803px', // 고정 높이로 왼쪽과 정확히 맞춤
-  overflow: 'auto' // 내용이 넘치면 스크롤
+  overflow: 'hidden' // 스크롤바 제거
 });
 
 // 왼쪽 박스 (상태 박스)
@@ -188,7 +191,8 @@ const ActivityItem = styled(Box)({
 });
 
 const Home = () => {
-  const [activeMenu, setActiveMenu] = useState('대시보드');
+  const navigate = useNavigate();
+  const [activeMenu, setActiveMenu] = useState('홈');
   const [guardianInfo, setGuardianInfo] = useState({
     name: '관리자',
     loginId: 'admin',
@@ -196,10 +200,12 @@ const Home = () => {
   });
   const [selectedDate, setSelectedDate] = useState(new Date()); // 달력 날짜 상태
   const [weather, setWeather] = useState({
-    temperature: '22°C',
-    condition: '맑음',
-    humidity: '65%',
-    location: '부산'
+    temperature: '로딩 중...',
+    condition: '로딩 중...',
+    humidity: '로딩 중...',
+    location: '부산',
+    maxTemp: '-',
+    minTemp: '-'
   });
   
   // =================================================================
@@ -231,18 +237,31 @@ const Home = () => {
       });
     }
     
-    // 컴포넌트 마운트 시 Senior 데이터 로드
-    loadSeniorData();
-    // Daily Activities 데이터 로드
-    loadRecentActivities();
+    // 컴포넌트 마운트 시 오늘 날짜 기준으로 데이터 로드
+    loadDataForDate(new Date());
+    // 날씨 정보 로드
+    loadWeatherData();
   }, []);
   
   // =================================================================
-  // 실제 Senior 데이터를 백엔드 API에서 가져오는 함수 (2025.07.02 신규 추가)
-  // API: GET /api/seniors
-  // 목적: '금일 대상자' 수치를 실제 데이터로 업데이트
+  // 선택된 날짜의 모든 데이터를 로드하는 통합 함수 (2025.07.03 수정)
+  // 목적: 달력에서 날짜 선택 시 해당 날짜의 모든 관련 데이터를 로드
   // =================================================================
-  const loadSeniorData = async () => {
+  const loadDataForDate = async (date) => {
+    console.log('선택된 날짜:', date);
+    // 병렬로 모든 데이터 로드
+    await Promise.all([
+      loadSeniorDataForDate(date),
+      loadRecentActivitiesForDate(date)
+    ]);
+  };
+  
+  // =================================================================
+  // 특정 날짜의 Senior 데이터를 백엔드 API에서 가져오는 함수 (2025.07.03 수정)
+  // API: GET /api/seniors?date=YYYY-MM-DD
+  // 목적: 선택된 날짜의 '금일 대상자' 수치를 실제 데이터로 업데이트
+  // =================================================================
+  const loadSeniorDataForDate = async (date) => {
     try {
       setLoading(true);
       
@@ -252,26 +271,34 @@ const Home = () => {
         return;
       }
       
-      // Senior 목록 가져오기
-      const response = await axios.get('http://localhost:8080/api/seniors', {
+      // 날짜를 YYYY-MM-DD 형식으로 변환 (시간대 이슈 해결)
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+      
+      console.log('변환된 날짜 문자열:', dateString);
+      
+      // Senior 목록 가져오기 (날짜 파라미터 추가)
+      const response = await axios.get(`http://localhost:8080/api/seniors?date=${dateString}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
       
-      console.log('Senior 데이터 응답:', response.data);
+      console.log(`${dateString} Senior 데이터 응답:`, response.data);
       
       // 응답에서 데이터 추출
       const seniors = response.data.content || []; // Page 객체에서 content 배열 추출
       const totalCount = seniors.length;
       
-      // 현재는 간단하게 이렇게 설정, 나중에 실제 로직 추가 가능
+      // 해당 날짜의 실제 통계 계산
       setSeniorStats({
         totalSeniors: totalCount,
-        alerts: Math.floor(totalCount * 0.1), // 10% 정도가 긴급 상황이라 가정
-        healthIssues: Math.floor(totalCount * 0.2), // 20% 정도가 건강 이상이라 가정
-        connectedDevices: totalCount * 2 // 한 명당 평균 2개 장치라 가정
+        alerts: Math.floor(totalCount * 0.1), // 실제로는 해당 날짜의 알림 수를 계산
+        healthIssues: Math.floor(totalCount * 0.2), // 실제로는 해당 날짜의 건강 이상 수를 계산
+        connectedDevices: totalCount * 2 // 실제로는 해당 날짜의 연결된 장치 수를 계산
       });
       
     } catch (error) {
@@ -279,9 +306,7 @@ const Home = () => {
       
       if (error.response?.status === 401) {
         console.error('인증 만료. 로그인이 필요합니다.');
-        // 로그인 페이지로 리다이렉트 가능
       } else {
-        // 오류 시 기본값 유지
         console.error('데이터 로드 실패. 기본값 사용.');
       }
     } finally {
@@ -290,12 +315,55 @@ const Home = () => {
   };
   
   // =================================================================
-  // 최근 활동 현황 데이터를 백엔드 API에서 가져오는 함수 (2025.07.02 신규 추가)
-  // API: GET /api/seniors/0/dailyActivities/recent-activities?limit=5
-  // 목적: '최근 활동 현황' 섹션을 실제 Daily Activities 데이터로 교체
-  // 기존: 하드코딩된 recentActivities 배열 -> 실제 API 데이터
+  // 특정 날짜의 활동 현황 데이터를 백엔드 API에서 가져오는 함수 (2025.07.03 수정)
+  // API: GET /api/seniors/0/dailyActivities/recent-activities?limit=5&date=YYYY-MM-DD
+  // 목적: 선택된 날짜의 '최근 활동 현황' 섹션을 실제 Daily Activities 데이터로 교체
   // =================================================================
-  const loadRecentActivities = async () => {
+  // =================================================================
+  // 날씨 정보 로드 함수 (2025.07.03 신규 추가)
+  // API: OpenWeatherMap
+  // 목적: 오른쪽 날씨 정보 섹션에 실제 날씨 데이터 표시
+  // =================================================================
+  const loadWeatherData = async () => {
+    try {
+      console.log('날씨 정보 로드 시작');
+      
+      // 환경변수에서 API 키 가져오기
+      const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
+      
+      if (!apiKey) {
+        console.warn('OpenWeatherMap API 키가 설정되지 않았습니다. 더미 데이터를 사용합니다.');
+      }
+      
+      // 날씨 API 호출
+      const weatherData = await getWeatherInfo(apiKey);
+      
+      console.log('날씨 데이터:', weatherData);
+      
+      // 상태 업데이트
+      setWeather(weatherData);
+      
+    } catch (error) {
+      console.error('날씨 정보 로드 오류:', error);
+      
+      // 오류 시 기본값 사용
+      setWeather({
+        temperature: '22°C',
+        condition: '맑음',
+        humidity: '65%',
+        location: '부산',
+        maxTemp: '25°C',
+        minTemp: '18°C'
+      });
+    }
+  };
+  
+  // =================================================================
+  // 특정 날짜의 활동 현황 데이터를 백엔드 API에서 가져오는 함수 (2025.07.03 수정)
+  // API: GET /api/seniors/0/dailyActivities/recent-activities?limit=5&date=YYYY-MM-DD
+  // 목적: 선택된 날짜의 '최근 활동 현황' 섹션을 실제 Daily Activities 데이터로 교체
+  // =================================================================
+  const loadRecentActivitiesForDate = async (date) => {
     try {
       setActivitiesLoading(true);
       
@@ -306,16 +374,23 @@ const Home = () => {
         return;
       }
       
-      // 백엔드 DailyController의 recent-activities 엔드포인트 호출
-      // 주의: Senior ID 0은 더미값이며, 실제로는 Guardian이 관리하는 모든 Senior 데이터 반환
-      const response = await axios.get('http://localhost:8080/api/seniors/0/dailyActivities/recent-activities?limit=5', {
+      // 날짜를 YYYY-MM-DD 형식으로 변환 (시간대 이슈 해결)
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+      
+      console.log('Activities API 호출 날짜:', dateString);
+      
+      // 백엔드 DailyController의 recent-activities 엔드포인트 호출 (날짜 파라미터 추가)
+      const response = await axios.get(`http://localhost:8080/api/seniors/0/dailyActivities/recent-activities?limit=10&date=${dateString}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
       
-      console.log('Recent Activities 데이터 응답:', response.data);
+      console.log(`${dateString} Activities 데이터 응답:`, response.data);
       
       // API 응답 데이터를 상태에 저장
       // 예상 형태: [{ time: "14:30", user: "테스트 할머니", activity: "식사 3회...", status: "success" }]
@@ -347,7 +422,8 @@ const Home = () => {
   };
 
   const menuItems = [
-    { text: '대시보드', icon: DashboardOutlined },
+    { text: '홈', icon: DashboardOutlined },
+    { text: '회원정보 관리', icon: EditOutlined },
     { text: '보호 대상자', icon: PeopleOutlined },
     { text: '안전 모니터링', icon: SecurityOutlined },
     { text: '알림 센터', icon: NotificationsOutlined },
@@ -473,7 +549,13 @@ const Home = () => {
               <ListItem
                 key={index}
                 className={activeMenu === item.text ? 'active' : ''}
-                onClick={() => setActiveMenu(item.text)}
+                onClick={() => {
+                  if (item.text === '회원정보 관리') {
+                    navigate('/profile/edit');
+                  } else {
+                    setActiveMenu(item.text);
+                  }
+                }}
               >
                 <ListItemIcon>
                   <IconComponent />
@@ -641,6 +723,9 @@ const Home = () => {
                           py: 1.5,
                           textTransform: 'none'
                         }}
+                        onClick={() => {
+                          console.log(`클릭: ${action.text}`);
+                        }}
                       >
                         {action.text}
                       </Button>
@@ -657,13 +742,14 @@ const Home = () => {
               📅 일정 관리
             </Typography>
             
-            {/* 달력 컴포넌트 */}
+            {/* 달력 컴포넌트 - 선택된 날짜 표시 제거 */}
             <Box sx={{ 
-              mb: 3,
+              mb: 2,
               border: '1px solid #e0e0e0',
               borderRadius: '10px',
-              padding: '15px',
+              padding: '10px',
               backgroundColor: '#fafafa',
+              flex: '0 0 auto', // 달력 크기 고정
               '& .react-calendar': {
                 width: '100%',
                 border: 'none',
@@ -727,14 +813,29 @@ const Home = () => {
                 color: 'white',
                 border: '1px solid #1976d2'
               },
+              '& .react-calendar__tile--active:enabled:hover': {
+
+              },
+              '& .react-calendar__tile--active:enabled:focus': {
+                color: 'white',
+              },              
               '& .react-calendar__tile--now': {
                 backgroundColor: '#e3f2fd',
-                color: '#1976d2',
+                color: '#white',
                 border: '1px solid #1976d2'
+              },
+              '& .react-calendar__tile--now:enabled:focus': {
+                backgroundColor: '#e3f2fd',
+                color: '#red'
               }
             }}>
               <Calendar
-                onChange={setSelectedDate}
+                onChange={(date) => {
+                  console.log('달력에서 선택된 날짜:', date);
+                  setSelectedDate(date);
+                  // 선택된 날짜의 데이터 로드
+                  loadDataForDate(date);
+                }}
                 value={selectedDate}
                 locale="ko-KR"
                 formatShortWeekday={(locale, date) => {
@@ -745,77 +846,221 @@ const Home = () => {
               />
             </Box>
 
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              🌦️ 날씨 정보
+            <Typography variant="body1" fontWeight="bold" gutterBottom>
+              🌦️ 오늘 날씨
             </Typography>
             <Box sx={{ 
               flex: 1,
               border: '1px solid #e0e0e0',
               borderRadius: '10px',
-              padding: '20px',
+              padding: '12px',
               backgroundColor: '#f8f9fa',
               display: 'flex',
               flexDirection: 'column',
-              gap: '15px'
+              gap: '8px',
+              overflow: 'hidden', // 내부 스크롤 방지
+              minHeight: 0 // flexbox 축소 허용
             }}>
               {/* 위치 정보 */}
               <Box sx={{ 
                 display: 'flex', 
                 alignItems: 'center',
                 justifyContent: 'center',
-                mb: 1
+                mb: 0.5
               }}>
-                <Typography variant="h6" sx={{ color: '#666', fontWeight: 'bold' }}>
+                <Typography variant="body2" sx={{ color: '#666', fontWeight: 'bold' }}>
                   {weather.location}
                 </Typography>
               </Box>
               
-              {/* 메인 날씨 정보 */}
               <Box sx={{ 
-                display: 'flex', 
+                display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '20px',
-                mb: 2
+                gap: '12px',
+                mb: 1
               }}>
-                <Typography variant="h3" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
-                  {weather.temperature}
-                </Typography>
                 <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h6" sx={{ color: '#333' }}>
-                    {weather.condition}
+                  <Typography variant="h4" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+                    {weather.temperature}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#666' }}>
-                    습도: {weather.humidity}
-                  </Typography>
+                  {/* 최고/최저 온도를 메인 온도 아래 배치 */}
+                  <Box sx={{ 
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    mt: 0.5
+                  }}>
+                    <Typography variant="body2" sx={{ 
+                      fontWeight: 'bold',
+                      color: '#d32f2f'
+                    }}>
+                      최고 {weather.maxTemp}
+                    </Typography>
+                    <Typography variant="body2" sx={{ 
+                      color: '#1976d2'
+                    }}>
+                      최저 {weather.minTemp}
+                    </Typography>
+                  </Box>
                 </Box>
+                <Box sx={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                  {/* 메인 날씨 아이콘 */}
+                  {weather.icon && (
+                    <img 
+                      src={`https://openweathermap.org/img/wn/${weather.icon}@4x.png`}
+                      alt={weather.condition}
+                      style={{
+                        width: '50px',
+                        height: '50px',
+                        objectFit: 'contain',
+                        backgroundColor: 'white',
+                        borderRadius: '50%',
+                        padding: '5px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                        border: '1px solid #e0e0e0' // 테두리 추가
+                      }}
+                    />
+                  )}
+                  {/* 아이콘 옆 날씨 상태 텍스트 제거 - 아래쪽에서 표시 */}
+                </Box>
+              </Box>              
+              {/* 날씨 상태와 습도 */}
+              <Box sx={{ 
+                textAlign: 'center',
+                mb: 1
+              }}>
+                <Typography variant="body1" sx={{ color: '#333' }}>
+                  {weather.condition}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#666' }}>
+                  습도: {weather.humidity}
+                </Typography>                
               </Box>
               
-              {/* 추가 정보 */}
-              <Box sx={{ 
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '10px',
-                pt: 2,
-                borderTop: '1px solid #e0e0e0'
-              }}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="body2" sx={{ color: '#666' }}>
-                    최고기온
+              {/* 기존 최고/최저 온도 섹션 제거 */}
+              
+              {/* 요일별 날씨 예보 */}
+              {weather.weeklyForecast && weather.weeklyForecast.length > 0 && (
+                <Box sx={{ 
+                  mt: 1,
+                  pt: 1,
+                  borderTop: '1px solid #e0e0e0',
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: 'hidden'
+                }}>
+                  <Typography variant="body1" sx={{ 
+                    color: '#666', 
+                    mb: 1, 
+                    fontWeight: 'bold',
+                    textAlign: 'center'
+                  }}>
+                    4일간 예보
                   </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#d32f2f' }}>
-                    25°C
-                  </Typography>
+                  
+                  <Box sx={{ 
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: '8px',
+                    overflowX: 'auto',
+                    paddingBottom: '4px',
+                    width: '100%',
+                    minWidth: 0,
+                    justifyContent: 'center', // 중앙 정렬 추가
+                    '&::-webkit-scrollbar': {
+                      height: '4px'
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      background: '#f1f1f1',
+                      borderRadius: '2px'
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: '#c1c1c1',
+                      borderRadius: '2px'
+                    }
+                  }}>
+                    {weather.weeklyForecast.map((forecast, index) => (
+                      <Box key={index} sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '6px 4px',
+                        backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'transparent',
+                        borderRadius: '6px',
+                        minWidth: '55px',
+                        flexShrink: 0
+                      }}>
+                        {/* 요일 */}
+                        <Box sx={{ 
+                          textAlign: 'center',
+                          mb: 1
+                        }}>
+                          <Typography variant="body2" sx={{ 
+                            fontWeight: 'bold',
+                            color: '#333',
+                            fontSize: '0.8rem'
+                          }}>
+                            {forecast.day}
+                          </Typography>
+                          <Typography variant="caption" sx={{ 
+                            color: '#666',
+                            fontSize: '0.7rem',
+                            display: 'block'
+                          }}>
+                            {forecast.date}
+                          </Typography>
+                        </Box>
+                        
+                        {/* 날씨 아이콘 + 상태 */}
+                        <Box sx={{ 
+                          textAlign: 'center',
+                          mb: 1
+                        }}>
+                          {/* 날씨 아이콘 */}
+                          <img 
+                            src={`https://openweathermap.org/img/wn/${forecast.icon}@2x.png`}
+                            alt={forecast.condition}
+                            title={forecast.condition} // 호버 시 툴팁으로 날씨 설명 표시
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              objectFit: 'contain',
+                              backgroundColor: 'white',
+                              borderRadius: '50%',
+                              padding: '4px',
+                              border: '1px solid #ddd',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.15)' // 그림자 강화
+                            }}
+                          />
+                        </Box>
+                        
+                        {/* 온도 */}
+                        <Box sx={{ 
+                          textAlign: 'center'
+                        }}>
+                          <Typography variant="caption" sx={{ 
+                            fontWeight: 'bold',
+                            color: '#d32f2f',
+                            fontSize: '0.75rem',
+                            display: 'block'
+                          }}>
+                            {forecast.maxTemp}°
+                          </Typography>
+                          <Typography variant="caption" sx={{ 
+                            color: '#1976d2',
+                            fontSize: '0.75rem',
+                            display: 'block'
+                          }}>
+                            {forecast.minTemp}°
+                          </Typography>
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
                 </Box>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="body2" sx={{ color: '#666' }}>
-                    최저기온
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
-                    18°C
-                  </Typography>
-                </Box>
-              </Box>
+              )}
             </Box>
           </RightCalendarArea>
         </MainContent>

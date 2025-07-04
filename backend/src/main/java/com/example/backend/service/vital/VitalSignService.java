@@ -29,7 +29,7 @@ public class VitalSignService {
     public SeniorDto.SeniorVitalDto createVital(Integer seniorId, VitalSignsDto.VitalCreateDto dto, Guardians guardian){
         // senior 조회
         Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId,guardian.getId())
-                .orElseThrow(() -> new EntityNotFoundException("해당 노인을 찾을수 없습니다"));
+                .orElseThrow(() -> new EntityNotFoundException("해당 보호 대상자를 찾을수 없습니다"));
         // 생체 기록 생성
         VitalSigns vitalSigns = VitalSigns.builder()
                 .senior(senior)
@@ -52,7 +52,7 @@ public class VitalSignService {
     // 조회 서비스
     public SeniorDto.SeniorVitalDto searchVital(Integer seniorId, Guardians guardian){
         Seniors seniors = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
-                .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("해당 보호 대상자를 찾을 수 없습니다."));
 
         return convertToSeniorVitalDto(seniors);
     }
@@ -61,7 +61,7 @@ public class VitalSignService {
     @Transactional
     public SeniorDto.SeniorVitalDto deleteVital(Integer seniorId, Integer vitalId, Guardians guardian){
         Seniors seniors = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
-                .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("해당 보호 대상자를 찾을 수 없습니다."));
         List<VitalSigns> vitalSigns = Optional.ofNullable(seniors.getVitalSigns())
                 .orElse(new ArrayList<>());
 
@@ -81,7 +81,7 @@ public class VitalSignService {
     @Transactional
     public SeniorDto.SeniorVitalDto updateVital(Integer seniorId, Integer vitalId, VitalSignsDto.VitalUpdateDto updateDto, Guardians guardian){
         Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
-                .orElseThrow(() -> new SecurityException("해당 노인에 대한 접근 권한이 없습니다."));
+                .orElseThrow(() -> new SecurityException("해당 보호 대상자에 대한 접근 권한이 없습니다."));
 
         VitalSigns vitalSign = senior.getVitalSigns().stream()
                 .filter(vital -> vital.getId().equals(vitalId))

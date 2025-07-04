@@ -914,7 +914,8 @@ const Home = () => {
                     display: 'flex', 
                     gap: 2, 
                     mb: 1.5,
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    flexWrap: 'wrap'
                   }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <Chip label="정상" color="success" size="small" />

@@ -84,6 +84,19 @@ public class Seniors {
         dailyActivity.setSenior(this);
     }
 
+    // 생체기록 저장용 컬럼
+    @OneToMany(mappedBy = "senior", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<VitalSigns> vitalSigns = new ArrayList<>();
+    // 생체 기록 저장용 도우미 메서드
+    public void addVitalSign(VitalSigns vitalSign) {
+        this.vitalSigns.add(vitalSign);
+        vitalSign.setSenior(this);
+    }
+    // 생체 기록 삭제용 도우미 메서드
+    public void removeVitalSign(VitalSigns vitalSign) {
+        this.vitalSigns.remove(vitalSign);
+        vitalSign.setSenior(null);
+    }
     /**
      * 엔티티 저장 전 실행되는 메서드들은 아래에 작성
      */

@@ -2,6 +2,7 @@ package com.example.backend.dto;
 
 import com.example.backend.DB.DailyActivities;
 import com.example.backend.DB.Seniors;
+import com.example.backend.dto.seviceDto.VitalSignsDto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 
@@ -238,4 +239,12 @@ public class SeniorDto {
             );
         }
     }
+    // 생체 기록 관련 Dto
+    @Builder
+    public record SeniorVitalDto(
+            Integer id,
+            String seniorName,
+            List<VitalSignsDto.VitalSearchDto> vitalSigns
+    ) {}
+
 }

@@ -9,7 +9,8 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,  
-  Chip,  
+  Chip,
+  IconButton,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -27,7 +28,9 @@ import {
   LocationOnOutlined,
   SettingsOutlined,
   AddOutlined,
-  EditOutlined
+  EditOutlined,
+  ChevronLeft,
+  ChevronRight
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
 import { getWeatherInfo } from '../utils/weatherAPI';
@@ -220,9 +223,171 @@ const Home = () => {
   });
   const [loading, setLoading] = useState(true); // 로딩 상태 (데이터 로딩 중일 때 '...' 표시)
   
-  // Daily Activities 최근 활동 현황용 State
+  // 빠른 작업 데이터 관리용 State (2025.07.04 신규 추가)
+  const [recentActions, setRecentActions] = useState([
+    { text: '회원정보 관리', icon: EditOutlined, path: '/profile/edit', lastUsed: new Date('2025-07-04T10:20:00') },
+    { text: '보호 대상자 관리', icon: PeopleOutlined, path: '/seniors', lastUsed: new Date('2025-07-04T09:15:00') },
+    { text: '안전 모니터링', icon: SecurityOutlined, path: '/monitoring', lastUsed: new Date('2025-07-03T16:30:00') },
+    { text: '알림 설정', icon: SettingsOutlined, path: '/notifications', lastUsed: new Date('2025-07-03T14:20:00') }
+  ]);
+  
+  // 주소 기반 추천 병원 정보 State (2025.07.04 신규 추가)
+  const [recommendedHospital, setRecommendedHospital] = useState({
+    yadmNm: '부산대학교병원',
+    telno: '051-240-7000',
+    addr: '부산광역시 서구 구덕로 179'
+  });
+  
+  // 부산 지역 병원 목록 State (2025.07.04 신규 추가)
+  const [busanHospitals, setBusanHospitals] = useState([]);
+  const [hospitalLoading, setHospitalLoading] = useState(false);
+  
+  // 최근 활동 데이터 State (2025.07.04 신규 추가)
   const [recentActivitiesData, setRecentActivitiesData] = useState([]);
-  const [activitiesLoading, setActivitiesLoading] = useState(true);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
+  
+  // 주소 기반 추천 병원 로드 함수 (2025.07.04 신규 추가)
+  const loadRecommendedHospital = async () => {
+    try {
+      console.log('추천 병원 API 호출 시작');
+      setHospitalLoading(true);
+      
+      // 부산 지역 전체 병원 목록 조회 (유일한 작동하는 엔드포인트)
+      const response = await axios.get('http://localhost:8080/api/hospital/busan', {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 5000 // 5초 타임아웃
+      });
+      
+      console.log('부산 병원 목록 응답:', response.data);
+      
+      // API 응답에서 병원 데이터 추출 및 디버깅
+      console.log('API 응답 전체 구조:', response.data);
+      
+      if (response.data && response.data.response && response.data.response.body && response.data.response.body.items) {
+        const items = response.data.response.body.items.item;
+        console.log('추출된 items:', items);
+        console.log('items 타입:', typeof items);
+        console.log('items는 배열인가?', Array.isArray(items));
+        
+        let hospitalsList = [];
+        
+        if (Array.isArray(items)) {
+          hospitalsList = items;
+        } else if (items) {
+          hospitalsList = [items]; // 단일 아이템인 경우 배열로 변환
+        }
+        
+        console.log('처리된 hospitalsList:', hospitalsList);
+        console.log('hospitalsList 길이:', hospitalsList.length);
+        
+        // 병원 목록이 비어있지 않은 경우만 처리
+        if (hospitalsList.length > 0) {
+          // 병원 목록 저장
+          setBusanHospitals(hospitalsList);
+          
+          // 첫 번째 병원을 추천 병원으로 설정
+          const firstHospital = hospitalsList[0];
+          console.log('첫 번째 병원 데이터:', firstHospital);
+          
+          setRecommendedHospital({
+            yadmNm: firstHospital.yadmNm || '부산대학교병원',
+            telno: firstHospital.telno || '051-240-7000',
+            addr: firstHospital.addr || '부산광역시 서구 구덕로 179'
+          });
+          console.log('추천 병원 설정 완료:', firstHospital.yadmNm);
+          console.log('총 병원 수:', hospitalsList.length);
+          return; // 성공시 여기서 종료
+        } else {
+          console.warn('병원 목록이 비어있습니다.');
+        }
+      } else {
+        console.warn('API 응답 구조가 예상과 다릅니다.');
+        console.log('response.data:', response.data);
+        console.log('response.data.response:', response.data?.response);
+        console.log('response.data.response.body:', response.data?.response?.body);
+        console.log('response.data.response.body.items:', response.data?.response?.body?.items);
+      }
+      
+      // API 응답이 없거나 비어있는 경우 예외 발생
+      throw new Error('병원 API에서 유효한 데이터를 받지 못함');
+      
+    } catch (error) {
+      console.error('추천 병원 로드 오류:', error);
+      
+      // 서버 연결 실패 시 Mock 데이터 사용
+      console.error('서버 연결 실패. Mock 데이터 사용.');
+      const mockHospitals = [
+        {
+          yadmNm: '부산대학교병원 (Mock)',
+          telno: '051-240-7000',
+          addr: '부산광역시 서구 구덕로 179'
+        },
+        {
+          yadmNm: '인제대학교 부산백병원 (Mock)',
+          telno: '051-890-6114',
+          addr: '부산광역시 부산진구 복지로 75'
+        },
+        {
+          yadmNm: '가톨릭대학교 부산성모병원 (Mock)',
+          telno: '051-933-7114',
+          addr: '부산광역시 남구 용호로 232번길 25-14'
+        },
+        {
+          yadmNm: '동아대학교병원 (Mock)',
+          telno: '051-554-0114',
+          addr: '부산광역시 서구 대신공원로 26'
+        },
+        {
+          yadmNm: '부산의료원 (Mock)',
+          telno: '051-607-2000',
+          addr: '부산광역시 연제구 반송로 75'
+        },
+        {
+          yadmNm: '해운대백병원 (Mock)',
+          telno: '051-797-0100',
+          addr: '부산광역시 해운대구 해운대로 875'
+        }
+      ];
+      
+      setBusanHospitals(mockHospitals);
+      setRecommendedHospital(mockHospitals[0]);
+      console.log('Mock 병원 데이터 사용 완료');
+    } finally {
+      setHospitalLoading(false);
+    }
+  };
+  
+  // 병원 선택 함수 (2025.07.04 신규 추가)
+  const handleHospitalSelect = (hospital) => {
+    setRecommendedHospital(hospital);
+    console.log('병원 선택 완료:', hospital.yadmNm);
+  };
+  
+  // 빠른 작업 사용 기록 업데이트 함수
+  const updateRecentAction = (actionText) => {
+    setRecentActions(prev => 
+      prev.map(action => 
+        action.text === actionText 
+          ? { ...action, lastUsed: new Date() }
+          : action
+      ).sort((a, b) => new Date(b.lastUsed) - new Date(a.lastUsed)) // 최신 순으로 정렬
+    );
+  };
+  
+  // 빠른 작업 클릭 핸들러
+  const handleQuickActionClick = (action) => {
+    updateRecentAction(action.text);
+    
+    if (action.path) {
+      if (action.path.startsWith('/')) {
+        navigate(action.path);
+      } else {
+        console.log(`${action.text} 클릭됨 - 기능 준비 중`);
+      }
+    }
+  };
 
   useEffect(() => {
     const savedName = localStorage.getItem('guardianName');
@@ -241,6 +406,8 @@ const Home = () => {
     loadDataForDate(new Date());
     // 날씨 정보 로드
     loadWeatherData();
+    // 추천 병원 정보 로드 (2025.07.04 추가)
+    loadRecommendedHospital();
   }, []);
   
   // =================================================================
@@ -359,8 +526,8 @@ const Home = () => {
   };
   
   // =================================================================
-  // 특정 날짜의 활동 현황 데이터를 백엔드 API에서 가져오는 함수 (2025.07.03 수정)
-  // API: GET /api/seniors/0/dailyActivities/recent-activities?limit=5&date=YYYY-MM-DD
+  // 특정 날짜의 활동 현황 데이터를 백엔드 API에서 가져오는 함수 (2025.07.04 수정)
+  // 단계 1: Senior 목록 조회 후 첫 번째 Senior의 활동 데이터 로드
   // 목적: 선택된 날짜의 '최근 활동 현황' 섹션을 실제 Daily Activities 데이터로 교체
   // =================================================================
   const loadRecentActivitiesForDate = async (date) => {
@@ -382,25 +549,99 @@ const Home = () => {
       
       console.log('Activities API 호출 날짜:', dateString);
       
-      // 백엔드 DailyController의 recent-activities 엔드포인트 호출 (날짜 파라미터 추가)
-      const response = await axios.get(`http://localhost:8080/api/seniors/0/dailyActivities/recent-activities?limit=10&date=${dateString}`, {
+      // 단계 1: 현재 Guardian의 Senior 목록 조회
+      const seniorsResponse = await axios.get(`http://localhost:8080/api/seniors`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
       
-      console.log(`${dateString} Activities 데이터 응답:`, response.data);
+      console.log('Senior 목록 응답:', seniorsResponse.data);
       
-      // API 응답 데이터를 상태에 저장
-      // 예상 형태: [{ time: "14:30", user: "테스트 할머니", activity: "식사 3회...", status: "success" }]
-      setRecentActivitiesData(response.data || []);
+      // Senior 목록에서 첫 번째 Senior 선택
+      const seniors = seniorsResponse.data.content || [];
+      if (seniors.length === 0) {
+        console.warn('관리하는 Senior가 없습니다.');
+        setRecentActivitiesData([]);
+        return;
+      }
+      
+      const firstSeniorId = seniors[0].id;
+      console.log('첫 번째 Senior ID:', firstSeniorId);
+      
+      // 단계 2: 해당 Senior의 전체 Daily Activities 조회 후 날짜별 필터링
+      const activitiesResponse = await axios.get(`http://localhost:8080/api/seniors/${firstSeniorId}/dailyActivities`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log(`전체 Activities 데이터 응답:`, activitiesResponse.data);
+      console.log('activitiesResponse.data 타입:', typeof activitiesResponse.data);
+      console.log('activitiesResponse.data의 키들:', Object.keys(activitiesResponse.data || {}));
+      
+      // 응답 데이터에서 dailyActivities 배열 추출
+      // 백엔드는 SeniorDailyListDto를 반환: { seniors: [{ id, seniorName, dailyActivities }] }
+      const seniorData = activitiesResponse.data?.seniors?.[0]; // 첫 번째 Senior 선택
+      const allActivities = seniorData?.dailyActivities || [];
+      
+      console.log('seniorData:', seniorData);
+      console.log('allActivities 개수:', allActivities.length);
+      console.log('allActivities 샘플:', allActivities.slice(0, 2));
+      
+      // 선택된 날짜의 활동만 필터링
+      const filteredActivities = allActivities.filter(activity => {
+        // activityDate를 YYYY-MM-DD 형식으로 변환하여 비교
+        const activityDate = activity.activityDate;
+        if (activityDate) {
+          // 날짜만 비교 (2025-07-01 형식)
+          return activityDate === dateString;
+        }
+        return false;
+      });
+      
+      console.log(`${dateString} 필터링된 Activities:`, filteredActivities);
+      
+      // 프론트엔드에서 사용할 형식으로 변환
+      const formattedActivities = filteredActivities.slice(0, 10).map(activity => {
+        // status 판정 로직 수정 (현실적인 기준)
+        let status = 'success'; // 기본값을 정상으로 (긍정적 접근)
+        
+        // 1순위: 심각한 문제만 긴급으로 처리
+        if (activity.sleepQuality === 'bad' || activity.mealCount === 0) {
+          status = 'error';
+        }
+        // 2순위: 약간의 주의가 필요한 경우
+        else if (activity.sleepQuality === 'normal' || activity.mealCount === 1) {
+          status = 'warning';
+        }
+        // 3순위: 나머지는 모두 정상 (기본값)
+        
+        console.log(`Activity ${activity.id}: sleep=${activity.sleepQuality}, meal=${activity.mealCount} -> status=${status}`);
+        
+        return {
+          time: activity.createdAt ? new Date(activity.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '--:--',
+          user: seniorData?.seniorName || '어르신',
+          activity: `식사 ${activity.mealCount || 0}회, 수면: ${activity.sleepQuality || '미기록'}, ${activity.dailyNotes || '상세내용없음'}`,
+          status: status
+        };
+      });
+      
+      setRecentActivitiesData(formattedActivities);
       
     } catch (error) {
       console.error('Recent Activities 데이터 로드 오류:', error);
       
       if (error.response?.status === 401) {
         console.error('인증 만료. 로그인이 필요합니다.');
+      } else if (error.response?.status === 404) {
+        console.error('Senior 또는 Activities API를 찾을 수 없습니다.');
+        setRecentActivitiesData([]);
+      } else if (error.response?.status === 403) {
+        console.error('해당 Senior에 대한 접근 권한이 없습니다.');
+        setRecentActivitiesData([]);
       } else {
         // 오류 시 기본값 유지 (빈 배열)
         console.error('Recent Activities 데이터 로드 실패. 기본값 사용.');
@@ -551,9 +792,11 @@ const Home = () => {
                 className={activeMenu === item.text ? 'active' : ''}
                 onClick={() => {
                   if (item.text === '회원정보 관리') {
+                    updateRecentAction(item.text);
                     navigate('/profile/edit');
                   } else {
                     setActiveMenu(item.text);
+                    updateRecentAction(item.text);
                   }
                 }}
               >
@@ -658,6 +901,73 @@ const Home = () => {
                   📋 최근 활동 현황
                 </Typography>
                 
+                {/* 상태 표시 범례 및 기준 설명 추가 */}
+                <Box sx={{ 
+                  mb: 2, 
+                  p: 2, 
+                  backgroundColor: '#f8f9fa', 
+                  borderRadius: '10px',
+                  border: '1px solid #e0e0e0'
+                }}>
+                  {/* 범례 */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    gap: 2, 
+                    mb: 1.5,
+                    justifyContent: 'center'
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Chip label="정상" color="success" size="small" />
+                      <Typography variant="caption" color="text.secondary">양호</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Chip label="주의" color="warning" size="small" />
+                      <Typography variant="caption" color="text.secondary">보통</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Chip label="긴급" color="error" size="small" />
+                      <Typography variant="caption" color="text.secondary">위험</Typography>
+                    </Box>
+                  </Box>
+                  
+                  {/* 판정 기준 설명 */}
+                  <Box sx={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '1fr 1fr 1fr', 
+                    gap: 1.5,
+                    pt: 1.5,
+                    borderTop: '1px solid #e0e0e0'
+                  }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#2e7d32', display: 'block', mb: 0.5 }}>
+                        🟢 정상 조건
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#666', lineHeight: 1.3 }}>
+                        수면 상태 좋음<br/>
+                        또는 식사 2회 이상
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#ed6c02', display: 'block', mb: 0.5 }}>
+                        🟡 주의 조건
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#666', lineHeight: 1.3 }}>
+                        수면 상태 보통<br/>
+                        또는 식사 1회
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#d32f2f', display: 'block', mb: 0.5 }}>
+                        🔴 긴급 조건
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#666', lineHeight: 1.3 }}>
+                        수면 상태 나쁨<br/>
+                        또는 식사 0회
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                
                 {/* 로딩 상태 또는 데이터 없을 때 처리 (2025.07.02 신규 추가) */}
                 {/* 기존: 하드코딩된 recentActivities.map() -> 실제 API 데이터 recentActivitiesData */}
                 {activitiesLoading ? (
@@ -677,60 +987,165 @@ const Home = () => {
                   recentActivitiesData.map((activity, index) => (
                     <ActivityItem key={index}>
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="body1" fontWeight="500">
-                          {activity.user}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Typography variant="body1" fontWeight="500">
+                            {activity.user}
+                          </Typography>
+                          <Chip
+                            label={
+                              activity.status === 'warning' ? '주의' :
+                              activity.status === 'success' ? '정상' : '긴급'
+                            }
+                            color={activity.status === 'warning' ? 'warning' : 
+                                    activity.status === 'success' ? 'success' : 'error'}
+                            size="small"
+                          />
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.4 }}>
                           {activity.activity}
                         </Typography>
                       </Box>
-                      <Box sx={{ textAlign: 'right' }}>
+                      <Box sx={{ textAlign: 'right', minWidth: '60px' }}>
                         <Typography variant="body2" color="text.secondary">
                           {activity.time}
                         </Typography>
-                        <Chip
-                          label={
-                            activity.status === 'warning' ? '주의' :
-                            activity.status === 'success' ? '정상' : '긴급'
-                          }
-                          color={activity.status === 'warning' ? 'warning' : 
-                                  activity.status === 'success' ? 'success' : 'error'}
-                          size="small"
-                        />
                       </Box>
                     </ActivityItem>
                   ))
                 )}
               </ActivityBox>
 
-              {/* 오른쪽 박스 - 빠른 작업 */}
+              {/* 오른쪽 박스 - 오늘의 할 일 & 요약 */}
               <QuickActionBox elevation={0}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  ⚡ 빠른 작업
+                  📊 오늘의 요약
                 </Typography>
                 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 2 }}>
-                  {quickActions.map((action, index) => {
-                    const IconComponent = action.icon;
-                    return (
-                      <Button
-                        key={index}
-                        fullWidth
-                        variant="outlined"
-                        startIcon={<IconComponent />}
-                        sx={{ 
-                          justifyContent: 'flex-start', 
-                          py: 1.5,
-                          textTransform: 'none'
-                        }}
-                        onClick={() => {
-                          console.log(`클릭: ${action.text}`);
-                        }}
-                      >
-                        {action.text}
-                      </Button>
-                    );
-                  })}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  
+                  {/* 대상자 요약 */}
+                  <Paper sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2' }}>
+                      👥 관리 대상자
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        총 {loading ? '...' : seniorStats.totalSeniors}명 관리 중
+                      </Typography>
+                      <Chip 
+                        label={loading ? '...' : `${seniorStats.alerts}건 주의`} 
+                        color={seniorStats.alerts > 0 ? 'warning' : 'success'} 
+                        size="small" 
+                      />
+                    </Box>
+                  </Paper>
+
+                  {/* 오늘의 할 일 */}
+                  <Paper sx={{ p: 2, backgroundColor: '#fff3e0', borderRadius: '10px' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#f57c00' }}>
+                      ✅ 오늘의 할 일
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2">• 정기 건강 체크</Typography>
+                        <Chip label="2명" size="small" variant="outlined" />
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2">• 약물 복용 확인</Typography>
+                        <Chip label="3명" size="small" variant="outlined" />
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2">• 안전 확인 전화</Typography>
+                        <Chip label="1명" size="small" variant="outlined" />
+                      </Box>
+                    </Box>
+                  </Paper>
+
+                  {/* 추천 주변 병원 정보 (2025.07.04 신규 추가) */}
+                  <Paper sx={{ p: 2, backgroundColor: '#e3f2fd', borderRadius: '10px' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2' }}>
+                      🏥 추천 주변 병원
+                    </Typography>
+                    
+                    {hospitalLoading ? (
+                      <Typography variant="body2" sx={{ color: '#666', textAlign: 'center', py: 1 }}>
+                        병원 정보를 불러오는 중...
+                      </Typography>
+                    ) : (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#333' }}>
+                          {recommendedHospital.yadmNm}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#666' }}>
+                          📍 {recommendedHospital.addr}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+                          📞 {recommendedHospital.telno}
+                        </Typography>
+                        
+                        {busanHospitals.length > 1 && (
+                          <Box sx={{ 
+                            mt: 1, 
+                            pt: 1, 
+                            borderTop: '1px solid #e0e0e0',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            gap: 0.5
+                          }}>
+                            <IconButton 
+                              size="small" 
+                              onClick={() => {
+                                const currentIndex = busanHospitals.findIndex(h => h.yadmNm === recommendedHospital.yadmNm);
+                                const prevIndex = currentIndex === 0 ? busanHospitals.length - 1 : currentIndex - 1;
+                                handleHospitalSelect(busanHospitals[prevIndex]);
+                              }}
+                              sx={{ 
+                                backgroundColor: '#f5f5f5',
+                                '&:hover': {
+                                  backgroundColor: '#e0e0e0'
+                                },
+                                width: '32px',
+                                height: '32px'
+                              }}
+                            >
+                              <ChevronLeft sx={{ color: '#1976d2', fontSize: '18px' }} />
+                            </IconButton>
+                            
+                            <Typography variant="caption" sx={{ 
+                              color: '#666',
+                              minWidth: '40px',
+                              textAlign: 'center',
+                              fontSize: '0.8rem',
+                              fontWeight: 'bold'
+                            }}>
+                              {busanHospitals.findIndex(h => h.yadmNm === recommendedHospital.yadmNm) + 1} / {busanHospitals.length}
+                            </Typography>
+                            
+                            <IconButton 
+                              size="small" 
+                              onClick={() => {
+                                const currentIndex = busanHospitals.findIndex(h => h.yadmNm === recommendedHospital.yadmNm);
+                                const nextIndex = (currentIndex + 1) % busanHospitals.length;
+                                handleHospitalSelect(busanHospitals[nextIndex]);
+                              }}
+                              sx={{ 
+                                backgroundColor: '#f5f5f5',
+                                '&:hover': {
+                                  backgroundColor: '#e0e0e0'
+                                },
+                                width: '32px',
+                                height: '32px'
+                              }}
+                            >
+                              <ChevronRight sx={{ color: '#1976d2', fontSize: '18px' }} />
+                            </IconButton>
+                          </Box>
+                        )}
+                      </Box>
+                    )}
+                  </Paper>
+
                 </Box>
               </QuickActionBox>
             </BottomBoxContainer>
@@ -757,8 +1172,7 @@ const Home = () => {
                 backgroundColor: 'transparent'
               },
               '& .react-calendar__navigation': {
-                marginBottom: '10px',
-                height: '44px',
+                height: '20px',
                 display: 'flex',
                 alignItems: 'center'
               },
@@ -782,7 +1196,7 @@ const Home = () => {
                 justifyContent: 'space-between'
               },
               '& .react-calendar__month-view__weekdays__weekday': {
-                padding: '8px 4px',
+                padding: '4px 4px',
                 fontSize: '14px',
                 fontWeight: 'bold',
                 textAlign: 'center',
@@ -853,214 +1267,215 @@ const Home = () => {
               flex: 1,
               border: '1px solid #e0e0e0',
               borderRadius: '10px',
-              padding: '12px',
+              padding: '10px',
               backgroundColor: '#f8f9fa',
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px',
-              overflow: 'hidden', // 내부 스크롤 방지
-              minHeight: 0 // flexbox 축소 허용
+              gap: '5px',
+              overflow: 'hidden',
+              minHeight: 0
             }}>
               {/* 위치 정보 */}
               <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center',
-                justifyContent: 'center',
-                mb: 0.5
+                textAlign: 'center',
+                mb: 1
               }}>
-                <Typography variant="body2" sx={{ color: '#666', fontWeight: 'bold' }}>
+                <Typography variant="body1" sx={{ 
+                  color: '#666', 
+                  fontWeight: 'bold', 
+                  fontSize: '1.8rem' 
+                }}>
                   {weather.location}
                 </Typography>
               </Box>
               
+              {/* 메인 날씨 정보 - 가로 배치 */}
               <Box sx={{ 
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '12px',
+                gap: '25px',
                 mb: 1
               }}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h4" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+                {/* 온도 정보 (현재 + 최고/최저) */}
+                <Box sx={{ textAlign: 'center', flex: 1.5 }}>
+                  <Typography variant="h3" sx={{ 
+                    fontSize: '50px',
+                    color: '#1976d2', 
+                    fontWeight: 'bold', 
+                    mb: 1 }}>
                     {weather.temperature}
                   </Typography>
-                  {/* 최고/최저 온도를 메인 온도 아래 배치 */}
-                  <Box sx={{ 
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    mt: 0.5
-                  }}>
-                    <Typography variant="body2" sx={{ 
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
+                    <Typography variant="body2" sx={{
+                      fontSize: '20px', 
                       fontWeight: 'bold',
                       color: '#d32f2f'
                     }}>
                       최고 {weather.maxTemp}
                     </Typography>
                     <Typography variant="body2" sx={{ 
+                      fontSize: '20px', 
                       color: '#1976d2'
                     }}>
                       최저 {weather.minTemp}
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                  {/* 메인 날씨 아이콘 */}
+                
+                {/* 날씨 아이콘 + 상태 + 습도 */}
+                <Box sx={{ textAlign: 'center', flex: 1 }}>
                   {weather.icon && (
-                    <img 
-                      src={`https://openweathermap.org/img/wn/${weather.icon}@4x.png`}
-                      alt={weather.condition}
-                      style={{
-                        width: '50px',
-                        height: '50px',
-                        objectFit: 'contain',
-                        backgroundColor: 'white',
-                        borderRadius: '50%',
-                        padding: '5px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                        border: '1px solid #e0e0e0' // 테두리 추가
-                      }}
-                    />
+                    <Box sx={{
+                      width: '70px',
+                      height: '70px',
+                      backgroundColor: 'white',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      border: '1px solid #e0e0e0',
+                      margin: '0 auto 8px auto'
+                    }}>
+                      <img 
+                        src={`https://openweathermap.org/img/wn/${weather.icon}@4x.png`}
+                        alt={weather.condition}
+                        style={{
+                          width: '50px',
+                          height: '50px',
+                          objectFit: 'contain'
+                        }}
+                      />
+                    </Box>
                   )}
-                  {/* 아이콘 옆 날씨 상태 텍스트 제거 - 아래쪽에서 표시 */}
+                  <Typography variant="body2" sx={{ 
+                    fontSize: '1.2rem',
+                    color: '#333', 
+                    mb: 0, 
+                    fontWeight: 'bold' 
+                  }}>
+                    {weather.condition}
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    color: '#666',
+                    fontSize: '0.9rem',
+                  }}>
+                    습도: {weather.humidity}
+                  </Typography>
                 </Box>
-              </Box>              
-              {/* 날씨 상태와 습도 */}
-              <Box sx={{ 
-                textAlign: 'center',
-                mb: 1
-              }}>
-                <Typography variant="body1" sx={{ color: '#333' }}>
-                  {weather.condition}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#666' }}>
-                  습도: {weather.humidity}
-                </Typography>                
               </Box>
               
-              {/* 기존 최고/최저 온도 섹션 제거 */}
-              
-              {/* 요일별 날씨 예보 */}
+              {/* 4일간 예보 - 가로 배치 */}
               {weather.weeklyForecast && weather.weeklyForecast.length > 0 && (
                 <Box sx={{ 
-                  mt: 1,
-                  pt: 1,
-                  borderTop: '1px solid #e0e0e0',
-                  flex: 1,
-                  minHeight: 0,
-                  overflow: 'hidden'
+                  pt: 2,
+                  borderTop: '1px solid #e0e0e0'
                 }}>
-                  <Typography variant="body1" sx={{ 
+                  <Typography variant="body2" sx={{ 
                     color: '#666', 
-                    mb: 1, 
+                    mb: 1.5, 
                     fontWeight: 'bold',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    fontSize: '1rem'
                   }}>
                     4일간 예보
                   </Typography>
                   
                   <Box sx={{ 
-                    display: 'flex',
-                    flexDirection: 'row',
-                    gap: '8px',
-                    overflowX: 'auto',
-                    paddingBottom: '4px',
-                    width: '100%',
-                    minWidth: 0,
-                    justifyContent: 'center', // 중앙 정렬 추가
-                    '&::-webkit-scrollbar': {
-                      height: '4px'
-                    },
-                    '&::-webkit-scrollbar-track': {
-                      background: '#f1f1f1',
-                      borderRadius: '2px'
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                      background: '#c1c1c1',
-                      borderRadius: '2px'
-                    }
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: '8px'
                   }}>
                     {weather.weeklyForecast.map((forecast, index) => (
                       <Box key={index} sx={{
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '6px 4px',
+                        padding: '8px 4px',
                         backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'transparent',
-                        borderRadius: '6px',
-                        minWidth: '55px',
-                        flexShrink: 0
+                        borderRadius: '8px'
                       }}>
                         {/* 요일 */}
-                        <Box sx={{ 
-                          textAlign: 'center',
-                          mb: 1
+                        <Typography variant="caption" sx={{ 
+                          fontWeight: 'bold',
+                          color: '#333',
+                          fontSize: '0.75rem',
+                          mb: 0.5
                         }}>
-                          <Typography variant="body2" sx={{ 
-                            fontWeight: 'bold',
-                            color: '#333',
-                            fontSize: '0.8rem'
-                          }}>
-                            {forecast.day}
-                          </Typography>
-                          <Typography variant="caption" sx={{ 
-                            color: '#666',
-                            fontSize: '0.7rem',
-                            display: 'block'
-                          }}>
-                            {forecast.date}
-                          </Typography>
-                        </Box>
+                          {forecast.day}
+                        </Typography>
                         
-                        {/* 날씨 아이콘 + 상태 */}
-                        <Box sx={{ 
-                          textAlign: 'center',
-                          mb: 1
+                        {/* 날씨 아이콘 */}
+                        <Box sx={{
+                          width: '36px',
+                          height: '36px',
+                          backgroundColor: 'white',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+                          border: '1px solid #e0e0e0',
+                          margin: '0 auto 4px auto'
                         }}>
-                          {/* 날씨 아이콘 */}
                           <img 
                             src={`https://openweathermap.org/img/wn/${forecast.icon}@2x.png`}
                             alt={forecast.condition}
-                            title={forecast.condition} // 호버 시 툴팁으로 날씨 설명 표시
+                            title={forecast.condition}
                             style={{
-                              width: '32px',
-                              height: '32px',
-                              objectFit: 'contain',
-                              backgroundColor: 'white',
-                              borderRadius: '50%',
-                              padding: '4px',
-                              border: '1px solid #ddd',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.15)' // 그림자 강화
+                              width: '24px',
+                              height: '24px',
+                              objectFit: 'contain'
                             }}
                           />
                         </Box>
                         
                         {/* 온도 */}
-                        <Box sx={{ 
-                          textAlign: 'center'
+                        <Typography variant="caption" sx={{ 
+                          fontWeight: 'bold',
+                          color: '#d32f2f',
+                          fontSize: '0.9rem'
                         }}>
-                          <Typography variant="caption" sx={{ 
-                            fontWeight: 'bold',
-                            color: '#d32f2f',
-                            fontSize: '0.75rem',
-                            display: 'block'
-                          }}>
-                            {forecast.maxTemp}°
-                          </Typography>
-                          <Typography variant="caption" sx={{ 
-                            color: '#1976d2',
-                            fontSize: '0.75rem',
-                            display: 'block'
-                          }}>
-                            {forecast.minTemp}°
-                          </Typography>
-                        </Box>
+                          {forecast.maxTemp}°
+                        </Typography>
+                        <Typography variant="caption" sx={{ 
+                          color: '#1976d2',
+                          fontSize: '0.9rem'
+                        }}>
+                          {forecast.minTemp}°
+                        </Typography>
                       </Box>
                     ))}
                   </Box>
                 </Box>
               )}
+              
+              {/* API 출처 표시 (2025.07.04 추가) */}
+              <Box sx={{ 
+                textAlign: 'center',                
+                borderTop: '1px solid #e0e0e0'
+              }}>
+                <Typography variant="caption" sx={{ 
+                  color: '#999',
+                  fontSize: '0.65rem',
+                  fontStyle: 'italic'
+                }}>
+                  Powered by{' '}
+                  <a 
+                    href="https://openweathermap.org/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{
+                      color: '#1976d2',
+                      textDecoration: 'none',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    OpenWeatherMap
+                  </a>
+                </Typography>
+              </Box>
             </Box>
           </RightCalendarArea>
         </MainContent>

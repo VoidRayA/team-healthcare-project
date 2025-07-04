@@ -40,12 +40,12 @@ public class DailyActivitiesService {
             // 1단계: 해당 Senior가 존재하고 Guardian이 소유하는지 확인 (권한 체크 추가)
             Optional<Seniors> seniorOpt = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId());
             if (seniorOpt.isEmpty()) {
-                System.out.println("Senior가 없거나 권한이 없음 - 403 오류 발생 예상");
-                throw new EntityNotFoundException("해당 Senior를 찾을 수 없거나 접근 권한이 없습니다.");
+                System.out.println("보호 대상자가 없거나 권한이 없음 - 403 오류 발생 예상");
+                throw new EntityNotFoundException("해당 보호 대상자를 찾을 수 없거나 접근 권한이 없습니다.");
             }
             
             Seniors senior = seniorOpt.get();
-            System.out.println("Senior 찾음: " + senior.getSeniorName() + " (소유자: " + senior.getGuardian().getGuardianName() + ")");
+            System.out.println("보호 대상자 찾음: " + senior.getSeniorName() + " (소유자: " + senior.getGuardian().getGuardianName() + ")");
             
             // 2단계: 해당 Senior의 기존 활동 기록들을 체크
             if (senior.getActivities() != null) {
@@ -247,7 +247,7 @@ public class DailyActivitiesService {
     // guardian이 관리하는 특정 senior 조회
     public SeniorDto.SeniorDailyDto getDaily(Integer seniorId, Integer activityId, Guardians guardian) {
         Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
-                .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("해당 보호 대상자를 찾을 수 없습니다."));
 
         return convertToSeniorDailyDto(senior);
     }
@@ -256,7 +256,7 @@ public class DailyActivitiesService {
     public SeniorDto.SeniorDailyDto deleteDaily(Integer seniorId, Integer activityId, Guardians guardian) {
         // 특정 senior 정보 조회
         Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
-                .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("해당 보호 대상자를 찾을 수 없습니다."));
 
         // 특정 senior의 dailyActivities를 가져옴
         List<DailyActivities> activities = Optional.ofNullable(senior.getActivities())

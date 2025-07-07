@@ -234,5 +234,4 @@ public class SeniorDto {
             String seniorName,
             List<VitalSignsDto.VitalSearchDto> vitalSigns
     ) {}
-
 }

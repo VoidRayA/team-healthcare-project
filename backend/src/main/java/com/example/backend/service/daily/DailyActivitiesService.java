@@ -276,9 +276,8 @@ public class DailyActivitiesService {
         return convertToSeniorDailyDto(senior);
     }
 
-        // Seniors Entity를 SeniorDailyDto로 변환하는 헬퍼 메서드
-        //  순환 참조를 방지하기 위해 Entity를 DTO로 변환
-
+    // Seniors Entity를 SeniorDailyDto로 변환하는 헬퍼 메서드
+    //  순환 참조를 방지하기 위해 Entity를 DTO로 변환
     private SeniorDto.SeniorDailyDto convertToSeniorDailyDto(Seniors senior) {
         // 활동 기록들을 DTO로 변환
         List<SeniorDto.ActivityResponseDto> activitiesDto = Optional.ofNullable(senior.getActivities())
@@ -316,18 +315,6 @@ public class DailyActivitiesService {
                 .orElseThrow(() -> new RuntimeException("Activity not found"));
 
         // 활동 기록 수정 (null 체크 후 업데이트)
-//        if (updateDto.mealCount() != 0) {
-//            targetActivity.setMealCount(updateDto.mealCount());
-//        }
-//        if (updateDto.medicationTaken() != null) {
-//            targetActivity.setMedicationTaken(updateDto.medicationTaken());
-//        }
-//        if (updateDto.outdoorActivity() != null) {
-//            targetActivity.setOutdoorActivity(updateDto.outdoorActivity());
-//        }
-//        if (updateDto.sleepQuality() != null) {
-//            targetActivity.setSleepQuality(updateDto.sleepQuality());
-//        }
         if (updateDto.activityCategory() != null){
             targetActivity.setActivityCategory(updateDto.activityCategory());
         }
@@ -342,4 +329,5 @@ public class DailyActivitiesService {
         // DTO 변환 후 반환
         return SeniorDto.SeniorUpdateDailyDto.from(targetActivity);
     }
+
 }

@@ -6,6 +6,7 @@ import com.example.backend.DB.VitalSigns;
 import com.example.backend.dto.SeniorDto;
 import com.example.backend.dto.seviceDto.VitalSignsDto;
 import com.example.backend.repository.SeniorRepository;
+import com.example.backend.repository.VitalSignRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class VitalSignService {
 
     private final SeniorRepository seniorRepository;
+    private final VitalSignRepository vitalSignRepository;
 
     // 생성 서비스
     @Transactional
@@ -56,6 +58,32 @@ public class VitalSignService {
 
         return convertToSeniorVitalDto(seniors);
     }
+
+    // 특정 날짜 조회 서비스
+    public VitalSignsDto.VitalSearchDto getVital(Integer seniorId, Guardians guardian, VitalSigns vitalSigns){
+        Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
+                .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
+
+        List<VitalSigns> vitalSignsList  = vitalSignRepository.findByMeasurementTime(vitalSigns.getMeasurementTime());
+
+        VitalSigns targetVitalSign  = vitalSignsList.stream()
+                .filter(vs -> vs.getSenior().getId().equals(seniorId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("해당 Senior의 측정시간에 해당하는 VitalSign을 찾을 수 없습니다."));
+
+        return VitalSignsDto.VitalSearchDto.builder()
+                .id(targetVitalSign.getId())
+                .measurementTime(targetVitalSign.getMeasurementTime())
+                .bloodPressureHigh(targetVitalSign.getBloodPressureHigh())
+                .bloodPressureLow(targetVitalSign.getBloodPressureLow())
+                .heartRate(targetVitalSign.getHeartRate())
+                .bloodSugar(targetVitalSign.getBloodSugar())
+                .bodyTemperature(targetVitalSign.getBodyTemperature())
+                .isNormal(targetVitalSign.isNormal())
+                .notes(targetVitalSign.getNotes())
+                .build();
+    }
+
 
     // 삭제 서비스
     @Transactional

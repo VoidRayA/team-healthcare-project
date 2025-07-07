@@ -39,17 +39,8 @@ public class DailyActivities {
     @Column(name = "activity_date")
     private LocalDate activityDate;
 
-    @Column(name = "meal_count")
-    private int mealCount;
-
-    @Column(name = "medication_taken")
-    private Byte medicationTaken;
-
-    @Column(name = "outdoor_activity")
-    private Byte outdoorActivity;
-
-    @Column(name = "sleep_quality")
-    private String sleepQuality;
+    @Column(name = "activity_category")
+    private String activityCategory;
 
     @Column(name = "daily_notes")
     private String dailyNotes;

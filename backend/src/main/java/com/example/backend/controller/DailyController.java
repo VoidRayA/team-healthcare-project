@@ -7,7 +7,6 @@ import com.example.backend.config.CustomUserDetails;
 import com.example.backend.dto.SeniorDto;
 import com.example.backend.dto.seviceDto.DailyActivitiesDto;
 import com.example.backend.repository.SeniorRepository;
-import com.example.backend.service.SeniorService;
 import com.example.backend.service.daily.DailyActivitiesService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;

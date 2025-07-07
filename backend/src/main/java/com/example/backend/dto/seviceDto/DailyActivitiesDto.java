@@ -20,9 +20,6 @@ public class DailyActivitiesDto {
     private Integer activitiesId;           // 고유 ID
     private Seniors senior;                 // senior 참조
     private LocalDate activityDate;         // 활동 날짜
-    private int mealCount;                  // 식사 횟수
-    private Byte medicationTaken;           // 약 복용 여부
-    private Byte outdoorActivity;           // 외출 여부
-    private String sleepQuality;            // 수면상태
+    private String activityCategory;        // 비고
     private String dailyNotes;              // 일일 특이사항
 }

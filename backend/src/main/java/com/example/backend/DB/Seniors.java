@@ -97,6 +97,8 @@ public class Seniors {
         this.vitalSigns.remove(vitalSign);
         vitalSign.setSenior(null);
     }
+
+    //
     /**
      * 엔티티 저장 전 실행되는 메서드들은 아래에 작성
      */

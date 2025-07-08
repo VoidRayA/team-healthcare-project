@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.dto.HospitalDetailItem;
 import com.example.backend.service.ApiService;
+import com.example.backend.service.KakaoApiService;
 import com.example.backend.service.location.HospitalLocationService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,10 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class HospitalController {
     private final ApiService apiService;
     private final HospitalLocationService hospitalLocationService;
+    private final KakaoApiService kakaoApiService;
 
-    public HospitalController(ApiService apiService, HospitalLocationService hospitalLocationService) {
+    public HospitalController(ApiService apiService, HospitalLocationService hospitalLocationService, KakaoApiService kakaoApiService) {
         this.apiService = apiService;
         this.hospitalLocationService = hospitalLocationService;
+        this.kakaoApiService = kakaoApiService;
     }
 
     @GetMapping("/busan")
@@ -44,5 +47,25 @@ public class HospitalController {
         }
         
         return hospitalLocationService.getRecommendedHospital(address);
+    }
+    
+    /**
+     * 카카오 API를 사용한 부산 지역 병원 검색 (2025.07.08 신규 추가)
+     * @param query 검색어 (기본값: "병원")
+     * @param page 페이지 번호 (기본값: 1)
+     * @param size 한 페이지 결과 수 (기본값: 15)
+     * @param lat 검색 중심 위도 (기본값: 35.1796 - 부산시청)
+     * @param lon 검색 중심 경도 (기본값: 129.0756 - 부산시청)
+     * @return 카카오 API 기반 병원 정보
+     */
+    @GetMapping("/kakao/busan")
+    public String getBusanHospitalsFromKakao(
+            @RequestParam(value = "query", defaultValue = "병원") String query,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "15") int size,
+            @RequestParam(value = "lat", defaultValue = "35.1796") double lat,
+            @RequestParam(value = "lon", defaultValue = "129.0756") double lon
+    ) {
+        return kakaoApiService.searchBusanHospitals(query, page, size, lat, lon);
     }
 }

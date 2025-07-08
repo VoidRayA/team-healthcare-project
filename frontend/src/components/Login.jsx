@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+// API 클라이언트 import로 axios 대체 (2025.07.08)
+import { login } from '../api/apiClient';
 
 import {
   Box,
@@ -343,23 +344,16 @@ const Login = () => {
     setError('');
   
     try {
-      // 실제 백엔드 API 호출
-      const response = await axios.post(
-        'http://localhost:8080/api/auth/login',
-        {
-          loginId: user.userid,
-          loginPw: user.password
-        },
-        { 
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 5000 // 5초 타임아웃
-        }
-      );
+      // 실제 백엔드 API 호출 (apiClient 사용)
+      const response = await login({
+        loginId: user.userid,
+        loginPw: user.password
+      });
 
-      console.log('로그인 응답:', response.data);
+      console.log('로그인 응답:', response);
 
       // 응답에서 데이터 추출
-      const { accessToken, loginId, guardianName, role } = response.data;
+      const { accessToken, loginId, guardianName, role } = response;
       
       if (accessToken) {
         // rememberMe 처리

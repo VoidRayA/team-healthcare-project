@@ -33,10 +33,14 @@ import {
   ChevronRight
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
+import PasswordConfirmModal from './PasswordConfirmModal';
 import { getWeatherInfo } from '../utils/weatherAPI';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import axios from 'axios'; // API 호출을 위해 추가
+// API 클라이언트 import로 axios 대체 (2025.07.08)
+import { getSeniorsForDate, getAllSeniors, getSeniorDailyActivities, getBusanHospitals, getBusanHospitalsFromKakaoBackend } from '../api/apiClient';
+// 카카오 API 유틸리티 import (2025.07.08)
+import { searchBusanHospitals } from '../utils/kakaoAPI';
 
 // 전체 컨테이너 - 연한 파란 배경
 const MainContainer = styled(Box)({
@@ -225,7 +229,7 @@ const Home = () => {
   
   // 빠른 작업 데이터 관리용 State (2025.07.04 신규 추가)
   const [recentActions, setRecentActions] = useState([
-    { text: '회원정보 관리', icon: EditOutlined, path: '/profile/edit', lastUsed: new Date('2025-07-04T10:20:00') },
+    { text: '회원정보 관리', icon: EditOutlined, path: '/profile/management', lastUsed: new Date('2025-07-04T10:20:00') },
     { text: '보호 대상자 관리', icon: PeopleOutlined, path: '/seniors', lastUsed: new Date('2025-07-04T09:15:00') },
     { text: '안전 모니터링', icon: SecurityOutlined, path: '/monitoring', lastUsed: new Date('2025-07-03T16:30:00') },
     { text: '알림 설정', icon: SettingsOutlined, path: '/notifications', lastUsed: new Date('2025-07-03T14:20:00') }
@@ -244,118 +248,125 @@ const Home = () => {
   
   // 최근 활동 데이터 State (2025.07.04 신규 추가)
   const [recentActivitiesData, setRecentActivitiesData] = useState([]);
+  
+  // 비밀번호 확인 모달 상태
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [activitiesLoading, setActivitiesLoading] = useState(false);
   
-  // 주소 기반 추천 병원 로드 함수 (2025.07.04 신규 추가)
+  // 주소 기반 추천 병원 로드 함수 (위치 기반)
   const loadRecommendedHospital = async () => {
     try {
-      console.log('추천 병원 API 호출 시작');
+      console.log('추천 병원 조회 시작');
       setHospitalLoading(true);
       
-      // 부산 지역 전체 병원 목록 조회 (유일한 작동하는 엔드포인트)
-      const response = await axios.get('http://localhost:8080/api/hospital/busan', {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        timeout: 5000 // 5초 타임아웃
-      });
+      // 사용자 위치 가져오기
+      const position = await getCurrentPosition();
+      const { latitude, longitude } = position;
       
-      console.log('부산 병원 목록 응답:', response.data);
+      console.log('현재 위치:', latitude, longitude);
       
-      // API 응답에서 병원 데이터 추출 및 디버깅
-      console.log('API 응답 전체 구조:', response.data);
+      // 카카오 API로 현재 위치 근처 병원 검색
+      const result = await searchNearbyHospitals(latitude, longitude);
       
-      if (response.data && response.data.response && response.data.response.body && response.data.response.body.items) {
-        const items = response.data.response.body.items.item;
-        console.log('추출된 items:', items);
-        console.log('items 타입:', typeof items);
-        console.log('items는 배열인가?', Array.isArray(items));
+      console.log('카카오 병원 검색 결과:', result);
+      
+      if (result.success && result.places && result.places.length > 0) {
+        // 카카오 API 결과를 병원 목록으로 변환
+        const kakaoHospitals = result.places.map(place => ({
+          yadmNm: place.name,
+          telno: place.phone || '전화번호 정보 없음',
+          addr: place.roadAddress || place.address,
+          distance: place.distance ? `${Math.round(place.distance)}m` : '',
+          categoryName: place.category
+        }));
         
-        let hospitalsList = [];
+        setBusanHospitals(kakaoHospitals);
+        setRecommendedHospital(kakaoHospitals[0]);
         
-        if (Array.isArray(items)) {
-          hospitalsList = items;
-        } else if (items) {
-          hospitalsList = [items]; // 단일 아이템인 경우 배열로 변환
-        }
-        
-        console.log('처리된 hospitalsList:', hospitalsList);
-        console.log('hospitalsList 길이:', hospitalsList.length);
-        
-        // 병원 목록이 비어있지 않은 경우만 처리
-        if (hospitalsList.length > 0) {
-          // 병원 목록 저장
-          setBusanHospitals(hospitalsList);
-          
-          // 첫 번째 병원을 추천 병원으로 설정
-          const firstHospital = hospitalsList[0];
-          console.log('첫 번째 병원 데이터:', firstHospital);
-          
-          setRecommendedHospital({
-            yadmNm: firstHospital.yadmNm || '부산대학교병원',
-            telno: firstHospital.telno || '051-240-7000',
-            addr: firstHospital.addr || '부산광역시 서구 구덕로 179'
-          });
-          console.log('추천 병원 설정 완료:', firstHospital.yadmNm);
-          console.log('총 병원 수:', hospitalsList.length);
-          return; // 성공시 여기서 종료
-        } else {
-          console.warn('병원 목록이 비어있습니다.');
-        }
+        console.log(`카카오 API로 ${kakaoHospitals.length}개 병원 로드 완료`);
       } else {
-        console.warn('API 응답 구조가 예상과 다릅니다.');
-        console.log('response.data:', response.data);
-        console.log('response.data.response:', response.data?.response);
-        console.log('response.data.response.body:', response.data?.response?.body);
-        console.log('response.data.response.body.items:', response.data?.response?.body?.items);
+        console.warn('카카오 API에서 병원 정보를 찾을 수 없음');
+        setError('근처 병원 정보를 찾을 수 없습니다.');
       }
       
-      // API 응답이 없거나 비어있는 경우 예외 발생
-      throw new Error('병원 API에서 유효한 데이터를 받지 못함');
-      
     } catch (error) {
-      console.error('추천 병원 로드 오류:', error);
-      
-      // 서버 연결 실패 시 Mock 데이터 사용
-      console.error('서버 연결 실패. Mock 데이터 사용.');
-      const mockHospitals = [
-        {
-          yadmNm: '부산대학교병원 (Mock)',
-          telno: '051-240-7000',
-          addr: '부산광역시 서구 구덕로 179'
-        },
-        {
-          yadmNm: '인제대학교 부산백병원 (Mock)',
-          telno: '051-890-6114',
-          addr: '부산광역시 부산진구 복지로 75'
-        },
-        {
-          yadmNm: '가톨릭대학교 부산성모병원 (Mock)',
-          telno: '051-933-7114',
-          addr: '부산광역시 남구 용호로 232번길 25-14'
-        },
-        {
-          yadmNm: '동아대학교병원 (Mock)',
-          telno: '051-554-0114',
-          addr: '부산광역시 서구 대신공원로 26'
-        },
-        {
-          yadmNm: '부산의료원 (Mock)',
-          telno: '051-607-2000',
-          addr: '부산광역시 연제구 반송로 75'
-        },
-        {
-          yadmNm: '해운대백병원 (Mock)',
-          telno: '051-797-0100',
-          addr: '부산광역시 해운대구 해운대로 875'
-        }
-      ];
-      
-      setBusanHospitals(mockHospitals);
-      setRecommendedHospital(mockHospitals[0]);
-      console.log('Mock 병원 데이터 사용 완료');
+      console.error('병원 검색 오류:', error);
+      setError('병원 정보를 불러오는데 실패했습니다.');
     } finally {
       setHospitalLoading(false);
+    }
+  };
+  
+  // 사용자 위치 가져오기 함수
+  const getCurrentPosition = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('이 브라우저는 위치 서비스를 지원하지 않습니다.'));
+        return;
+      }
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error('위치 규한 오류:', error);
+          // 위치 규한 실패 시 부산 기본 좌표 사용
+          resolve({
+            latitude: 35.1796,  // 부산 시청 좌표
+            longitude: 129.0756
+          });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5분간 캐시
+        }
+      );
+    });
+  };
+  
+  // 카카오 API로 근처 병원 검색
+  const searchNearbyHospitals = async (latitude, longitude) => {
+    try {
+      const REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
+      
+      if (!REST_API_KEY) {
+        throw new Error('카카오 API 키가 설정되지 않았습니다.');
+      }
+      
+      const response = await fetch(
+        `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=HP8&x=${longitude}&y=${latitude}&radius=5000&sort=distance`,
+        {
+          headers: {
+            'Authorization': `KakaoAK ${REST_API_KEY}`
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`카카오 API 요청 실패: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      return {
+        success: true,
+        places: data.documents.map(place => ({
+          name: place.place_name,
+          phone: place.phone,
+          address: place.address_name,
+          roadAddress: place.road_address_name,
+          distance: place.distance,
+          category: place.category_name
+        }))
+      };
+    } catch (error) {
+      console.error('카카오 병원 검색 API 오류:', error);
+      return { success: false, places: [] };
     }
   };
   
@@ -363,6 +374,11 @@ const Home = () => {
   const handleHospitalSelect = (hospital) => {
     setRecommendedHospital(hospital);
     console.log('병원 선택 완료:', hospital.yadmNm);
+  };
+  
+  // 병원 아이콘 반환 함수 (2025.07.08 신규 추가)
+  const getIcon = () => {
+    return '🏥'; // 병원 아이콘
   };
   
   // 빠른 작업 사용 기록 업데이트 함수
@@ -424,19 +440,13 @@ const Home = () => {
   };
   
   // =================================================================
-  // 특정 날짜의 Senior 데이터를 백엔드 API에서 가져오는 함수 (2025.07.03 수정)
+  // 특정 날짜의 Senior 데이터를 백엔드 API에서 가져오는 함수 (2025.07.03 수정, 2025.07.08 apiClient 적용)
   // API: GET /api/seniors?date=YYYY-MM-DD
   // 목적: 선택된 날짜의 '금일 대상자' 수치를 실제 데이터로 업데이트
   // =================================================================
   const loadSeniorDataForDate = async (date) => {
     try {
       setLoading(true);
-      
-      const token = localStorage.getItem('jwt');
-      if (!token) {
-        console.error('JWT 토큰이 없습니다.');
-        return;
-      }
       
       // 날짜를 YYYY-MM-DD 형식으로 변환 (시간대 이슈 해결)
       const year = date.getFullYear();
@@ -446,18 +456,13 @@ const Home = () => {
       
       console.log('변환된 날짜 문자열:', dateString);
       
-      // Senior 목록 가져오기 (날짜 파라미터 추가)
-      const response = await axios.get(`http://localhost:8080/api/seniors?date=${dateString}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Senior 목록 가져오기 (apiClient 사용)
+      const response = await getSeniorsForDate(dateString);
       
-      console.log(`${dateString} Senior 데이터 응답:`, response.data);
+      console.log(`${dateString} Senior 데이터 응답:`, response);
       
       // 응답에서 데이터 추출
-      const seniors = response.data.content || []; // Page 객체에서 content 배열 추출
+      const seniors = response.content || []; // Page 객체에서 content 배열 추출
       const totalCount = seniors.length;
       
       // 해당 날짜의 실제 통계 계산
@@ -526,20 +531,13 @@ const Home = () => {
   };
   
   // =================================================================
-  // 특정 날짜의 활동 현황 데이터를 백엔드 API에서 가져오는 함수 (2025.07.04 수정)
+  // 특정 날짜의 활동 현황 데이터를 백엔드 API에서 가져오는 함수 (2025.07.04 수정, 2025.07.08 apiClient 적용)
   // 단계 1: Senior 목록 조회 후 첫 번째 Senior의 활동 데이터 로드
   // 목적: 선택된 날짜의 '최근 활동 현황' 섹션을 실제 Daily Activities 데이터로 교체
   // =================================================================
   const loadRecentActivitiesForDate = async (date) => {
     try {
       setActivitiesLoading(true);
-      
-      // JWT 토큰 인증 확인
-      const token = localStorage.getItem('jwt');
-      if (!token) {
-        console.error('JWT 토큰이 없습니다.');
-        return;
-      }
       
       // 날짜를 YYYY-MM-DD 형식으로 변환 (시간대 이슈 해결)
       const year = date.getFullYear();
@@ -549,18 +547,13 @@ const Home = () => {
       
       console.log('Activities API 호출 날짜:', dateString);
       
-      // 단계 1: 현재 Guardian의 Senior 목록 조회
-      const seniorsResponse = await axios.get(`http://localhost:8080/api/seniors`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // 단계 1: 현재 Guardian의 Senior 목록 조회 (apiClient 사용)
+      const seniorsResponse = await getAllSeniors();
       
-      console.log('Senior 목록 응답:', seniorsResponse.data);
+      console.log('Senior 목록 응답:', seniorsResponse);
       
       // Senior 목록에서 첫 번째 Senior 선택
-      const seniors = seniorsResponse.data.content || [];
+      const seniors = seniorsResponse.content || [];
       if (seniors.length === 0) {
         console.warn('관리하는 Senior가 없습니다.');
         setRecentActivitiesData([]);
@@ -570,21 +563,16 @@ const Home = () => {
       const firstSeniorId = seniors[0].id;
       console.log('첫 번째 Senior ID:', firstSeniorId);
       
-      // 단계 2: 해당 Senior의 전체 Daily Activities 조회 후 날짜별 필터링
-      const activitiesResponse = await axios.get(`http://localhost:8080/api/seniors/${firstSeniorId}/dailyActivities`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // 단계 2: 해당 Senior의 전체 Daily Activities 조회 후 날짜별 필터링 (apiClient 사용)
+      const activitiesResponse = await getSeniorDailyActivities(firstSeniorId);
       
-      console.log(`전체 Activities 데이터 응답:`, activitiesResponse.data);
-      console.log('activitiesResponse.data 타입:', typeof activitiesResponse.data);
-      console.log('activitiesResponse.data의 키들:', Object.keys(activitiesResponse.data || {}));
+      console.log(`전체 Activities 데이터 응답:`, activitiesResponse);
+      console.log('activitiesResponse 타입:', typeof activitiesResponse);
+      console.log('activitiesResponse의 키들:', Object.keys(activitiesResponse || {}));
       
       // 응답 데이터에서 dailyActivities 배열 추출
       // 백엔드는 SeniorDailyListDto를 반환: { seniors: [{ id, seniorName, dailyActivities }] }
-      const seniorData = activitiesResponse.data?.seniors?.[0]; // 첫 번째 Senior 선택
+      const seniorData = activitiesResponse?.seniors?.[0]; // 첫 번째 Senior 선택
       const allActivities = seniorData?.dailyActivities || [];
       
       console.log('seniorData:', seniorData);
@@ -793,7 +781,13 @@ const Home = () => {
                 onClick={() => {
                   if (item.text === '회원정보 관리') {
                     updateRecentAction(item.text);
-                    navigate('/profile/edit');
+                    navigate('/profile/management');
+                  } else if (item.text === '보호 대상자') {
+                    updateRecentAction(item.text);
+                    navigate('/seniors');
+                  } else if (item.text === '일정 관리') {
+                    updateRecentAction(item.text);
+                    navigate('/daily');
                   } else {
                     setActiveMenu(item.text);
                     updateRecentAction(item.text);
@@ -1075,14 +1069,26 @@ const Home = () => {
                     ) : (
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                         <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#333' }}>
-                          {recommendedHospital.yadmNm}
+                        {getIcon()} {recommendedHospital.yadmNm}
                         </Typography>
                         <Typography variant="caption" sx={{ color: '#666' }}>
-                          📍 {recommendedHospital.addr}
+                        📍 {recommendedHospital.addr}
                         </Typography>
+                        {recommendedHospital.telno && (
                         <Typography variant="caption" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
-                          📞 {recommendedHospital.telno}
-                        </Typography>
+                            📞 {recommendedHospital.telno}
+                    </Typography>
+                  )}
+                  {recommendedHospital.distance && (
+                    <Typography variant="caption" sx={{ color: '#ff9800', fontWeight: 'bold' }}>
+                      📍 거리: {recommendedHospital.distance}
+                    </Typography>
+                  )}
+                  {recommendedHospital.categoryName && (
+                    <Typography variant="caption" sx={{ color: '#999' }}>
+                      🏷️ {recommendedHospital.categoryName}
+                    </Typography>
+                  )}
                         
                         {busanHospitals.length > 1 && (
                           <Box sx={{ 

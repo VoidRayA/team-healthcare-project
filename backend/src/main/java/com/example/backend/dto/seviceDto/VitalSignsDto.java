@@ -39,6 +39,7 @@ public class VitalSignsDto {
             String notes                    // 특이사항
     ){}
     // 조회 요청을 위한 Dto
+    @Builder
     public record VitalSearchDto(
             Integer id,
             LocalDateTime measurementTime,

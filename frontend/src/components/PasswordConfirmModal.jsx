@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { LockOutlined } from '@mui/icons-material';
+import { verifyGuardianPassword } from '../api/apiClient';
 
 const StyledDialog = styled(Dialog)({
   '& .MuiDialog-paper': {
@@ -104,18 +105,26 @@ const PasswordConfirmModal = ({ open, onClose, onConfirm }) => {
     setError('');
 
     try {
-      // TODO: 실제 비밀번호 확인 API 호출
-      // const response = await verifyPassword(password);
+      // 실제 비밀번호 확인 API 호출
+      const response = await verifyGuardianPassword(password);
+      console.log('비밀번호 확인 성공:', response);
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // 실제 API가 준비되면 아래 임시 코드 제거
-      console.log('비밀번호 확인 API 기다리는 중...');
-      setError('비밀번호 확인 기능이 준비 중입니다.');
+      // 비밀번호 확인 성공 시 onConfirm 콜백 호출
+      onConfirm();
       
     } catch (err) {
       console.error('비밀번호 확인 오류:', err);
-      setError('비밀번호 확인 중 오류가 발생했습니다.');
+      
+      // 에러 메시지 처리
+      if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else if (err.response?.status === 401) {
+        setError('로그인이 필요합니다. 다시 로그인해주세요.');
+      } else if (err.response?.status === 400) {
+        setError('비밀번호가 올바르지 않습니다.');
+      } else {
+        setError('비밀번호 확인 중 오류가 발생했습니다.');
+      }
     } finally {
       setLoading(false);
     }

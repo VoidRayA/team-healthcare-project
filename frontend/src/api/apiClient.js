@@ -81,9 +81,32 @@ apiClient.interceptors.response.use(
 export const getGuardianProfile = async () => {
   try {
     const response = await apiClient.get('/api/guardians/me');
-    return response.data;
+    const data = response.data;
+    
+    // 백엔드 필드명을 프론트엔드에서 사용하는 필드명으로 매핑
+    return {
+      ...data,
+      phoneNumber: data.phone  // phone -> phoneNumber
+    };
   } catch (error) {
     console.error('Guardian 프로필 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * Guardian 비밀번호 확인
+ * @param {string} password - 확인할 비밀번호
+ * @returns {Promise} 비밀번호 확인 결과
+ */
+export const verifyGuardianPassword = async (password) => {
+  try {
+    const response = await apiClient.post('/api/guardians/me/verify-password', {
+      password: password
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Guardian 비밀번호 확인 실패:', error);
     throw error;
   }
 };
@@ -106,14 +129,26 @@ export const updateGuardianProfile = async (updateData) => {
       // 비밀번호 필드 제거 후 기본 정보 업데이트
       const { currentPassword, newPassword, ...profileData } = updateData;
       if (Object.keys(profileData).length > 0) {
-        const response = await apiClient.put('/api/guardians/me', profileData);
+        // 필드명 매핑: 백엔드에서 기대하는 필드명으로 변경
+        const mappedData = {
+          guardianName: profileData.guardianName,
+          phone: profileData.phoneNumber, // phoneNumber -> phone
+          email: profileData.email
+        };
+        const response = await apiClient.put('/api/guardians/me', mappedData);
         return response.data;
       }
       
       return { message: '비밀번호가 성공적으로 변경되었습니다.' };
     } else {
       // 기본 정보만 업데이트
-      const response = await apiClient.put('/api/guardians/me', updateData);
+      // 필드명 매핑: 백엔드에서 기대하는 필드명으로 변경
+      const mappedData = {
+        guardianName: updateData.guardianName,
+        phone: updateData.phoneNumber, // phoneNumber -> phone
+        email: updateData.email
+      };
+      const response = await apiClient.put('/api/guardians/me', mappedData);
       return response.data;
     }
   } catch (error) {

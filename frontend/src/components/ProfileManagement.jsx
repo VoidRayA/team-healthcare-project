@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getGuardianProfile, updateGuardianProfile } from '../api/apiClient';
+import PasswordConfirmModal from './PasswordConfirmModal';
 
 import {
   Box,
@@ -277,6 +278,8 @@ const ProfileManagement = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showPasswordModal, setShowPasswordModal] = useState(true);
+  const [isPasswordConfirmed, setIsPasswordConfirmed] = useState(false);
 
   // 프로필 정보 가져오기
   const fetchProfile = useCallback(async () => {
@@ -317,8 +320,10 @@ const ProfileManagement = () => {
   }, []);
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (isPasswordConfirmed) {
+      fetchProfile();
+    }
+  }, [fetchProfile, isPasswordConfirmed]);
 
   // 입력값 변경 핸들러
   const handleInputChange = (field) => (event) => {
@@ -390,6 +395,17 @@ const ProfileManagement = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/');
+  };
+
+  // 비밀번호 확인 모달 핸들러
+  const handlePasswordModalClose = () => {
+    setShowPasswordModal(false);
+    navigate('/home'); // 취소시 홈으로 이동
+  };
+
+  const handlePasswordConfirm = () => {
+    setIsPasswordConfirmed(true);
+    setShowPasswordModal(false);
   };
 
   return (
@@ -527,7 +543,10 @@ const ProfileManagement = () => {
               </LoadingOverlay>
             )}
 
-            <PageTitle>회원정보 관리</PageTitle>
+            {/* 비밀번호 확인이 완료된 경우에만 내용 표시 */}
+            {isPasswordConfirmed && (
+              <>
+                <PageTitle>회원정보 관리</PageTitle>
 
             {/* 기본 정보 */}
             <InputTable>
@@ -633,6 +652,8 @@ const ProfileManagement = () => {
             >
               {loading ? '수정 중...' : '정보 수정'}
             </UpdateButton>
+              </>
+            )}
           </ProfileContent>
         </MainContent>
       </ContentContainer>
@@ -658,6 +679,13 @@ const ProfileManagement = () => {
           </Alert>
         )}
       </MessageContainer>
+      
+      {/* 비밀번호 확인 모달 */}
+      <PasswordConfirmModal
+        open={showPasswordModal}
+        onClose={handlePasswordModalClose}
+        onConfirm={handlePasswordConfirm}
+      />
     </MainContainer>
   );
 };

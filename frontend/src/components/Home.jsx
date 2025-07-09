@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Typography,
-  Button,  
+  Typography,  
   Paper,
   List,
   ListItem,
@@ -11,8 +10,8 @@ import {
   ListItemText,  
   Chip,
   IconButton,
+  Button,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import {
   DashboardOutlined,
   PeopleOutlined,
@@ -21,181 +20,23 @@ import {
   EventOutlined,
   MessageOutlined,
   LogoutOutlined,
-  WarningAmberOutlined,
-  PersonAddOutlined,
+  WarningAmberOutlined,  
   FavoriteOutlined,
-  DevicesOutlined,  
-  LocationOnOutlined,
-  SettingsOutlined,
-  AddOutlined,
+  DevicesOutlined,    
+  SettingsOutlined,  
   EditOutlined,
   ChevronLeft,
   ChevronRight
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
-import PasswordConfirmModal from './PasswordConfirmModal';
+import HospitalMapModal from './modals/HospitalMapModal';
 import { getWeatherInfo } from '../utils/weatherAPI';
 import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
 // API 클라이언트 import로 axios 대체 (2025.07.08)
-import { getSeniorsForDate, getAllSeniors, getSeniorDailyActivities, getBusanHospitals, getBusanHospitalsFromKakaoBackend } from '../api/apiClient';
+import { getSeniorsForDate, getAllSeniors, getSeniorDailyActivities } from '../api/apiClient';
 // 카카오 API 유틸리티 import (2025.07.08)
-import { searchBusanHospitals } from '../utils/kakaoAPI';
-
-// 전체 컨테이너 - 연한 파란 배경
-const MainContainer = styled(Box)({
-  width: '100vw',
-  height: '100vh',
-  backgroundColor: '#CCE5FF',
-  display: 'flex',  
-  gap: '0px',
-  overflow: 'hidden'
-});
-
-// 메인 컨테이너 - 하얀색
-const ContentContainer = styled(Paper)({
-  backgroundColor: '#ffffff',  
-  flex: 1,
-  display: 'flex',
-  overflow: 'auto',
-  margin: '1vw 1vw 1vw 240px',
-  height: 'calc(100vh - 2vw)',
-  minHeight: 'calc(100vh - 2vw)'
-});
-
-// 왼쪽 사이드바
-const Sidebar = styled(Paper)({
-  width: '240px',
-  height: '100vh',
-  backgroundColor: '#1976d2',
-  borderRadius: '0 20px 20px 0',
-  display: 'flex',
-  flexDirection: 'column',
-  padding: '20px 0',
-  color: 'white',
-  boxSizing: 'border-box',
-  flexShrink: 0,
-  position: 'fixed',
-  left: 0,
-  top: 0,
-  zIndex: 1000
-});
-
-const SidebarMenu = styled(List)({
-  padding: '0 20px',
-  flex: 1,
-  '& .MuiListItem-root': {
-    borderRadius: '12px',
-    marginBottom: '8px',
-    color: 'white',
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    '&.active': {
-      backgroundColor: 'rgba(255,255,255,0.2)',
-    },
-  },
-  '& .MuiListItemIcon-root': {
-    color: 'white',
-    minWidth: '40px',
-  }
-});
-
-// 중앙 메인 영역
-const MainContent = styled(Box)({
-  flex: 1,
-  display: 'flex',
-  padding: '30px 30px 30px 30px', // 오른쪽 여백 추가
-  gap: '20px'
-});
-
-// 왼쪽 콘텐츠 영역
-const LeftContent = styled(Box)({
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column'
-  // justifyContent 제거해서 자연스러운 흐름으로
-});
-
-// 상단 헤더
-const HeaderSection = styled(Box)({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  height: '200px', // 헤더 높이 추가
-  marginBottom: '40px',
-  paddingTop: '20px'
-});
-
-const WelcomeText = styled(Box)({
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center', // 세로 중앙 정렬
-  flex: 1  
-});
-
-// 하단 3개 박스 컨테이너
-const BottomBoxContainer = styled(Box)({
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr 1fr',
-  gap: '15px',
-  // height 제거 - 자연스러운 높이로
-  padding: '0 0 20px 0'
-});
-
-// 오른쪽 세로 긴 박스 - 왼쪽 박스들과 같은 높이
-const RightCalendarArea = styled(Paper)({
-  width: '320px', // 280px에서 320px로 늘림
-  backgroundColor: '#ffffff',
-  border: '1px solid #e0e0e0',
-  borderRadius: '15px',
-  padding: '15px', // 패딩 줄임
-  display: 'flex',
-  flexDirection: 'column',
-  height: '803px', // 고정 높이로 왼쪽과 정확히 맞춤
-  overflow: 'hidden' // 스크롤바 제거
-});
-
-// 왼쪽 박스 (상태 박스)
-const StatusBox = styled(Paper)({
-  backgroundColor: '#ffffff',
-  border: '1px solid #e0e0e0',
-  borderRadius: '15px',
-  padding: '20px',
-  minHeight: '450px', // 더 긴 높이로 설정
-  overflow: 'auto'
-});
-
-// 중간 박스 (최근 활동)
-const ActivityBox = styled(Paper)({
-  backgroundColor: '#ffffff',
-  border: '1px solid #e0e0e0',
-  borderRadius: '15px',
-  padding: '20px',
-  minHeight: '450px', // 더 긴 높이로 설정
-  overflow: 'auto'
-});
-
-// 오른쪽 박스 (빠른 작업)
-const QuickActionBox = styled(Paper)({
-  backgroundColor: '#ffffff',
-  border: '1px solid #e0e0e0',
-  borderRadius: '15px',
-  padding: '20px',
-  minHeight: '450px', // 더 긴 높이로 설정
-  overflow: 'auto'
-});
-
-const ActivityItem = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  padding: '12px 0',
-  borderBottom: '1px solid #f0f0f0',
-  '&:last-child': {
-    borderBottom: 'none'
-  }
-});
+import { } from '../utils/kakaoAPI';
+import { getUserInfo, clearAuthData, getAuthToken } from '../utils/auth';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -205,7 +46,7 @@ const Home = () => {
     loginId: 'admin',
     role: 'ADMIN'
   });
-  const [selectedDate, setSelectedDate] = useState(new Date()); // 달력 날짜 상태
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [weather, setWeather] = useState({
     temperature: '로딩 중...',
     condition: '로딩 중...',
@@ -215,19 +56,14 @@ const Home = () => {
     minTemp: '-'
   });
   
-  // =================================================================
-  // Senior 데이터 및 Daily Activities 데이터 관리용 State (2025.07.02 신규 추가)
-  // 목적: 하드코딩된 더미 데이터를 실제 백엔드 API 데이터로 교체
-  // =================================================================
   const [seniorStats, setSeniorStats] = useState({
-    totalSeniors: 0,      // 총 관리 대상자 수 (기존: 5 -> 실제 API 데이터)
-    alerts: 0,            // 긴급 알림 수 (기존: 2 -> 실제 계산값)
-    healthIssues: 0,      // 건강 이상 수 (기존: 3 -> 실제 계산값)
-    connectedDevices: 0   // 연결된 장치 수 (기존: 8 -> 실제 계산값)
+    totalSeniors: 0,
+    alerts: 0,
+    healthIssues: 0,
+    connectedDevices: 0
   });
-  const [loading, setLoading] = useState(true); // 로딩 상태 (데이터 로딩 중일 때 '...' 표시)
+  const [loading, setLoading] = useState(true);
   
-  // 빠른 작업 데이터 관리용 State (2025.07.04 신규 추가)
   const [recentActions, setRecentActions] = useState([
     { text: '회원정보 관리', icon: EditOutlined, path: '/profile/management', lastUsed: new Date('2025-07-04T10:20:00') },
     { text: '보호 대상자 관리', icon: PeopleOutlined, path: '/seniors', lastUsed: new Date('2025-07-04T09:15:00') },
@@ -235,50 +71,40 @@ const Home = () => {
     { text: '알림 설정', icon: SettingsOutlined, path: '/notifications', lastUsed: new Date('2025-07-03T14:20:00') }
   ]);
   
-  // 주소 기반 추천 병원 정보 State (2025.07.04 신규 추가)
-  const [recommendedHospital, setRecommendedHospital] = useState({
-    yadmNm: '부산대학교병원',
-    telno: '051-240-7000',
-    addr: '부산광역시 서구 구덕로 179'
-  });
+  const [recommendedHospital, setRecommendedHospital] = useState(null);
   
-  // 부산 지역 병원 목록 State (2025.07.04 신규 추가)
   const [busanHospitals, setBusanHospitals] = useState([]);
   const [hospitalLoading, setHospitalLoading] = useState(false);
-  
-  // 최근 활동 데이터 State (2025.07.04 신규 추가)
   const [recentActivitiesData, setRecentActivitiesData] = useState([]);
-  
-  // 비밀번호 확인 모달 상태
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [activitiesLoading, setActivitiesLoading] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [currentPosition, setCurrentPosition] = useState(null);
   
-  // 주소 기반 추천 병원 로드 함수 (위치 기반)
   const loadRecommendedHospital = async () => {
     try {
       console.log('추천 병원 조회 시작');
       setHospitalLoading(true);
       
-      // 사용자 위치 가져오기
       const position = await getCurrentPosition();
       const { latitude, longitude } = position;
+      setCurrentPosition(position);
       
       console.log('현재 위치:', latitude, longitude);
       
-      // 카카오 API로 현재 위치 근처 병원 검색
       const result = await searchNearbyHospitals(latitude, longitude);
       
       console.log('카카오 병원 검색 결과:', result);
       
       if (result.success && result.places && result.places.length > 0) {
-        // 카카오 API 결과를 병원 목록으로 변환
         const kakaoHospitals = result.places.map(place => ({
-          yadmNm: place.name,
-          telno: place.phone || '전화번호 정보 없음',
-          addr: place.roadAddress || place.address,
-          distance: place.distance ? `${Math.round(place.distance)}m` : '',
-          categoryName: place.category
-        }));
+        yadmNm: place.name,
+        telno: place.phone || '전화번호 정보 없음',
+        addr: place.roadAddress || place.address,
+        distance: place.distance ? `${Math.round(place.distance)}m` : '',
+        categoryName: place.category,
+        latitude: place.y,
+        longitude: place.x
+      }));
         
         setBusanHospitals(kakaoHospitals);
         setRecommendedHospital(kakaoHospitals[0]);
@@ -286,18 +112,15 @@ const Home = () => {
         console.log(`카카오 API로 ${kakaoHospitals.length}개 병원 로드 완료`);
       } else {
         console.warn('카카오 API에서 병원 정보를 찾을 수 없음');
-        setError('근처 병원 정보를 찾을 수 없습니다.');
       }
       
     } catch (error) {
       console.error('병원 검색 오류:', error);
-      setError('병원 정보를 불러오는데 실패했습니다.');
     } finally {
       setHospitalLoading(false);
     }
   };
   
-  // 사용자 위치 가져오기 함수
   const getCurrentPosition = () => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -313,23 +136,21 @@ const Home = () => {
           });
         },
         (error) => {
-          console.error('위치 규한 오류:', error);
-          // 위치 규한 실패 시 부산 기본 좌표 사용
+          console.error('위치 권한 오류:', error);
           resolve({
-            latitude: 35.1796,  // 부산 시청 좌표
+            latitude: 35.1796,
             longitude: 129.0756
           });
         },
         {
           enableHighAccuracy: true,
           timeout: 10000,
-          maximumAge: 300000 // 5분간 캐시
+          maximumAge: 300000
         }
       );
     });
   };
   
-  // 카카오 API로 근처 병원 검색
   const searchNearbyHospitals = async (latitude, longitude) => {
     try {
       const REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
@@ -361,7 +182,9 @@ const Home = () => {
           address: place.address_name,
           roadAddress: place.road_address_name,
           distance: place.distance,
-          category: place.category_name
+          category: place.category_name,
+          x: place.x,
+          y: place.y
         }))
       };
     } catch (error) {
@@ -370,29 +193,25 @@ const Home = () => {
     }
   };
   
-  // 병원 선택 함수 (2025.07.04 신규 추가)
   const handleHospitalSelect = (hospital) => {
     setRecommendedHospital(hospital);
     console.log('병원 선택 완료:', hospital.yadmNm);
   };
   
-  // 병원 아이콘 반환 함수 (2025.07.08 신규 추가)
   const getIcon = () => {
-    return '🏥'; // 병원 아이콘
+    return '🏥';
   };
   
-  // 빠른 작업 사용 기록 업데이트 함수
   const updateRecentAction = (actionText) => {
     setRecentActions(prev => 
       prev.map(action => 
         action.text === actionText 
           ? { ...action, lastUsed: new Date() }
           : action
-      ).sort((a, b) => new Date(b.lastUsed) - new Date(a.lastUsed)) // 최신 순으로 정렬
+      ).sort((a, b) => new Date(b.lastUsed) - new Date(a.lastUsed))
     );
   };
   
-  // 빠른 작업 클릭 핸들러
   const handleQuickActionClick = (action) => {
     updateRecentAction(action.text);
     
@@ -406,49 +225,33 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const savedName = localStorage.getItem('guardianName');
-    const savedLoginId = localStorage.getItem('loginId');
-    const savedRole = localStorage.getItem('role');
+    const userInfo = getUserInfo();
     
-    if (savedName && savedLoginId) {
+    if (userInfo) {
       setGuardianInfo({
-        name: savedName,
-        loginId: savedLoginId,
-        role: savedRole || 'GUARDIAN'
+        name: userInfo.name,
+        loginId: userInfo.loginId,
+        role: userInfo.role || 'GUARDIAN'
       });
     }
     
-    // 컴포넌트 마운트 시 오늘 날짜 기준으로 데이터 로드
     loadDataForDate(new Date());
-    // 날씨 정보 로드
     loadWeatherData();
-    // 추천 병원 정보 로드 (2025.07.04 추가)
     loadRecommendedHospital();
   }, []);
   
-  // =================================================================
-  // 선택된 날짜의 모든 데이터를 로드하는 통합 함수 (2025.07.03 수정)
-  // 목적: 달력에서 날짜 선택 시 해당 날짜의 모든 관련 데이터를 로드
-  // =================================================================
   const loadDataForDate = async (date) => {
     console.log('선택된 날짜:', date);
-    // 병렬로 모든 데이터 로드
     await Promise.all([
       loadSeniorDataForDate(date),
       loadRecentActivitiesForDate(date)
     ]);
   };
   
-  // =================================================================
-  // 특정 날짜의 Senior 데이터를 백엔드 API에서 가져오는 함수 (2025.07.03 수정, 2025.07.08 apiClient 적용)
-  // API: GET /api/seniors?date=YYYY-MM-DD
-  // 목적: 선택된 날짜의 '금일 대상자' 수치를 실제 데이터로 업데이트
-  // =================================================================
   const loadSeniorDataForDate = async (date) => {
     try {
       setLoading(true);
       
-      // 날짜를 YYYY-MM-DD 형식으로 변환 (시간대 이슈 해결)
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
@@ -456,21 +259,18 @@ const Home = () => {
       
       console.log('변환된 날짜 문자열:', dateString);
       
-      // Senior 목록 가져오기 (apiClient 사용)
       const response = await getSeniorsForDate(dateString);
       
       console.log(`${dateString} Senior 데이터 응답:`, response);
       
-      // 응답에서 데이터 추출
-      const seniors = response.content || []; // Page 객체에서 content 배열 추출
+      const seniors = response.content || [];
       const totalCount = seniors.length;
       
-      // 해당 날짜의 실제 통계 계산
       setSeniorStats({
         totalSeniors: totalCount,
-        alerts: Math.floor(totalCount * 0.1), // 실제로는 해당 날짜의 알림 수를 계산
-        healthIssues: Math.floor(totalCount * 0.2), // 실제로는 해당 날짜의 건강 이상 수를 계산
-        connectedDevices: totalCount * 2 // 실제로는 해당 날짜의 연결된 장치 수를 계산
+        alerts: Math.floor(totalCount * 0.1),
+        healthIssues: Math.floor(totalCount * 0.2),
+        connectedDevices: totalCount * 2
       });
       
     } catch (error) {
@@ -486,39 +286,25 @@ const Home = () => {
     }
   };
   
-  // =================================================================
-  // 특정 날짜의 활동 현황 데이터를 백엔드 API에서 가져오는 함수 (2025.07.03 수정)
-  // API: GET /api/seniors/0/dailyActivities/recent-activities?limit=5&date=YYYY-MM-DD
-  // 목적: 선택된 날짜의 '최근 활동 현황' 섹션을 실제 Daily Activities 데이터로 교체
-  // =================================================================
-  // =================================================================
-  // 날씨 정보 로드 함수 (2025.07.03 신규 추가)
-  // API: OpenWeatherMap
-  // 목적: 오른쪽 날씨 정보 섹션에 실제 날씨 데이터 표시
-  // =================================================================
   const loadWeatherData = async () => {
     try {
       console.log('날씨 정보 로드 시작');
       
-      // 환경변수에서 API 키 가져오기
       const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
       
       if (!apiKey) {
         console.warn('OpenWeatherMap API 키가 설정되지 않았습니다. 더미 데이터를 사용합니다.');
       }
       
-      // 날씨 API 호출
       const weatherData = await getWeatherInfo(apiKey);
       
       console.log('날씨 데이터:', weatherData);
       
-      // 상태 업데이트
       setWeather(weatherData);
       
     } catch (error) {
       console.error('날씨 정보 로드 오류:', error);
       
-      // 오류 시 기본값 사용
       setWeather({
         temperature: '22°C',
         condition: '맑음',
@@ -530,16 +316,10 @@ const Home = () => {
     }
   };
   
-  // =================================================================
-  // 특정 날짜의 활동 현황 데이터를 백엔드 API에서 가져오는 함수 (2025.07.04 수정, 2025.07.08 apiClient 적용)
-  // 단계 1: Senior 목록 조회 후 첫 번째 Senior의 활동 데이터 로드
-  // 목적: 선택된 날짜의 '최근 활동 현황' 섹션을 실제 Daily Activities 데이터로 교체
-  // =================================================================
   const loadRecentActivitiesForDate = async (date) => {
     try {
       setActivitiesLoading(true);
       
-      // 날짜를 YYYY-MM-DD 형식으로 변환 (시간대 이슈 해결)
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
@@ -547,12 +327,10 @@ const Home = () => {
       
       console.log('Activities API 호출 날짜:', dateString);
       
-      // 단계 1: 현재 Guardian의 Senior 목록 조회 (apiClient 사용)
       const seniorsResponse = await getAllSeniors();
       
       console.log('Senior 목록 응답:', seniorsResponse);
       
-      // Senior 목록에서 첫 번째 Senior 선택
       const seniors = seniorsResponse.content || [];
       if (seniors.length === 0) {
         console.warn('관리하는 Senior가 없습니다.');
@@ -563,28 +341,19 @@ const Home = () => {
       const firstSeniorId = seniors[0].id;
       console.log('첫 번째 Senior ID:', firstSeniorId);
       
-      // 단계 2: 해당 Senior의 전체 Daily Activities 조회 후 날짜별 필터링 (apiClient 사용)
       const activitiesResponse = await getSeniorDailyActivities(firstSeniorId);
       
       console.log(`전체 Activities 데이터 응답:`, activitiesResponse);
-      console.log('activitiesResponse 타입:', typeof activitiesResponse);
-      console.log('activitiesResponse의 키들:', Object.keys(activitiesResponse || {}));
       
-      // 응답 데이터에서 dailyActivities 배열 추출
-      // 백엔드는 SeniorDailyListDto를 반환: { seniors: [{ id, seniorName, dailyActivities }] }
-      const seniorData = activitiesResponse?.seniors?.[0]; // 첫 번째 Senior 선택
+      const seniorData = activitiesResponse?.seniors?.[0];
       const allActivities = seniorData?.dailyActivities || [];
       
       console.log('seniorData:', seniorData);
       console.log('allActivities 개수:', allActivities.length);
-      console.log('allActivities 샘플:', allActivities.slice(0, 2));
       
-      // 선택된 날짜의 활동만 필터링
       const filteredActivities = allActivities.filter(activity => {
-        // activityDate를 YYYY-MM-DD 형식으로 변환하여 비교
         const activityDate = activity.activityDate;
         if (activityDate) {
-          // 날짜만 비교 (2025-07-01 형식)
           return activityDate === dateString;
         }
         return false;
@@ -592,20 +361,15 @@ const Home = () => {
       
       console.log(`${dateString} 필터링된 Activities:`, filteredActivities);
       
-      // 프론트엔드에서 사용할 형식으로 변환
       const formattedActivities = filteredActivities.slice(0, 10).map(activity => {
-        // status 판정 로직 수정 (현실적인 기준)
-        let status = 'success'; // 기본값을 정상으로 (긍정적 접근)
+        let status = 'success';
         
-        // 1순위: 심각한 문제만 긴급으로 처리
         if (activity.sleepQuality === 'bad' || activity.mealCount === 0) {
           status = 'error';
         }
-        // 2순위: 약간의 주의가 필요한 경우
         else if (activity.sleepQuality === 'normal' || activity.mealCount === 1) {
           status = 'warning';
         }
-        // 3순위: 나머지는 모두 정상 (기본값)
         
         console.log(`Activity ${activity.id}: sleep=${activity.sleepQuality}, meal=${activity.mealCount} -> status=${status}`);
         
@@ -631,7 +395,6 @@ const Home = () => {
         console.error('해당 Senior에 대한 접근 권한이 없습니다.');
         setRecentActivitiesData([]);
       } else {
-        // 오류 시 기본값 유지 (빈 배열)
         console.error('Recent Activities 데이터 로드 실패. 기본값 사용.');
         setRecentActivitiesData([]);
       }
@@ -641,12 +404,12 @@ const Home = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('jwt');
-    localStorage.removeItem('loginId');
-    localStorage.removeItem('guardianName');
-    localStorage.removeItem('role');
+    clearAuthData();
     
     alert('로그아웃 되었습니다.');
+    
+    // 커스텀 이벤트 발생
+    window.dispatchEvent(new Event('authStateChange'));
     window.location.reload();
   };
 
@@ -663,71 +426,57 @@ const Home = () => {
   const statusData = [
     {
       title: '긴급 알림',
-      count: loading ? '...' : seniorStats.alerts, // 실제 API 데이터로 교체 (기존 하드코딩: 2)
+      count: loading ? '...' : seniorStats.alerts,
       icon: WarningAmberOutlined,
       color: '#ff4444'
     },
     {
       title: '금일 대상자',
-      count: loading ? '...' : seniorStats.totalSeniors, // 실제 API 데이터로 교체 (기존 하드코딩: 5)
+      count: loading ? '...' : seniorStats.totalSeniors,
       icon: PeopleOutlined,
       color: '#2196f3'
     },
     {
       title: '건강 상태',
-      count: loading ? '...' : seniorStats.healthIssues, // 실제 API 데이터로 교체 (기존 하드코딩: 3)
+      count: loading ? '...' : seniorStats.healthIssues,
       icon: FavoriteOutlined,
       color: '#4caf50'
     },
     {
       title: '연결 장치',
-      count: loading ? '...' : seniorStats.connectedDevices, // 실제 API 데이터로 교체 (기존 하드코딩: 8)
+      count: loading ? '...' : seniorStats.connectedDevices,
       icon: DevicesOutlined,
       color: '#9c27b0'
     }
   ];
 
-  // 하드코딩된 recentActivities 제거 (이제 API에서 가져옴)
-  // const recentActivities = [
-  //   {
-  //     time: '10:30',
-  //     user: '김영수',
-  //     activity: '안전지대 이탈 감지',
-  //     status: 'warning'
-  //   },
-  //   {
-  //     time: '09:15',
-  //     user: '박미영',
-  //     activity: '정상 귀가 확인',
-  //     status: 'success'
-  //   },
-  //   {
-  //     time: '08:45',
-  //     user: '이철수',
-  //     activity: '응급호출 버튼 작동',
-  //     status: 'error'
-  //   },
-  //   {
-  //     time: '08:20',
-  //     user: '최순자',
-  //     activity: '일일 건강체크 완료',
-  //     status: 'success'
-  //   }
-  // ];
-  //   }
-  // ];
-
-  const quickActions = [
-    { text: '새 보호대상자 추가', icon: PersonAddOutlined },
-    { text: '안전구역 설정', icon: LocationOnOutlined },
-    { text: '알림 설정 변경', icon: SettingsOutlined },
-    { text: '일정 등록', icon: AddOutlined }
-  ];
-
   return (
-    <MainContainer>
+    <Box sx={{
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: '#CCE5FF',
+      display: 'flex',  
+      gap: 0,
+      overflow: 'hidden'
+    }}>
       {/* 왼쪽 사이드바 - 고정 위치 */}
-      <Sidebar elevation={0}>
+      <Paper sx={{
+        width: '240px',
+        height: '100vh',
+        backgroundColor: '#1976d2',
+        borderRadius: '0 20px 20px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '20px 0',
+        color: 'white',
+        boxSizing: 'border-box',
+        flexShrink: 0,
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        zIndex: 1000,
+        boxShadow: 10
+      }}>
         {/* 사용자 정보 영역 */}
         <Box sx={{ 
           px: 2, 
@@ -771,7 +520,30 @@ const Home = () => {
           </Typography>
         </Box>
 
-        <SidebarMenu>
+        <List sx={{
+          padding: '0 20px',
+          flex: 1,
+          '& .MuiListItem-root': {
+            borderRadius: 1.5,
+            marginBottom: 1,
+            color: 'white',
+            cursor: 'pointer',
+            transition: theme => theme.transitions.create(['background-color', 'transform'], {
+              duration: theme.transitions.duration.short,
+            }),
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              transform: 'translateX(4px)'
+            },
+            '&.active': {
+              backgroundColor: 'rgba(255,255,255,0.2)',
+            },
+          },
+          '& .MuiListItemIcon-root': {
+            color: 'white',
+            minWidth: '40px',
+          }
+        }}>
           {menuItems.map((item, index) => {
             const IconComponent = item.icon;
             return (
@@ -781,6 +553,7 @@ const Home = () => {
                 onClick={() => {
                   if (item.text === '회원정보 관리') {
                     updateRecentAction(item.text);
+                    // 직접 ProfileManagement로 이동 (모달은 ProfileManagement에서 처리)
                     navigate('/profile/management');
                   } else if (item.text === '보호 대상자') {
                     updateRecentAction(item.text);
@@ -801,16 +574,19 @@ const Home = () => {
               </ListItem>
             );
           })}
-        </SidebarMenu>
+        </List>
 
         {/* 로그아웃 버튼 */}
         <Box sx={{ px: 2 }}>
           <ListItem
             onClick={handleLogout}
             sx={{
-              borderRadius: '12px',
+              borderRadius: 1.5,
               color: 'white',
               cursor: 'pointer',
+              transition: theme => theme.transitions.create(['background-color'], {
+                duration: theme.transitions.duration.short,
+              }),
               '&:hover': {
                 backgroundColor: 'rgba(255,255,255,0.1)',
               }
@@ -822,31 +598,73 @@ const Home = () => {
             <ListItemText primary="로그아웃" />
           </ListItem>
         </Box>
-      </Sidebar>
+      </Paper>
 
-      <ContentContainer elevation={0}>
-
+      <Paper sx={{
+        backgroundColor: '#ffffff',  
+        flex: 1,
+        display: 'flex',
+        overflow: 'auto',
+        margin: '1vw 1vw 1vw 240px',
+        height: 'calc(100vh - 2vw)',
+        minHeight: 'calc(100vh - 2vw)',
+        borderRadius: 1,
+        boxShadow: 3
+      }}>
         {/* 중앙 메인 콘텐츠 */}
-        <MainContent>
+        <Box sx={{
+          flex: 1,
+          display: 'flex',
+          padding: 4,
+          gap: 2.5
+        }}>
           {/* 왼쪽 콘텐츠 */}
-          <LeftContent>
+          <Box sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
             {/* 상단 헤더 */}
-            <HeaderSection>
-              <WelcomeText>
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              height: '200px',
+              marginBottom: 5,
+              paddingTop: 2.5
+            }}>
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                flex: 1  
+              }}>
                 <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 5, color: '#333' }}>
                   안녕하세요, <span style={{ color: '#1976d2' }}>{guardianInfo.name}</span> 님
                 </Typography>
                 <Typography variant="h6" color="text.secondary">
                   오늘도 소중한 분의 안전을 지켜주세요.
                 </Typography>
-              </WelcomeText>
-              
-            </HeaderSection>
+              </Box>
+            </Box>
 
             {/* 하단 3개 박스 */}
-            <BottomBoxContainer>
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              gap: 2,
+              padding: `0 0 2.5 0`
+            }}>
               {/* 왼쪽 박스 - 상태 현황 */}
-              <StatusBox elevation={0}>
+              <Paper sx={{
+                backgroundColor: '#ffffff',
+                border: theme => `1px solid ${theme.palette.divider}`,
+                borderRadius: 2,
+                padding: 2.5,
+                minHeight: '450px',
+                overflow: 'auto',
+                boxShadow: 2
+              }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>                  
                 </Typography>
                 
@@ -860,14 +678,16 @@ const Home = () => {
                         sx={{
                           backgroundColor: '#1976D2',
                           color: 'white',
-                          padding: '20px',
-                          borderRadius: '10px',
+                          padding: 2.5,
+                          borderRadius: 1.25,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           cursor: 'pointer',
                           minHeight: '80px',
-                          transition: 'transform 0.2s, box-shadow 0.2s',
+                          transition: theme => theme.transitions.create(['transform', 'box-shadow'], {
+                            duration: theme.transitions.duration.short,
+                          }),
                           '&:hover': {
                             transform: 'translateY(-2px)',
                             boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
@@ -887,84 +707,22 @@ const Home = () => {
                     );
                   })}
                 </Box>
-              </StatusBox>
+              </Paper>
 
               {/* 중간 박스 - 최근 활동 현황 */}
-              <ActivityBox elevation={0}>
+              <Paper sx={{
+                backgroundColor: '#ffffff',
+                border: theme => `1px solid ${theme.palette.divider}`,
+                borderRadius: 2,
+                padding: 2.5,
+                minHeight: '450px',
+                overflow: 'auto',
+                boxShadow: 2
+              }}>
                 <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                   📋 최근 활동 현황
-                </Typography>
-                
-                {/* 상태 표시 범례 및 기준 설명 추가 */}
-                <Box sx={{ 
-                  mb: 2, 
-                  p: 2, 
-                  backgroundColor: '#f8f9fa', 
-                  borderRadius: '10px',
-                  border: '1px solid #e0e0e0'
-                }}>
-                  {/* 범례 */}
-                  <Box sx={{ 
-                    display: 'flex', 
-                    gap: 2, 
-                    mb: 1.5,
-                    justifyContent: 'center',
-                    flexWrap: 'wrap'
-                  }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Chip label="정상" color="success" size="small" />
-                      <Typography variant="caption" color="text.secondary">양호</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Chip label="주의" color="warning" size="small" />
-                      <Typography variant="caption" color="text.secondary">보통</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Chip label="긴급" color="error" size="small" />
-                      <Typography variant="caption" color="text.secondary">위험</Typography>
-                    </Box>
-                  </Box>
-                  
-                  {/* 판정 기준 설명 */}
-                  <Box sx={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '1fr 1fr 1fr', 
-                    gap: 1.5,
-                    pt: 1.5,
-                    borderTop: '1px solid #e0e0e0'
-                  }}>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#2e7d32', display: 'block', mb: 0.5 }}>
-                        🟢 정상 조건
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#666', lineHeight: 1.3 }}>
-                        수면 상태 좋음<br/>
-                        또는 식사 2회 이상
-                      </Typography>
-                    </Box>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#ed6c02', display: 'block', mb: 0.5 }}>
-                        🟡 주의 조건
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#666', lineHeight: 1.3 }}>
-                        수면 상태 보통<br/>
-                        또는 식사 1회
-                      </Typography>
-                    </Box>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#d32f2f', display: 'block', mb: 0.5 }}>
-                        🔴 긴급 조건
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#666', lineHeight: 1.3 }}>
-                        수면 상태 나쁨<br/>
-                        또는 식사 0회
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-                
-                {/* 로딩 상태 또는 데이터 없을 때 처리 (2025.07.02 신규 추가) */}
-                {/* 기존: 하드코딩된 recentActivities.map() -> 실제 API 데이터 recentActivitiesData */}
+                </Typography>                
+                {/* 로딩 상태 또는 데이터 없을 때 처리 */}
                 {activitiesLoading ? (
                   <Box sx={{ textAlign: 'center', py: 4 }}>
                     <Typography variant="body2" color="text.secondary">
@@ -978,9 +736,16 @@ const Home = () => {
                     </Typography>
                   </Box>
                 ) : (
-                  // 실제 API 데이터 표시: time, user, activity, status 필드 사용
                   recentActivitiesData.map((activity, index) => (
-                    <ActivityItem key={index}>
+                    <Box key={index} sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: theme => theme.spacing(1.5, 0),
+                      borderBottom: theme => `1px solid ${theme.palette.grey[100]}`,
+                      '&:last-child': {
+                        borderBottom: 'none'
+                      }
+                    }}>
                       <Box sx={{ flex: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                           <Typography variant="body1" fontWeight="500">
@@ -1005,13 +770,21 @@ const Home = () => {
                           {activity.time}
                         </Typography>
                       </Box>
-                    </ActivityItem>
+                    </Box>
                   ))
                 )}
-              </ActivityBox>
+              </Paper>
 
               {/* 오른쪽 박스 - 오늘의 할 일 & 요약 */}
-              <QuickActionBox elevation={0}>
+              <Paper sx={{
+                backgroundColor: '#ffffff',
+                border: theme => `1px solid ${theme.palette.divider}`,
+                borderRadius: 2,
+                padding: 2.5,
+                minHeight: '450px',
+                overflow: 'auto',
+                boxShadow: 2
+              }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                   📊 오늘의 요약
                 </Typography>
@@ -1019,7 +792,7 @@ const Home = () => {
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   
                   {/* 대상자 요약 */}
-                  <Paper sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
+                  <Paper sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: 1.25 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2' }}>
                       👥 관리 대상자
                     </Typography>
@@ -1036,7 +809,7 @@ const Home = () => {
                   </Paper>
 
                   {/* 오늘의 할 일 */}
-                  <Paper sx={{ p: 2, backgroundColor: '#fff3e0', borderRadius: '10px' }}>
+                  <Paper sx={{ p: 2, backgroundColor: '#fff3e0', borderRadius: 1.25 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#f57c00' }}>
                       ✅ 오늘의 할 일
                     </Typography>
@@ -1056,8 +829,8 @@ const Home = () => {
                     </Box>
                   </Paper>
 
-                  {/* 추천 주변 병원 정보 (2025.07.04 신규 추가) */}
-                  <Paper sx={{ p: 2, backgroundColor: '#e3f2fd', borderRadius: '10px' }}>
+                  {/* 추천 주변 병원 정보 */}
+                  <Paper sx={{ p: 2, backgroundColor: '#e3f2fd', borderRadius: 1.25 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2' }}>
                       🏥 추천 주변 병원
                     </Typography>
@@ -1066,35 +839,59 @@ const Home = () => {
                       <Typography variant="body2" sx={{ color: '#666', textAlign: 'center', py: 1 }}>
                         병원 정보를 불러오는 중...
                       </Typography>
-                    ) : (
+                    ) : recommendedHospital ? (
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                         <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#333' }}>
-                        {getIcon()} {recommendedHospital.yadmNm}
+                          {getIcon()} {recommendedHospital.yadmNm}
                         </Typography>
                         <Typography variant="caption" sx={{ color: '#666' }}>
-                        📍 {recommendedHospital.addr}
+                          📍 {recommendedHospital.addr}
                         </Typography>
-                        {recommendedHospital.telno && (
-                        <Typography variant="caption" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+                        {recommendedHospital.telno && recommendedHospital.telno !== '전화번호 정보 없음' && (
+                          <Typography variant="caption" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
                             📞 {recommendedHospital.telno}
-                    </Typography>
-                  )}
-                  {recommendedHospital.distance && (
-                    <Typography variant="caption" sx={{ color: '#ff9800', fontWeight: 'bold' }}>
-                      📍 거리: {recommendedHospital.distance}
-                    </Typography>
-                  )}
-                  {recommendedHospital.categoryName && (
-                    <Typography variant="caption" sx={{ color: '#999' }}>
-                      🏷️ {recommendedHospital.categoryName}
-                    </Typography>
-                  )}
+                          </Typography>
+                        )}
+                        {recommendedHospital.distance && (
+                          <Typography variant="caption" sx={{ color: '#ff9800', fontWeight: 'bold' }}>
+                            📍 거리: {recommendedHospital.distance}
+                          </Typography>
+                        )}
+                        {recommendedHospital.categoryName && (
+                          <Typography variant="caption" sx={{ color: '#999' }}>
+                            🏷️ {recommendedHospital.categoryName}
+                          </Typography>
+                        )}
+                        
+                        {/* 지도 보기 버튼 */}
+                        <Box sx={{
+                          mt: 1.5,
+                          display: 'flex',
+                          justifyContent: 'center'
+                        }}>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => setShowMapModal(true)}
+                            sx={{
+                              backgroundColor: '#1976d2',
+                              fontSize: '0.75rem',
+                              py: 0.5,
+                              px: 1.5,
+                              '&:hover': {
+                                backgroundColor: '#1565c0'
+                              }
+                            }}
+                          >
+                            🗺️ 지도에서 보기
+                          </Button>
+                        </Box>
                         
                         {busanHospitals.length > 1 && (
                           <Box sx={{ 
                             mt: 1, 
                             pt: 1, 
-                            borderTop: '1px solid #e0e0e0',
+                            borderTop: theme => `1px solid ${theme.palette.divider}`,
                             display: 'flex',
                             justifyContent: 'center',
                             alignItems: 'center',
@@ -1112,11 +909,11 @@ const Home = () => {
                                 '&:hover': {
                                   backgroundColor: '#e0e0e0'
                                 },
-                                width: '32px',
-                                height: '32px'
+                                width: 32,
+                                height: 32
                               }}
                             >
-                              <ChevronLeft sx={{ color: '#1976d2', fontSize: '18px' }} />
+                              <ChevronLeft sx={{ color: '#1976d2', fontSize: 18 }} />
                             </IconButton>
                             
                             <Typography variant="caption" sx={{ 
@@ -1141,41 +938,55 @@ const Home = () => {
                                 '&:hover': {
                                   backgroundColor: '#e0e0e0'
                                 },
-                                width: '32px',
-                                height: '32px'
+                                width: 32,
+                                height: 32
                               }}
                             >
-                              <ChevronRight sx={{ color: '#1976d2', fontSize: '18px' }} />
+                              <ChevronRight sx={{ color: '#1976d2', fontSize: 18 }} />
                             </IconButton>
                           </Box>
                         )}
                       </Box>
+                    ) : (
+                      <Typography variant="body2" sx={{ color: '#999', textAlign: 'center', py: 1, fontStyle: 'italic' }}>
+                        근처 병원 정보를 찾을 수 없습니다
+                      </Typography>
                     )}
                   </Paper>
-
                 </Box>
-              </QuickActionBox>
-            </BottomBoxContainer>
-          </LeftContent>
+              </Paper>
+            </Box>
+          </Box>
 
           {/* 오른쪽 세로 긴 박스 - 전체 높이 */}
-          <RightCalendarArea elevation={0}>
+          <Paper sx={{
+            width: '320px',
+            backgroundColor: '#ffffff',
+            border: theme => `1px solid ${theme.palette.divider}`,
+            borderRadius: 2,
+            padding: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '803px',
+            overflow: 'hidden',
+            boxShadow: 2
+          }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               📅 일정 관리
             </Typography>
             
-            {/* 달력 컴포넌트 - 선택된 날짜 표시 제거 */}
-            <Box sx={{ 
-              mb: 2,
-              border: '1px solid #e0e0e0',
-              borderRadius: '10px',
-              padding: '10px',
-              backgroundColor: '#fafafa',
-              flex: '0 0 auto', // 달력 크기 고정
+            {/* 달력 컴포넌트 */}
+            <Box sx={{
+              marginBottom: 2,
+              border: theme => `1px solid ${theme.palette.divider}`,
+              borderRadius: 1.25,
+              padding: 1.25,
+              backgroundColor: theme => theme.palette.grey[50],
+              flex: '0 0 auto',
               '& .react-calendar': {
                 width: '100%',
                 border: 'none',
-                fontFamily: 'inherit',
+                fontFamily: theme => theme.typography.fontFamily,
                 backgroundColor: 'transparent'
               },
               '& .react-calendar__navigation': {
@@ -1187,27 +998,43 @@ const Home = () => {
                 minWidth: '32px',
                 height: '44px',
                 fontSize: '16px',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                color: theme => theme.palette.primary.main,
+                backgroundColor: 'transparent',
+                border: 'none',
+                borderRadius: 1,
+                cursor: 'pointer',
+                transition: theme => theme.transitions.create(['background-color'], {
+                  duration: theme.transitions.duration.short,
+                }),
+                '&:hover': {
+                  backgroundColor: theme => theme.palette.primary.main,
+                  color: 'white'
+                },
+                '&:disabled': {
+                  color: theme => theme.palette.text.disabled
+                }
               },
               '& .react-calendar__navigation__label': {
                 fontSize: '16px',
                 fontWeight: 'bold',
                 textAlign: 'center',
-                flex: 1
+                flex: 1,
+                color: theme => theme.palette.text.primary
               },
               '& .react-calendar__month-view__weekdays': {
-                borderBottom: '1px solid #e0e0e0',
-                paddingBottom: '5px',
-                marginBottom: '5px',
+                borderBottom: theme => `1px solid ${theme.palette.divider}`,
+                paddingBottom: 0.625,
+                marginBottom: 0.625,
                 display: 'flex',
                 justifyContent: 'space-between'
               },
               '& .react-calendar__month-view__weekdays__weekday': {
-                padding: '4px 4px',
+                padding: 0.5,
                 fontSize: '14px',
                 fontWeight: 'bold',
                 textAlign: 'center',
-                color: '#666',
+                color: theme => theme.palette.text.secondary,
                 flex: 1,
                 display: 'flex',
                 alignItems: 'center',
@@ -1217,44 +1044,48 @@ const Home = () => {
                 overflow: 'hidden'
               },
               '& .react-calendar__tile': {
-                padding: '8px',
+                padding: 1,
                 fontSize: '0.85rem',
-                border: '1px solid #f0f0f0',
+                border: theme => `1px solid ${theme.palette.grey[200]}`,
                 backgroundColor: 'white',
                 minHeight: '35px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                cursor: 'pointer',
+                transition: theme => theme.transitions.create(['background-color', 'color'], {
+                  duration: theme.transitions.duration.short,
+                }),
                 '&:hover': {
-                  backgroundColor: '#e3f2fd'
+                  backgroundColor: theme => theme.palette.primary.light,
+                  color: 'white'
                 }
               },
               '& .react-calendar__tile--active': {
-                backgroundColor: '#1976d2 !important',
+                backgroundColor: theme => `${theme.palette.primary.main} !important`,
                 color: 'white',
-                border: '1px solid #1976d2'
+                border: theme => `1px solid ${theme.palette.primary.main}`
               },
               '& .react-calendar__tile--active:enabled:hover': {
-
+                backgroundColor: theme => `${theme.palette.primary.dark} !important`
               },
               '& .react-calendar__tile--active:enabled:focus': {
                 color: 'white',
               },              
               '& .react-calendar__tile--now': {
-                backgroundColor: '#e3f2fd',
-                color: '#white',
-                border: '1px solid #1976d2'
+                backgroundColor: theme => theme.palette.primary.light,
+                color: 'white',
+                border: theme => `1px solid ${theme.palette.primary.main}`
               },
               '& .react-calendar__tile--now:enabled:focus': {
-                backgroundColor: '#e3f2fd',
-                color: '#red'
+                backgroundColor: theme => theme.palette.primary.light,
+                color: 'white'
               }
             }}>
               <Calendar
                 onChange={(date) => {
                   console.log('달력에서 선택된 날짜:', date);
                   setSelectedDate(date);
-                  // 선택된 날짜의 데이터 로드
                   loadDataForDate(date);
                 }}
                 value={selectedDate}
@@ -1272,13 +1103,13 @@ const Home = () => {
             </Typography>
             <Box sx={{ 
               flex: 1,
-              border: '1px solid #e0e0e0',
-              borderRadius: '10px',
-              padding: '10px',
+              border: theme => `1px solid ${theme.palette.divider}`,
+              borderRadius: 1.25,
+              padding: 1.25,
               backgroundColor: '#f8f9fa',
               display: 'flex',
               flexDirection: 'column',
-              gap: '5px',
+              gap: 0.625,
               overflow: 'hidden',
               minHeight: 0
             }}>
@@ -1301,7 +1132,7 @@ const Home = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '25px',
+                gap: 3.125,
                 mb: 1
               }}>
                 {/* 온도 정보 (현재 + 최고/최저) */}
@@ -1310,10 +1141,11 @@ const Home = () => {
                     fontSize: '50px',
                     color: '#1976d2', 
                     fontWeight: 'bold', 
-                    mb: 1 }}>
+                    mb: 1 
+                  }}>
                     {weather.temperature}
                   </Typography>
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.625 }}>
                     <Typography variant="body2" sx={{
                       fontSize: '20px', 
                       fontWeight: 'bold',
@@ -1334,15 +1166,15 @@ const Home = () => {
                 <Box sx={{ textAlign: 'center', flex: 1 }}>
                   {weather.icon && (
                     <Box sx={{
-                      width: '70px',
-                      height: '70px',
+                      width: 70,
+                      height: 70,
                       backgroundColor: 'white',
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                      border: '1px solid #e0e0e0',
+                      border: theme => `1px solid ${theme.palette.divider}`,
                       margin: '0 auto 8px auto'
                     }}>
                       <img 
@@ -1377,7 +1209,7 @@ const Home = () => {
               {weather.weeklyForecast && weather.weeklyForecast.length > 0 && (
                 <Box sx={{ 
                   pt: 2,
-                  borderTop: '1px solid #e0e0e0'
+                  borderTop: theme => `1px solid ${theme.palette.divider}`
                 }}>
                   <Typography variant="body2" sx={{ 
                     color: '#666', 
@@ -1392,16 +1224,16 @@ const Home = () => {
                   <Box sx={{ 
                     display: 'grid',
                     gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: '8px'
+                    gap: 1
                   }}>
                     {weather.weeklyForecast.map((forecast, index) => (
                       <Box key={index} sx={{
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        padding: '8px 4px',
+                        padding: 1,
                         backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'transparent',
-                        borderRadius: '8px'
+                        borderRadius: 1
                       }}>
                         {/* 요일 */}
                         <Typography variant="caption" sx={{ 
@@ -1415,15 +1247,15 @@ const Home = () => {
                         
                         {/* 날씨 아이콘 */}
                         <Box sx={{
-                          width: '36px',
-                          height: '36px',
+                          width: 36,
+                          height: 36,
                           backgroundColor: 'white',
                           borderRadius: '50%',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                          border: '1px solid #e0e0e0',
+                          border: theme => `1px solid ${theme.palette.divider}`,
                           margin: '0 auto 4px auto'
                         }}>
                           <img 
@@ -1458,10 +1290,10 @@ const Home = () => {
                 </Box>
               )}
               
-              {/* API 출처 표시 (2025.07.04 추가) */}
+              {/* API 출처 표시 */}
               <Box sx={{ 
                 textAlign: 'center',                
-                borderTop: '1px solid #e0e0e0'
+                borderTop: theme => `1px solid ${theme.palette.divider}`
               }}>
                 <Typography variant="caption" sx={{ 
                   color: '#999',
@@ -1469,26 +1301,38 @@ const Home = () => {
                   fontStyle: 'italic'
                 }}>
                   Powered by{' '}
-                  <a 
+                  <Box
+                    component="a"
                     href="https://openweathermap.org/" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    style={{
+                    sx={{
                       color: '#1976d2',
                       textDecoration: 'none',
-                      fontWeight: 'bold'
+                      fontWeight: 'bold',
+                      '&:hover': {
+                        textDecoration: 'underline'
+                      }
                     }}
                   >
                     OpenWeatherMap
-                  </a>
+                  </Box>
                 </Typography>
               </Box>
             </Box>
-          </RightCalendarArea>
-        </MainContent>
-      </ContentContainer>
-    </MainContainer>
+          </Paper>
+        </Box>
+      </Paper>
+      
+      {/* 병원 지도 모달 */}
+      <HospitalMapModal
+        open={showMapModal}
+        onClose={() => setShowMapModal(false)}
+        hospitals={busanHospitals}
+        currentPosition={currentPosition}
+      />
+    </Box>
   );
 };
 
-export default Home;
+export default Home; 

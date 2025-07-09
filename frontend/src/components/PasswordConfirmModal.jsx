@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -94,6 +94,27 @@ const PasswordConfirmModal = ({ open, onClose, onConfirm }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const isProcessingRef = useRef(false);
+  const hasSubmittedSuccessfullyRef = useRef(false); // 성공적으로 제출 완료된 경우
+
+  // 모달이 열릴 때마다 상태 초기화 (성공 상태는 유지)
+  useEffect(() => {
+    if (open && !hasSubmittedSuccessfullyRef.current) {
+      console.log('비밀번호 모달 열림 - 상태 초기화');
+      setPassword('');
+      setError('');
+      setLoading(false);
+      isProcessingRef.current = false;
+    } else if (open && hasSubmittedSuccessfullyRef.current) {
+      console.log('이미 비밀번호 인증 완료됨 - 모달 자동 닫기');
+      onConfirm(); // 즉시 성공 처리
+    }
+  }, [open, onConfirm]);
+
+  // 성공 시 모달을 열지 않도록 처리
+  if (hasSubmittedSuccessfullyRef.current) {
+    return null;
+  }
 
   const handleSubmit = async () => {
     if (!password.trim()) {
@@ -101,13 +122,31 @@ const PasswordConfirmModal = ({ open, onClose, onConfirm }) => {
       return;
     }
 
+    // 이미 제출이 완료된 경우 중단
+    if (hasSubmittedSuccessfullyRef.current) {
+      console.log('이미 비밀번호 제출이 완료되었습니다.');
+      return;
+    }
+
+    // 이미 처리 중이면 중단
+    if (isProcessingRef.current) {
+      console.log('중복 호출 방지: 이미 비밀번호 처리 중입니다.');
+      return;
+    }
+
+    isProcessingRef.current = true;
     setLoading(true);
     setError('');
 
     try {
+      console.log('비밀번호 확인 API 호출 시작');
+      
       // 실제 비밀번호 확인 API 호출
       const response = await verifyGuardianPassword(password);
       console.log('비밀번호 확인 성공:', response);
+      
+      // 성공적으로 제출 완료 표시
+      hasSubmittedSuccessfullyRef.current = true;
       
       // 비밀번호 확인 성공 시 onConfirm 콜백 호출
       onConfirm();
@@ -127,13 +166,18 @@ const PasswordConfirmModal = ({ open, onClose, onConfirm }) => {
       }
     } finally {
       setLoading(false);
+      isProcessingRef.current = false;
+      console.log('비밀번호 확인 처리 완료');
     }
   };
 
   const handleClose = () => {
+    console.log('비밀번호 모달 닫기');
     setPassword('');
     setError('');
     setLoading(false);
+    isProcessingRef.current = false;
+    // hasSubmittedSuccessfullyRef는 성공 시 유지
     onClose();
   };
 

@@ -16,284 +16,13 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  Backdrop
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
-
-// ProfileManagement.jsx와 동일한 페이지 컨테이너
-const PageContainer = styled(Box)({
-  position: 'relative',
-  width: '100vw',
-  height: '100vh',
-  background: 'linear-gradient(180deg, rgba(0, 124, 255, 0.05) 0%, rgba(0, 188, 255, 0.05) 100%)',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  overflow: 'auto',
-  padding: '20px 0'
-});
-
-// ProfileManagement.jsx와 동일한 메인 보드 (크기 최적화)
-const MainBoard = styled(Paper)({
-  position: 'relative',
-  width: '1200px', // 1820px에서 1200px로 축소
-  maxWidth: '90vw',
-  height: '800px', // 1000px에서 800px로 축소
-  maxHeight: '90vh',
-  backgroundColor: '#FFFFFF',
-  borderRadius: '10px',
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-  overflow: 'auto',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center'
-});
-
-// ProfileManagement.jsx와 동일한 페이지 제목 (크기 최적화)
-const PageTitle = styled(Typography)({
-  position: 'absolute',
-  top: '50px', // 80px에서 50px로 조정
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '28px', // 32px에서 28px로 축소
-  lineHeight: '34px', // 38px에서 34px로 축소
-  color: '#000000',
-  textAlign: 'center'
-});
-
-// ProfileManagement.jsx와 동일한 입력 폼 컨테이너 (크기 최적화)
-const FormContainer = styled(Box)({
-  position: 'absolute',
-  top: '100px', // 140px에서 100px로 조정
-  width: '900px', // 1000px에서 900px로 축소
-  maxWidth: '90%',
-  height: 'auto'
-});
-
-// ProfileManagement.jsx와 동일한 입력 테이블
-const InputTable = styled(Box)({
-  position: 'relative',
-  width: '100%',
-  backgroundColor: '#ffffff',
-  border: 'none'
-});
-
-// ProfileManagement.jsx와 동일한 입력 행 (크기 최적화)
-const InputRow = styled(Box)({
-  position: 'relative',
-  width: '100%',
-  height: '50px', // 55px에서 50px로 축소
-  display: 'flex',
-  alignItems: 'center',
-  borderBottom: '1px solid #0869CC',
-  '&:first-of-type': {
-    borderTop: '4px solid #00458B'
-  }
-});
-
-// ProfileManagement.jsx와 동일한 라벨 섹션 (크기 최적화)
-const LabelSection = styled(Box)({
-  position: 'absolute',
-  left: '0px',
-  width: '180px', // 200px에서 180px로 축소
-  height: '100%',
-  backgroundColor: 'rgba(51, 153, 255, 0.3)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '18px', // 22px에서 18px로 축소
-  color: '#000000'
-});
-
-// ProfileManagement.jsx와 동일한 입력 섹션 (위치 조정)
-const InputSection = styled(Box)({
-  position: 'absolute',
-  left: '180px', // 200px에서 180px로 조정
-  right: '0px',
-  height: '100%',
-  backgroundColor: '#FFFFFF',
-  display: 'flex',
-  alignItems: 'center',
-  paddingLeft: '24px',
-  paddingRight: '24px'
-});
-
-// ProfileManagement.jsx와 동일한 텍스트 필드 (크기 최적화)
-const StyledTextField = styled(TextField)({
-  width: '100%',
-  '& .MuiOutlinedInput-root': {
-    backgroundColor: 'transparent',
-    border: 'none',
-    '& fieldset': {
-      border: 'none'
-    },
-    '&:hover fieldset': {
-      border: 'none'
-    },
-    '&.Mui-focused fieldset': {
-      border: 'none'
-    }
-  },
-  '& .MuiInputBase-input': {
-    fontFamily: 'Pretendard',
-    fontWeight: 700,
-    fontSize: '16px', // 18px에서 16px로 축소
-    color: '#333',
-    padding: '0',
-    '&::placeholder': {
-      color: '#B4B4B4',
-      opacity: 1
-    }
-  }
-});
-
-// 동의 섹션 컨테이너 (크기 최적화)
-const AgreementContainer = styled(Box)({
-  position: 'absolute',
-  top: '430px', // 500px에서 430px로 조정
-  width: '900px', // 1000px에서 900px로 축소
-  maxWidth: '90%',
-  height: '160px' // 높이 명시
-});
-
-// 동의 섹션 제목 (크기 조정)
-const AgreementTitle = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '20px', // 24px에서 20px로 축소
-  color: '#00458B',
-  textAlign: 'center',
-  marginBottom: '20px' // 30px에서 20px로 축소
-});
-
-// 개별 동의 항목 (크기 최적화)
-const AgreementItem = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  height: '28px', // 40px에서 28px로 축소
-  marginBottom: '8px', // 16px에서 8px로 축소
-  paddingLeft: '4px' // 정렬 개선
-});
-
-const AgreementLabel = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 600,
-  fontSize: '16px', // 크기 유지
-  color: '#000000',
-  marginLeft: '8px'
-});
-
-// 버튼 컨테이너 (크기 최적화)
-const ButtonContainer = styled(Box)({
-  position: 'absolute',
-  bottom: '50px', // 60px에서 50px로 조정
-  left: '50%',
-  transform: 'translateX(-50%)',
-  width: '460px', // 420px에서 460px로 확대
-  height: '65px',
-  display: 'flex',
-  gap: '20px'
-});
-
-// 회원가입 버튼 (크기 최적화)
-const RegisterButton = styled(Button)({
-  width: '220px', // 200px에서 220px로 확대
-  height: '65px',
-  backgroundColor: '#0869CC',
-  borderRadius: '30px',
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '20px', // 24px에서 20px로 축소
-  color: '#FFFFFF',
-  textTransform: 'none',
-  '&:hover': {
-    backgroundColor: '#0653A3'
-  },
-  '&:disabled': {
-    backgroundColor: '#ccc'
-  }
-});
-
-// 로그인으로 돌아가기 버튼 (크기 최적화)
-const BackButton = styled(Button)({
-  width: '220px', // 200px에서 220px로 확대
-  height: '65px',
-  backgroundColor: '#666',
-  borderRadius: '30px',
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '20px', // 20px 유지
-  color: '#FFFFFF',
-  textTransform: 'none',
-  '&:hover': {
-    backgroundColor: '#555'
-  }
-});
-
-// 에러 컨테이너 (위치 최적화)
-const ErrorContainer = styled(Box)({
-  position: 'absolute',
-  top: '620px', // 680px에서 620px로 조정
-  width: '900px', // 1000px에서 900px로 축소
-  maxWidth: '90%',
-  minHeight: '50px'
-});
-
-// 필수 표시 스타일
-const RequiredMark = styled('span')({
-  color: '#ff4444',
-  fontWeight: 'bold',
-  marginLeft: '4px'
-});
-
-// 팝업 스타일
-const StyledDialog = styled(Dialog)({
-  '& .MuiDialog-paper': {
-    borderRadius: '20px',
-    maxWidth: '700px',
-    width: '90%',
-    maxHeight: '80vh',
-    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
-  }
-});
-
-const DialogTitleStyled = styled(DialogTitle)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '22px',
-  color: '#00458B',
-  textAlign: 'center',
-  borderBottom: '2px solid #e8f4fd',
-  backgroundColor: '#f8fbff',
-  padding: '24px'
-});
-
-const DialogContentStyled = styled(DialogContent)({
-  fontFamily: 'Pretendard',
-  fontSize: '15px',
-  lineHeight: 1.8,
-  color: '#333',
-  padding: '32px 28px',
-  backgroundColor: '#ffffff'
-});
-
-const LoadingOverlay = styled(Box)({
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  background: 'rgba(255, 255, 255, 0.8)',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  gap: '20px',
-  zIndex: 1000,
-  borderRadius: '10px'
-});
 
 const Register = () => {
   const navigate = useNavigate();
@@ -319,137 +48,93 @@ const Register = () => {
   
   // 팝업 상태
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogType, setDialogType] = useState(''); // 'service', 'privacy', 'location', 'marketing'
+  const [dialogType, setDialogType] = useState('');
   
   // 약관 내용
   const termsContent = {
     service: {
       title: '서비스 이용약관',
-      content: `제1조 (목적)
-이 약관은 헬스케어 관리 시스템(이하 '회사')이 제공하는 서비스의 이용에 관한 기본적인 사항을 정합니다.
-
-제2조 (서비스 내용)
-1. 어르신 건강 모니터링 서비스
-2. 응급 상황 대응 서비스
-3. 가족 연결 서비스
-4. 기타 건강관리 관련 서비스
-
-제3조 (이용자의 의무)
-이용자는 정확한 정보를 제공하고, 서비스를 올바른 목적으로 이용하여야 합니다.`
+      content: (
+        <Box>
+          <Typography variant="h6" gutterBottom>제1조 (목적)</Typography>
+          <Typography paragraph>
+            이 약관은 헬스케어 관리 시스템(이하 '회사')이 제공하는 서비스의 이용에 관한 기본적인 사항을 정합니다.
+          </Typography>
+          
+          <Typography variant="h6" gutterBottom>제2조 (서비스 내용)</Typography>
+          <Box component="ul" sx={{ pl: 2 }}>
+            <Typography component="li">어르신 건강 모니터링 서비스</Typography>
+            <Typography component="li">응급 상황 대응 서비스</Typography>
+            <Typography component="li">가족 연결 서비스</Typography>
+            <Typography component="li">기타 건강관리 관련 서비스</Typography>
+          </Box>
+          
+          <Typography variant="h6" gutterBottom>제3조 (이용자의 의무)</Typography>
+          <Typography paragraph>
+            이용자는 정확한 정보를 제공하고, 서비스를 올바른 목적으로 이용하여야 합니다.
+          </Typography>
+        </Box>
+      )
     },
     privacy: {
       title: '개인정보 처리방침',
-      content: `제1조 (개인정보 수집 목적)
-회사는 다음의 목적을 위해 개인정보를 수집합니다.
-1. 서비스 제공 및 운영
-2. 이용자 식별 및 인증
-3. 응급 상황 대응
-
-제2조 (수집하는 개인정보 항목)
-필수항목: 아이디, 비밀번호, 이름
-선택항목: 연락처, 이메일
-
-제3조 (개인정보 보유 및 이용기간)
-원칙적으로 서비스 이용기간 동안 보유하며, 탈퇴 시 즉시 파기합니다.`
+      content: (
+        <Box>
+          <Typography variant="h6" gutterBottom>제1조 (개인정보 수집 목적)</Typography>
+          <Typography paragraph>회사는 다음의 목적을 위해 개인정보를 수집합니다.</Typography>
+          <Box component="ul" sx={{ pl: 2 }}>
+            <Typography component="li">서비스 제공 및 운영</Typography>
+            <Typography component="li">이용자 식별 및 인증</Typography>
+            <Typography component="li">응급 상황 대응</Typography>
+          </Box>
+          
+          <Typography variant="h6" gutterBottom>제2조 (수집하는 개인정보 항목)</Typography>
+          <Typography paragraph>
+            <strong>필수항목:</strong> 아이디, 비밀번호, 이름
+          </Typography>
+          <Typography paragraph>
+            <strong>선택항목:</strong> 연락처, 이메일
+          </Typography>
+          
+          <Typography variant="h6" gutterBottom>제3조 (개인정보 보유 및 이용기간)</Typography>
+          <Typography paragraph>
+            원칙적으로 서비스 이용기간 동안 보유하며, 탈퇴 시 즉시 파기합니다.
+          </Typography>
+        </Box>
+      )
     },
     location: {
       title: '위치기반 서비스 이용약관',
-      content: `제1조 (위치정보 수집 목적)
-어르신의 안전한 일상생활을 위해 위치정보를 활용합니다.
-1. 응급 상황 시 위치 파악
-2. 안전구역 설정 및 모니터링
-3. 이동 경로 및 패턴 분석
-
-제2조 (위치정보 수집 방법)
-GPS, WiFi, 비콘 등을 통해 위치정보를 수집합니다.
-
-제3조 (위치정보 제3자 제공)
-응급 상황 시 소방서, 경찰서, 병원 등에 제공될 수 있습니다.`
+      content: (
+        <Box>
+          <Typography variant="h6" gutterBottom>제1조 (위치정보 수집 목적)</Typography>
+          <Typography paragraph>어르신의 안전한 일상생활을 위해 위치정보를 활용합니다.</Typography>
+          <Box component="ul" sx={{ pl: 2 }}>
+            <Typography component="li">응급 상황 시 위치 파악</Typography>
+            <Typography component="li">안전구역 설정 및 모니터링</Typography>
+            <Typography component="li">이동 경로 및 패턴 분석</Typography>
+          </Box>
+          
+          <Typography variant="h6" gutterBottom>제2조 (위치정보 수집 방법)</Typography>
+          <Typography paragraph>GPS, WiFi, 비콘 등을 통해 위치정보를 수집합니다.</Typography>
+          
+          <Typography variant="h6" gutterBottom>제3조 (위치정보 제3자 제공)</Typography>
+          <Typography paragraph>응급 상황 시 소방서, 경찰서, 병원 등에 제공될 수 있습니다.</Typography>
+        </Box>
+      )
     }
-  };
-
-  // 약관 내용을 HTML 형태로 렌더링
-  const renderTermsContent = (type) => {
-    const content = termsContent[type];
-    if (!content) return null;
-    
-    if (type === 'service') {
-      return (
-        <div>
-          <h4>제1조 (목적)</h4>
-          <p>이 약관은 헬스케어 관리 시스템(이하 '회사')이 제공하는 서비스의 이용에 관한 기본적인 사항을 정합니다.</p>
-          
-          <h4>제2조 (서비스 내용)</h4>
-          <ul>
-            <li>어르신 건강 모니터링 서비스</li>
-            <li>응급 상황 대응 서비스</li>
-            <li>가족 연결 서비스</li>
-            <li>기타 건강관리 관련 서비스</li>
-          </ul>
-          
-          <h4>제3조 (이용자의 의무)</h4>
-          <p>이용자는 정확한 정보를 제공하고, 서비스를 올바른 목적으로 이용하여야 합니다.</p>
-        </div>
-      );
-    }
-    
-    if (type === 'privacy') {
-      return (
-        <div>
-          <h4>제1조 (개인정보 수집 목적)</h4>
-          <p>회사는 다음의 목적을 위해 개인정보를 수집합니다.</p>
-          <ul>
-            <li>서비스 제공 및 운영</li>
-            <li>이용자 식별 및 인증</li>
-            <li>응급 상황 대응</li>
-          </ul>
-          
-          <h4>제2조 (수집하는 개인정보 항목)</h4>
-          <p><strong>필수항목:</strong> 아이디, 비밀번호, 이름</p>
-          <p><strong>선택항목:</strong> 연락처, 이메일</p>
-          
-          <h4>제3조 (개인정보 보유 및 이용기간)</h4>
-          <p>원칙적으로 서비스 이용기간 동안 보유하며, 탈퇴 시 즉시 파기합니다.</p>
-        </div>
-      );
-    }
-    
-    if (type === 'location') {
-      return (
-        <div>
-          <h4>제1조 (위치정보 수집 목적)</h4>
-          <p>어르신의 안전한 일상생활을 위해 위치정보를 활용합니다.</p>
-          <ul>
-            <li>응급 상황 시 위치 파악</li>
-            <li>안전구역 설정 및 모니터링</li>
-            <li>이동 경로 및 패턴 분석</li>
-          </ul>
-          
-          <h4>제2조 (위치정보 수집 방법)</h4>
-          <p>GPS, WiFi, 비콘 등을 통해 위치정보를 수집합니다.</p>
-          
-          <h4>제3조 (위치정보 제3자 제공)</h4>
-          <p>응급 상황 시 소방서, 경찰서, 병원 등에 제공될 수 있습니다.</p>
-        </div>
-      );
-    }
-    
-    return <div>{content?.content}</div>;
   };
   
-  // 팝업 열기 함수
   const handleViewTerms = (type) => {
     setDialogType(type);
     setDialogOpen(true);
   };
 
-  // 팝업 닫기 함수
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setDialogType('');
   };
 
-  // 확인 했을 때 동의도 하기
   const handleAcceptTerms = () => {
     setAgreements(prev => ({
       ...prev,
@@ -458,7 +143,6 @@ GPS, WiFi, 비콘 등을 통해 위치정보를 수집합니다.
     handleCloseDialog();
   };
 
-  // 페이지 진입시 스크롤 방지
   useEffect(() => {
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
@@ -471,19 +155,16 @@ GPS, WiFi, 비콘 등을 통해 위치정보를 수집합니다.
     };
   }, []);
 
-  // 입력값 변경 핸들러
   const handleInputChange = (field) => (event) => {
     setFormData(prev => ({
       ...prev,
       [field]: event.target.value
     }));
     
-    // 입력 변경시 에러/성공 메시지 클리어
     if (error) setError('');
     if (success) setSuccess('');
   };
 
-  // 동의 체크박스 핸들러
   const handleAgreementChange = (field) => (event) => {
     setAgreements(prev => ({
       ...prev,
@@ -522,7 +203,6 @@ GPS, WiFi, 비콘 등을 통해 위치정보를 수집합니다.
       return false;
     }
 
-    // 연락처는 선택사항이지만, 입력된 경우 유효성 검사
     if (formData.phone.trim()) {
       const phoneRegex = /^[0-9-]+$/;
       if (!phoneRegex.test(formData.phone)) {
@@ -531,7 +211,6 @@ GPS, WiFi, 비콘 등을 통해 위치정보를 수집합니다.
       }
     }
 
-    // 이메일도 선택사항이지만, 입력된 경우 유효성 검사
     if (formData.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
@@ -562,26 +241,19 @@ GPS, WiFi, 비콘 등을 통해 위치정보를 수집합니다.
         loginId: formData.loginId.trim(),
         loginPw: formData.loginPw,
         guardianName: formData.guardianName.trim(),
-        phone: formData.phone.trim() || null, // 빈 문자열이면 null로 전송
-        email: formData.email.trim() || null, // 빈 문자열이면 null로 전송
+        phone: formData.phone.trim() || null,
+        email: formData.email.trim() || null,
         role: 'GUARDIAN'
       };
 
-      console.log('회원가입 요청 데이터:', requestData);
-
       const response = await register(requestData);
-      console.log('회원가입 성공:', response);
-
       setSuccess('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.');
       
-      // 3초 후 로그인 페이지로 이동
       setTimeout(() => {
         navigate('/');
       }, 3000);
 
     } catch (err) {
-      console.error('회원가입 오류:', err);
-      
       if (err.response?.data?.message) {
         setError(err.response.data.message);
       } else if (err.response?.status === 409) {
@@ -602,335 +274,513 @@ GPS, WiFi, 비콘 등을 통해 위치정보를 수집합니다.
     navigate('/');
   };
 
+  // 공통 입력 필드 스타일
+  const inputFieldStyle = {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: 'transparent',
+      border: 'none',
+      '& fieldset': { border: 'none' },
+      '&:hover fieldset': { border: 'none' },
+      '&.Mui-focused fieldset': { border: 'none' }
+    },
+    '& .MuiInputBase-input': {
+      fontFamily: 'Pretendard',
+      fontWeight: 700,
+      fontSize: '16px',
+      color: '#333',
+      padding: '0',
+      '&::placeholder': {
+        color: '#B4B4B4',
+        opacity: 1
+      }
+    }
+  };
+
   return (
-    <PageContainer>
-      <MainBoard>
-        {loading && (
-          <LoadingOverlay>
-            <CircularProgress size={50} sx={{ color: '#0869CC' }} />
-            <Typography sx={{ 
-              color: '#0869CC', 
-              fontSize: '18px', 
-              fontWeight: 'bold',
-              fontFamily: 'Pretendard'
-            }}>
-              회원가입 중...
-            </Typography>
-          </LoadingOverlay>
-        )}
-
+    <Box sx={{
+      position: 'relative',
+      width: '100vw',
+      height: '100vh',
+      background: 'linear-gradient(180deg, rgba(0, 124, 255, 0.05) 0%, rgba(0, 188, 255, 0.05) 100%)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      overflow: 'auto',
+      padding: '20px 0'
+    }}>
+      <Paper sx={{
+        position: 'relative',
+        width: '1200px',
+        maxWidth: '90vw',
+        height: '800px',
+        maxHeight: '90vh',
+        backgroundColor: '#FFFFFF',
+        borderRadius: '10px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+        overflow: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}>
         {/* 페이지 제목 */}
-        <PageTitle>
+        <Typography sx={{
+          position: 'absolute',
+          top: '50px',
+          fontFamily: 'Pretendard',
+          fontWeight: 700,
+          fontSize: '28px',
+          lineHeight: '34px',
+          color: '#000000',
+          textAlign: 'center'
+        }}>
           회원가입
-        </PageTitle>
+        </Typography>
 
-        {/* 입력 폼 */}
-        <FormContainer>
-          <InputTable>
-            {/* 아이디 */}
-            <InputRow>
-              <LabelSection>아이디<RequiredMark>*</RequiredMark></LabelSection>
-              <InputSection>
-                <StyledTextField
-                  placeholder="영문, 숫자 조합 4~12자"
-                  value={formData.loginId}
-                  onChange={handleInputChange('loginId')}
-                  variant="outlined"
-                />
-              </InputSection>
-            </InputRow>
+        {/* 입력 폼 테이블 */}
+        <Box sx={{ position: 'absolute', top: '100px', width: '900px', maxWidth: '90%' }}>
+          <Table sx={{ 
+            '& .MuiTableCell-root': { 
+              border: 'none',
+              padding: 0
+            }
+          }}>
+            <TableBody>
+              {/* 아이디 */}
+              <TableRow>
+                <TableCell>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    height: '50px', 
+                    borderBottom: '1px solid #0869CC', 
+                    borderTop: '4px solid #00458B' 
+                  }}>
+                    <Box sx={{ 
+                      width: '180px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)', 
+                      fontFamily: 'Pretendard', 
+                      fontWeight: 700, 
+                      fontSize: '18px' 
+                    }}>
+                      아이디
+                      <Box component="span" sx={{ color: '#ff4444', marginLeft: '4px' }}>*</Box>
+                    </Box>
+                    <Box sx={{ 
+                      flex: 1, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      paddingX: '24px' 
+                    }}>
+                      <TextField 
+                        placeholder="영문, 숫자 조합 4~12자" 
+                        value={formData.loginId} 
+                        onChange={handleInputChange('loginId')} 
+                        fullWidth 
+                        sx={inputFieldStyle} 
+                      />
+                    </Box>
+                  </Box>
+                </TableCell>
+              </TableRow>
 
-            {/* 비밀번호 */}
-            <InputRow>
-              <LabelSection>비밀번호<RequiredMark>*</RequiredMark></LabelSection>
-              <InputSection>
-                <StyledTextField
-                  type="password"
-                  placeholder="영문, 숫자 조합 6~12자"
-                  value={formData.loginPw}
-                  onChange={handleInputChange('loginPw')}
-                  variant="outlined"
-                />
-              </InputSection>
-            </InputRow>
+              {/* 비밀번호 */}
+              <TableRow>
+                <TableCell>
+                  <Box sx={{ display: 'flex', height: '50px', borderBottom: '1px solid #0869CC' }}>
+                    <Box sx={{ 
+                      width: '180px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)', 
+                      fontFamily: 'Pretendard', 
+                      fontWeight: 700, 
+                      fontSize: '18px' 
+                    }}>
+                      비밀번호
+                      <Box component="span" sx={{ color: '#ff4444', marginLeft: '4px' }}>*</Box>
+                    </Box>
+                    <Box sx={{ 
+                      flex: 1, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      paddingX: '24px' 
+                    }}>
+                      <TextField 
+                        type="password" 
+                        placeholder="영문, 숫자 조합 6~12자" 
+                        value={formData.loginPw}
+                        onChange={handleInputChange('loginPw')} 
+                        fullWidth 
+                        sx={inputFieldStyle} 
+                      />
+                    </Box>
+                  </Box>
+                </TableCell>
+              </TableRow>
 
-            {/* 비밀번호 확인 */}
-            <InputRow>
-              <LabelSection>비밀번호 확인<RequiredMark>*</RequiredMark></LabelSection>
-              <InputSection>
-                <StyledTextField
-                  type="password"
-                  placeholder="비밀번호를 한번 더 입력해주세요"
-                  value={formData.confirmPw}
-                  onChange={handleInputChange('confirmPw')}
-                  variant="outlined"
-                />
-              </InputSection>
-            </InputRow>
+              {/* 비밀번호 확인 */}
+              <TableRow>
+                <TableCell>
+                  <Box sx={{ display: 'flex', height: '50px', borderBottom: '1px solid #0869CC' }}>
+                    <Box sx={{ 
+                      width: '180px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)', 
+                      fontFamily: 'Pretendard', 
+                      fontWeight: 700, 
+                      fontSize: '18px' 
+                    }}>
+                      비밀번호 확인
+                      <Box component="span" sx={{ color: '#ff4444', marginLeft: '4px' }}>*</Box>
+                    </Box>
+                    <Box sx={{ 
+                      flex: 1, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      paddingX: '24px' 
+                    }}>
+                      <TextField 
+                        type="password" 
+                        placeholder="비밀번호를 다시 입력하세요" 
+                        value={formData.confirmPw}
+                        onChange={handleInputChange('confirmPw')} 
+                        fullWidth 
+                        sx={inputFieldStyle} 
+                      />
+                    </Box>
+                  </Box>
+                </TableCell>
+              </TableRow>
 
-            {/* 이름 */}
-            <InputRow>
-              <LabelSection>이름<RequiredMark>*</RequiredMark></LabelSection>
-              <InputSection>
-                <StyledTextField
-                  placeholder="이름을 입력하세요"
-                  value={formData.guardianName}
-                  onChange={handleInputChange('guardianName')}
-                  variant="outlined"
-                />
-              </InputSection>
-            </InputRow>
+              {/* 이름 */}
+              <TableRow>
+                <TableCell>
+                  <Box sx={{ display: 'flex', height: '50px', borderBottom: '1px solid #0869CC' }}>
+                    <Box sx={{ 
+                      width: '180px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)', 
+                      fontFamily: 'Pretendard', 
+                      fontWeight: 700, 
+                      fontSize: '18px' 
+                    }}>
+                      이름
+                      <Box component="span" sx={{ color: '#ff4444', marginLeft: '4px' }}>*</Box>
+                    </Box>
+                    <Box sx={{ 
+                      flex: 1, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      paddingX: '24px' 
+                    }}>
+                      <TextField 
+                        placeholder="이름을 입력하세요" 
+                        value={formData.guardianName}
+                        onChange={handleInputChange('guardianName')} 
+                        fullWidth 
+                        sx={inputFieldStyle} 
+                      />
+                    </Box>
+                  </Box>
+                </TableCell>
+              </TableRow>
 
-            {/* 연락처 */}
-            <InputRow>
-              <LabelSection>연락처</LabelSection>
-              <InputSection>
-                <StyledTextField
-                  placeholder="ex) 010-1234-5678"
-                  value={formData.phone}
-                  onChange={handleInputChange('phone')}
-                  variant="outlined"
-                />
-              </InputSection>
-            </InputRow>
+              {/* 연락처 */}
+              <TableRow>
+                <TableCell>
+                  <Box sx={{ display: 'flex', height: '50px', borderBottom: '1px solid #0869CC' }}>
+                    <Box sx={{ 
+                      width: '180px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)', 
+                      fontFamily: 'Pretendard', 
+                      fontWeight: 700, 
+                      fontSize: '18px' 
+                    }}>
+                      연락처
+                    </Box>
+                    <Box sx={{ 
+                      flex: 1, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      paddingX: '24px' 
+                    }}>
+                      <TextField 
+                        placeholder="010-1234-5678" 
+                        value={formData.phone}
+                        onChange={handleInputChange('phone')} 
+                        fullWidth 
+                        sx={inputFieldStyle} 
+                      />
+                    </Box>
+                  </Box>
+                </TableCell>
+              </TableRow>
 
-            {/* 이메일 */}
-            <InputRow>
-              <LabelSection>이메일</LabelSection>
-              <InputSection>
-                <StyledTextField
-                  placeholder="이메일을 입력하세요"
-                  value={formData.email}
-                  onChange={handleInputChange('email')}
-                  variant="outlined"
-                />
-              </InputSection>
-            </InputRow>
-          </InputTable>
-        </FormContainer>
+              {/* 이메일 */}
+              <TableRow>
+                <TableCell>
+                  <Box sx={{ display: 'flex', height: '50px', borderBottom: '1px solid #0869CC' }}>
+                    <Box sx={{ 
+                      width: '180px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)', 
+                      fontFamily: 'Pretendard', 
+                      fontWeight: 700, 
+                      fontSize: '18px' 
+                    }}>
+                      이메일
+                    </Box>
+                    <Box sx={{ 
+                      flex: 1, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      paddingX: '24px' 
+                    }}>
+                      <TextField 
+                        placeholder="example@email.com" 
+                        value={formData.email}
+                        onChange={handleInputChange('email')} 
+                        fullWidth 
+                        sx={inputFieldStyle} 
+                      />
+                    </Box>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Box>
 
-        {/* 개인정보 수집 동의 */}
-        <AgreementContainer>
-          <AgreementTitle>📋 개인정보 수집 및 이용 동의</AgreementTitle>
+        {/* 약관 동의 */}
+        <Box sx={{ 
+          position: 'absolute', 
+          top: '420px', 
+          width: '900px', 
+          maxWidth: '90%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
+        }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={agreements.service}
+                onChange={handleAgreementChange('service')}
+                sx={{ color: '#0869CC' }}
+              />
+            }
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography sx={{ fontFamily: 'Pretendard', fontSize: '16px' }}>
+                  서비스 이용약관 동의
+                </Typography>
+                <Typography sx={{ color: '#ff4444', marginLeft: '4px' }}>*</Typography>
+                <Link
+                  component="button"
+                  type="button"
+                  onClick={() => handleViewTerms('service')}
+                  sx={{ marginLeft: '8px', fontFamily: 'Pretendard' }}
+                >
+                  [보기]
+                </Link>
+              </Box>
+            }
+          />
           
-          <AgreementItem>
-            <Checkbox
-              checked={agreements.service}
-              onChange={handleAgreementChange('service')}
-              sx={{
-                color: '#1976d2',
-                '&.Mui-checked': { color: '#1976d2' }
-              }}
-            />
-            <AgreementLabel>서비스 이용약관 동의 (필수)</AgreementLabel>
-            <Link 
-              component="button" 
-              variant="body2" 
-              onClick={() => handleViewTerms('service')}
-              sx={{ 
-                marginLeft: 'auto', 
-                color: '#0869CC', 
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                fontFamily: 'Pretendard',
-                fontSize: '14px'
-              }}
-            >
-              보기
-            </Link>
-          </AgreementItem>
-
-          <AgreementItem>
-            <Checkbox
-              checked={agreements.privacy}
-              onChange={handleAgreementChange('privacy')}
-              sx={{
-                color: '#1976d2',
-                '&.Mui-checked': { color: '#1976d2' }
-              }}
-            />
-            <AgreementLabel>개인정보 처리방침 동의 (필수)</AgreementLabel>
-            <Link 
-              component="button" 
-              variant="body2" 
-              onClick={() => handleViewTerms('privacy')}
-              sx={{ 
-                marginLeft: 'auto', 
-                color: '#0869CC', 
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                fontFamily: 'Pretendard',
-                fontSize: '14px'
-              }}
-            >
-              보기
-            </Link>
-          </AgreementItem>
-
-          <AgreementItem>
-            <Checkbox
-              checked={agreements.location}
-              onChange={handleAgreementChange('location')}
-              sx={{
-                color: '#1976d2',
-                '&.Mui-checked': { color: '#1976d2' }
-              }}
-            />
-            <AgreementLabel>위치기반 서비스 이용약관 동의 (필수)</AgreementLabel>
-            <Link 
-              component="button" 
-              variant="body2" 
-              onClick={() => handleViewTerms('location')}
-              sx={{ 
-                marginLeft: 'auto', 
-                color: '#0869CC', 
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                fontFamily: 'Pretendard',
-                fontSize: '14px'
-              }}
-            >
-              보기
-            </Link>
-          </AgreementItem>
-        </AgreementContainer>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={agreements.privacy}
+                onChange={handleAgreementChange('privacy')}
+                sx={{ color: '#0869CC' }}
+              />
+            }
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography sx={{ fontFamily: 'Pretendard', fontSize: '16px' }}>
+                  개인정보 처리방침 동의
+                </Typography>
+                <Typography sx={{ color: '#ff4444', marginLeft: '4px' }}>*</Typography>
+                <Link
+                  component="button"
+                  type="button"
+                  onClick={() => handleViewTerms('privacy')}
+                  sx={{ marginLeft: '8px', fontFamily: 'Pretendard' }}
+                >
+                  [보기]
+                </Link>
+              </Box>
+            }
+          />
+          
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={agreements.location}
+                onChange={handleAgreementChange('location')}
+                sx={{ color: '#0869CC' }}
+              />
+            }
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography sx={{ fontFamily: 'Pretendard', fontSize: '16px' }}>
+                  위치기반 서비스 이용약관 동의
+                </Typography>
+                <Typography sx={{ color: '#ff4444', marginLeft: '4px' }}>*</Typography>
+                <Link
+                  component="button"
+                  type="button"
+                  onClick={() => handleViewTerms('location')}
+                  sx={{ marginLeft: '8px', fontFamily: 'Pretendard' }}
+                >
+                  [보기]
+                </Link>
+              </Box>
+            }
+          />
+        </Box>
 
         {/* 에러/성공 메시지 */}
-        <ErrorContainer>
-          {error && (
-            <Alert 
-              severity="error" 
-              sx={{ 
-                width: '100%',
-                fontSize: '16px',
-                borderRadius: '8px'
-              }}
-            >
-              {error}
-            </Alert>
-          )}
-          {success && (
-            <Alert 
-              severity="success" 
-              sx={{ 
-                width: '100%',
-                fontSize: '16px',
-                borderRadius: '8px'
-              }}
-            >
-              {success}
-            </Alert>
-          )}
-        </ErrorContainer>
+        {error && (
+          <Box sx={{ position: 'absolute', top: '560px', width: '900px', maxWidth: '90%' }}>
+            <Alert severity="error">{error}</Alert>
+          </Box>
+        )}
+        
+        {success && (
+          <Box sx={{ position: 'absolute', top: '560px', width: '900px', maxWidth: '90%' }}>
+            <Alert severity="success">{success}</Alert>
+          </Box>
+        )}
 
-        {/* 버튼들 (가로 배치) */}
-        <ButtonContainer>
-          <RegisterButton
+        {/* 버튼들 */}
+        <Box sx={{ 
+          position: 'absolute', 
+          bottom: '50px', 
+          display: 'flex', 
+          gap: '20px' 
+        }}>
+          <Button
+            variant="outlined"
+            onClick={handleBack}
+            sx={{
+              width: '120px',
+              height: '50px',
+              borderColor: '#0869CC',
+              color: '#0869CC',
+              fontFamily: 'Pretendard',
+              fontWeight: 700,
+              fontSize: '16px',
+              '&:hover': {
+                borderColor: '#0869CC',
+                backgroundColor: 'rgba(8, 105, 204, 0.1)'
+              }
+            }}
+          >
+            뒤로가기
+          </Button>
+          
+          <Button
             variant="contained"
             onClick={handleRegister}
             disabled={loading}
+            sx={{
+              width: '120px',
+              height: '50px',
+              backgroundColor: '#0869CC',
+              fontFamily: 'Pretendard',
+              fontWeight: 700,
+              fontSize: '16px',
+              '&:hover': {
+                backgroundColor: '#0652A3'
+              },
+              '&:disabled': {
+                backgroundColor: '#cccccc'
+              }
+            }}
           >
-            회원가입
-          </RegisterButton>
+            {loading ? '가입 중...' : '회원가입'}
+          </Button>
+        </Box>
+      </Paper>
 
-          <BackButton
-            variant="contained"
-            onClick={handleBack}
-            disabled={loading}
-          >
-            로그인으로 돌아가기
-          </BackButton>
-        </ButtonContainer>
+      {/* 약관 내용 다이얼로그 */}
+      <Dialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontFamily: 'Pretendard', fontWeight: 700 }}>
+          {dialogType && termsContent[dialogType]?.title}
+        </DialogTitle>
         
-        {/* 약관 팝업 */}
-        <StyledDialog 
-          open={dialogOpen} 
-          onClose={handleCloseDialog}
-          maxWidth="md"
-          fullWidth
-        >
-          <DialogTitleStyled>
-            {termsContent[dialogType]?.title}
-          </DialogTitleStyled>
-          <DialogContentStyled>
-          <Box sx={{ 
-          whiteSpace: 'pre-line', 
-          minHeight: '300px',
-          '& h4': {
-          color: '#00458B',
-          fontWeight: 700,
-          fontSize: '16px',
-            marginTop: '24px',
-              marginBottom: '12px',
-            paddingLeft: '8px',
-              borderLeft: '4px solid #0869CC'
-            },
-            '& p': {
-              marginBottom: '16px',
-              color: '#555'
-            },
-            '& ul': {
-              paddingLeft: '20px',
-              marginBottom: '16px'
-            },
-            '& li': {
-              marginBottom: '8px',
-              color: '#666'
-            }
+        <DialogContent>
+          {dialogType && termsContent[dialogType]?.content}
+        </DialogContent>
+        
+        <DialogActions>
+          <Button 
+            onClick={handleCloseDialog}
+            sx={{ fontFamily: 'Pretendard' }}
+          >
+            취소
+          </Button>
+          <Button 
+            onClick={handleAcceptTerms}
+            variant="contained"
+            sx={{ 
+              backgroundColor: '#0869CC',
+              fontFamily: 'Pretendard',
+              '&:hover': {
+                backgroundColor: '#0652A3'
+              }
+            }}
+          >
+            동의하기
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 로딩 백드롭 */}
+      <Backdrop
+        sx={{ 
+          color: '#fff', 
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          background: 'rgba(255, 255, 255, 0.8)'
+        }}
+        open={loading}
+      >
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '20px'
+        }}>
+          <CircularProgress size={50} sx={{ color: '#0869CC' }} />
+          <Typography sx={{ 
+            color: '#0869CC', 
+            fontSize: '18px', 
+            fontWeight: 'bold',
+            fontFamily: 'Pretendard'
           }}>
-            {dialogType && renderTermsContent(dialogType)}
-          </Box>
-          </DialogContentStyled>
-          <DialogActions sx={{ 
-            padding: '20px 28px', 
-            backgroundColor: '#f8fbff',
-            borderTop: '1px solid #e8f4fd'
-          }}>
-            <Button
-              onClick={handleCloseDialog}
-              variant="outlined"
-              sx={{
-                fontFamily: 'Pretendard',
-                fontWeight: 600,
-                fontSize: '16px',
-                color: '#666',
-                borderColor: '#ddd',
-                borderRadius: '10px',
-                padding: '12px 24px',
-                minWidth: '100px',
-                '&:hover': {
-                  borderColor: '#999',
-                  backgroundColor: '#f5f5f5'
-                }
-              }}
-            >
-              닫기
-            </Button>
-            <Button
-              onClick={handleAcceptTerms}
-              variant="contained"
-              sx={{
-                fontFamily: 'Pretendard',
-                fontWeight: 600,
-                fontSize: '16px',
-                backgroundColor: '#0869CC',
-                borderRadius: '10px',
-                padding: '12px 24px',
-                minWidth: '140px',
-                marginLeft: '12px',
-                boxShadow: '0 4px 12px rgba(8, 105, 204, 0.3)',
-                '&:hover': {
-                  backgroundColor: '#0653A3',
-                  boxShadow: '0 6px 16px rgba(8, 105, 204, 0.4)'
-                }
-              }}
-            >
-              확인 및 동의
-            </Button>
-          </DialogActions>
-        </StyledDialog>
-      </MainBoard>
-    </PageContainer>
+            회원가입 중...
+          </Typography>
+        </Box>
+      </Backdrop>
+    </Box>
   );
 };
 

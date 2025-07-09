@@ -11,17 +11,13 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Button,
-  Select,
-  MenuItem,
-  FormControl,
+  Button,  
   Pagination,
   List,
   ListItem,
   ListItemIcon,
   ListItemText
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import {
   DashboardOutlined,
   PeopleOutlined,
@@ -33,236 +29,8 @@ import {
   EditOutlined
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
-import PasswordConfirmModal from './PasswordConfirmModal';
-
-// Home.jsx와 동일한 스타일 구조
-const MainContainer = styled(Box)({
-  width: '100vw',
-  height: '100vh',
-  backgroundColor: '#CCE5FF',
-  display: 'flex',  
-  gap: '0px',
-  overflow: 'hidden'
-});
-
-const ContentContainer = styled(Paper)({
-  backgroundColor: '#ffffff',  
-  flex: 1,
-  display: 'flex',
-  overflow: 'auto',
-  margin: '1vw 1vw 1vw 240px',
-  height: 'calc(100vh - 2vw)',
-  minHeight: 'calc(100vh - 2vw)'
-});
-
-const Sidebar = styled(Paper)({
-  width: '240px',
-  height: '100vh',
-  backgroundColor: '#1976d2',
-  borderRadius: '0 20px 20px 0',
-  display: 'flex',
-  flexDirection: 'column',
-  padding: '20px 0',
-  color: 'white',
-  boxSizing: 'border-box',
-  flexShrink: 0,
-  position: 'fixed',
-  left: 0,
-  top: 0,
-  zIndex: 1000
-});
-
-const SidebarMenu = styled(List)({
-  padding: '0 20px',
-  flex: 1,
-  '& .MuiListItem-root': {
-    borderRadius: '12px',
-    marginBottom: '8px',
-    color: 'white',
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    '&.active': {
-      backgroundColor: 'rgba(255,255,255,0.2)',
-    },
-  },
-  '& .MuiListItemIcon-root': {
-    color: 'white',
-    minWidth: '40px',
-  }
-});
-
-// 메인 콘텐츠 - 패딩 줄이고 높이 최적화, 세로 중앙 정렬
-const MainContent = styled(Box)({
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  padding: '20px 30px'
-});
-
-// 페이지 제목 - 마진 줄임
-const PageTitle = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '28px',
-  color: '#1976d2',
-  marginBottom: '20px'
-});
-
-// 상단 검색 영역 - 간격 줄임
-const SearchContainer = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '12px',
-  marginBottom: '15px',
-  padding: '10px 0'
-});
-
-// 필터 버튼 - 원본 색상, 최적화된 사이즈
-const FilterButton = styled(Button)({
-  height: '40px',
-  minWidth: '80px',
-  backgroundColor: '#FFFFFF',
-  color: '#003C78',
-  border: '1px solid #00458B',
-  borderRadius: '5px',
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '14px',
-  textTransform: 'none',
-  '&:hover': {
-    backgroundColor: '#f0f8ff'
-  },
-  '&.active': {
-    backgroundColor: '#00458B',
-    color: '#FFFFFF',
-    borderColor: '#00458B'
-  }
-});
-
-// 검색 입력 - 원본 색상, 최적화된 사이즈
-const SearchInput = styled(TextField)({
-  flex: 1,
-  '& .MuiOutlinedInput-root': {
-    height: '40px',
-    backgroundColor: '#FFFFFF',
-    borderRadius: '5px',
-    '& fieldset': {
-      borderColor: '#00458B'
-    },
-    '&:hover fieldset': {
-      borderColor: '#00458B'
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#00458B'
-    }
-  },
-  '& .MuiInputBase-input': {
-    fontFamily: 'Pretendard',
-    fontWeight: 700,
-    fontSize: '14px',
-    color: '#003C78',
-    '&::placeholder': {
-      color: '#003C78',
-      opacity: 1
-    }
-  }
-});
-
-// 찾기 버튼 - 원본 색상, 최적화된 사이즈
-const SearchButton = styled(Button)({
-  height: '40px',
-  minWidth: '70px',
-  backgroundColor: '#007EFF',
-  color: '#FFFFFF',
-  borderRadius: '8px',
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '14px',
-  textTransform: 'none',
-  '&:hover': {
-    backgroundColor: '#0066CC'
-  }
-});
-
-// 추가 버튼 - 원본 색상, 최적화된 사이즈
-const AddButton = styled(Button)({
-  height: '40px',
-  minWidth: '70px',
-  backgroundColor: '#00458B',
-  color: '#FFFFFF',
-  borderRadius: '8px',
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '14px',
-  textTransform: 'none',
-  '&:hover': {
-    backgroundColor: '#003366'
-  }
-});
-
-// 테이블 컨테이너 - 파란색 테두리 추가
-const StyledTableContainer = styled(TableContainer)({
-  backgroundColor: '#ffffff',
-  borderRadius: '0',
-  border: '2px solid #1976d2',
-  boxShadow: 'none'
-});
-
-// 테이블 헤더 - 높이 줄임
-const StyledTableHead = styled(TableHead)({
-  '& .MuiTableCell-root': {
-    backgroundColor: 'rgba(51, 153, 255, 0.3)',
-    borderBottom: '2px solid #1976d2',
-    fontFamily: 'Pretendard',
-    fontWeight: 700,
-    fontSize: '14px',
-    color: '#000',
-    textAlign: 'center',
-    padding: '12px 6px',
-    height: '45px'
-  }
-});
-
-// 테이블 바디 - 높이 줄임 + 5행마다 굵은 선 (마지막 제외) + 클릭 가능
-const StyledTableBody = styled(TableBody)({
-  '& .MuiTableRow-root': {
-    '&:nth-of-type(even)': {
-      backgroundColor: '#f8f9fa'
-    },
-    '&:hover': {
-      backgroundColor: '#e3f2fd',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s ease'
-    },
-    // 5행마다 굵은 구분선 (마지막 행 제외)
-    '&:nth-of-type(5):not(:last-child)': {
-      '& .MuiTableCell-root': {
-        borderBottom: '3px solid #1976d2'
-      }
-    }
-  },
-  '& .MuiTableCell-root': {
-    borderBottom: '1px solid #1976d2',
-    fontFamily: 'Pretendard',
-    fontSize: '12px',
-    color: '#333',
-    textAlign: 'center',
-    padding: '8px 6px',
-    height: '35px'
-  }
-});
-
-// 페이지네이션 컨테이너 - 마진 줄임
-const PaginationContainer = styled(Box)({
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  marginTop: '15px',
-  padding: '10px 0'
-});
+// import PasswordConfirmModal from './PasswordConfirmModal'; // ProfileManagement에서만 사용
+import { getUserInfo, clearAuthData } from '../utils/auth';
 
 const SeniorList = () => {
   const navigate = useNavigate();
@@ -278,19 +46,17 @@ const SeniorList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [seniors, setSeniors] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [totalPages, setTotalPages] = useState(13); // 임시값
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [totalPages, setTotalPages] = useState(1); // 실제 데이터에 따라 동적으로 설정
+  // const [showPasswordModal, setShowPasswordModal] = useState(false); // ProfileManagement에서만 처리
 
   useEffect(() => {
-    const savedName = localStorage.getItem('guardianName');
-    const savedLoginId = localStorage.getItem('loginId');
-    const savedRole = localStorage.getItem('role');
+    const userInfo = getUserInfo();
     
-    if (savedName && savedLoginId) {
+    if (userInfo) {
       setGuardianInfo({
-        name: savedName,
-        loginId: savedLoginId,
-        role: savedRole || 'GUARDIAN'
+        name: userInfo.name,
+        loginId: userInfo.loginId,
+        role: userInfo.role || 'GUARDIAN'
       });
     }
     
@@ -305,7 +71,7 @@ const SeniorList = () => {
       // const response = await getSeniors();
       
       // API가 준비되면 여기에 실제 데이터 로드 로직 추가
-      console.log('데이터 로드 기늤리는 중...');
+      console.log('데이터 로드 기다리는 중...');
       
     } catch (error) {
       console.error('보호 대상자 목록 로드 오류:', error);
@@ -328,23 +94,13 @@ const SeniorList = () => {
     navigate(`/senior/edit/${seniorId}`);
   };
 
-  // 비밀번호 확인 모달 열기
-  const handleProfileManagementClick = () => {
-    setShowPasswordModal(true);
-  };
-
-  // 비밀번호 확인 성공 시 회원정보 관리로 이동
-  const handlePasswordConfirm = () => {
-    navigate('/profile/management');
-  };
-
   const handleLogout = () => {
-    localStorage.removeItem('jwt');
-    localStorage.removeItem('loginId');
-    localStorage.removeItem('guardianName');
-    localStorage.removeItem('role');
+    clearAuthData();
     
     alert('로그아웃 되었습니다.');
+    
+    // 커스텀 이벤트 발생
+    window.dispatchEvent(new Event('authStateChange'));
     window.location.reload();
   };
 
@@ -359,9 +115,32 @@ const SeniorList = () => {
   ];
 
   return (
-    <MainContainer>
+    <Box sx={{
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: '#CCE5FF',
+      display: 'flex',  
+      gap: 0,
+      overflow: 'hidden'
+    }}>
       {/* 사이드바 */}
-      <Sidebar elevation={0}>
+      <Paper sx={{
+        width: '240px',
+        height: '100vh',
+        backgroundColor: '#1976d2',
+        borderRadius: '0 20px 20px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '20px 0',
+        color: 'white',
+        boxSizing: 'border-box',
+        flexShrink: 0,
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        zIndex: 1000,
+        boxShadow: 10
+      }}>
         <Box sx={{ 
           px: 2, 
           py: 3, 
@@ -402,7 +181,30 @@ const SeniorList = () => {
           </Typography>
         </Box>
 
-        <SidebarMenu>
+        <List sx={{
+          padding: '0 20px',
+          flex: 1,
+          '& .MuiListItem-root': {
+            borderRadius: 1.5,
+            marginBottom: 1,
+            color: 'white',
+            cursor: 'pointer',
+            transition: theme => theme.transitions.create(['background-color', 'transform'], {
+              duration: theme.transitions.duration.short,
+            }),
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              transform: 'translateX(4px)'
+            },
+            '&.active': {
+              backgroundColor: 'rgba(255,255,255,0.2)',
+            },
+          },
+          '& .MuiListItemIcon-root': {
+            color: 'white',
+            minWidth: '40px',
+          }
+        }}>
           {menuItems.map((item, index) => {
             const IconComponent = item.icon;
             return (
@@ -412,8 +214,8 @@ const SeniorList = () => {
                 onClick={() => {
                   if (item.text === '홈') {
                     navigate('/home');
-                  } else if (item.text === '회원정보 관리') {
-                    handleProfileManagementClick();
+                  } else if (item.text === '회원정보 관리') {                    
+                    navigate('/profile/management');
                   } else if (item.text === '보호 대상자') {
                     setActiveMenu(item.text);
                   } else if (item.text === '일정 관리') {
@@ -430,15 +232,18 @@ const SeniorList = () => {
               </ListItem>
             );
           })}
-        </SidebarMenu>
+        </List>
 
         <Box sx={{ px: 2 }}>
           <ListItem
             onClick={handleLogout}
             sx={{
-              borderRadius: '12px',
+              borderRadius: 1.5,
               color: 'white',
               cursor: 'pointer',
+              transition: theme => theme.transitions.create(['background-color'], {
+                duration: theme.transitions.duration.short,
+              }),
               '&:hover': {
                 backgroundColor: 'rgba(255,255,255,0.1)',
               }
@@ -450,45 +255,182 @@ const SeniorList = () => {
             <ListItemText primary="로그아웃" />
           </ListItem>
         </Box>
-      </Sidebar>
+      </Paper>
 
-      <ContentContainer elevation={0}>
-        <MainContent>
+      <Paper sx={{
+        backgroundColor: '#ffffff',  
+        flex: 1,
+        display: 'flex',
+        overflow: 'auto',
+        margin: '1vw 1vw 1vw 240px',
+        height: 'calc(100vh - 2vw)',
+        minHeight: 'calc(100vh - 2vw)',
+        borderRadius: 1,
+        boxShadow: 3
+      }}>
+        <Box sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          padding: '20px 30px'
+        }}>
           {/* 페이지 제목 */}
-          <PageTitle>보호 대상자 리스트</PageTitle>
+          <Typography sx={{
+            fontFamily: 'Pretendard',
+            fontWeight: 700,
+            fontSize: '28px',
+            color: '#1976d2',
+            marginBottom: '20px'
+          }}>
+            보호 대상자 리스트
+          </Typography>
           
           {/* 검색 영역 */}
-          <SearchContainer>
-            <FilterButton 
-              className={searchFilter === '항목' ? 'active' : ''}
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            marginBottom: '15px',
+            padding: '10px 0'
+          }}>
+            <Button 
               onClick={() => setSearchFilter('항목')}
+              sx={{
+                height: '40px',
+                minWidth: '80px',
+                backgroundColor: searchFilter === '항목' ? '#00458B' : '#FFFFFF',
+                color: searchFilter === '항목' ? '#FFFFFF' : '#003C78',
+                border: '1px solid #00458B',
+                borderRadius: '5px',
+                fontFamily: 'Pretendard',
+                fontWeight: 700,
+                fontSize: '14px',
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: searchFilter === '항목' ? '#003366' : '#f0f8ff'
+                }
+              }}
             >
               항목
-            </FilterButton>
-            <FilterButton 
-              className={searchFilter === '종류' ? 'active' : ''}
+            </Button>
+            <Button 
               onClick={() => setSearchFilter('종류')}
+              sx={{
+                height: '40px',
+                minWidth: '80px',
+                backgroundColor: searchFilter === '종류' ? '#00458B' : '#FFFFFF',
+                color: searchFilter === '종류' ? '#FFFFFF' : '#003C78',
+                border: '1px solid #00458B',
+                borderRadius: '5px',
+                fontFamily: 'Pretendard',
+                fontWeight: 700,
+                fontSize: '14px',
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: searchFilter === '종류' ? '#003366' : '#f0f8ff'
+                }
+              }}
             >
               종류
-            </FilterButton>
-            <SearchInput
+            </Button>
+            <TextField
               placeholder="검색"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               variant="outlined"
+              sx={{
+                flex: 1,
+                '& .MuiOutlinedInput-root': {
+                  height: '40px',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '5px',
+                  '& fieldset': {
+                    borderColor: '#00458B'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#00458B'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#00458B'
+                  }
+                },
+                '& .MuiInputBase-input': {
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  color: '#003C78',
+                  '&::placeholder': {
+                    color: '#003C78',
+                    opacity: 1
+                  }
+                }
+              }}
             />
-            <SearchButton onClick={handleSearch}>
+            <Button 
+              onClick={handleSearch}
+              sx={{
+                height: '40px',
+                minWidth: '70px',
+                backgroundColor: '#007EFF',
+                color: '#FFFFFF',
+                borderRadius: '8px',
+                fontFamily: 'Pretendard',
+                fontWeight: 700,
+                fontSize: '14px',
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: '#0066CC'
+                }
+              }}
+            >
               찾기
-            </SearchButton>
-            <AddButton onClick={handleAddSenior}>
+            </Button>
+            <Button 
+              onClick={handleAddSenior}
+              sx={{
+                height: '40px',
+                minWidth: '70px',
+                backgroundColor: '#00458B',
+                color: '#FFFFFF',
+                borderRadius: '8px',
+                fontFamily: 'Pretendard',
+                fontWeight: 700,
+                fontSize: '14px',
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: '#003366'
+                }
+              }}
+            >
               추가
-            </AddButton>
-          </SearchContainer>
+            </Button>
+          </Box>
 
           {/* 테이블 */}
-          <StyledTableContainer component={Paper}>
+          <TableContainer 
+            component={Paper}
+            sx={{
+              backgroundColor: '#ffffff',
+              borderRadius: 0,
+              border: '2px solid #1976d2',
+              boxShadow: 'none'
+            }}
+          >
             <Table>
-              <StyledTableHead>
+              <TableHead sx={{
+                '& .MuiTableCell-root': {
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  borderBottom: '2px solid #1976d2',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  color: '#000',
+                  textAlign: 'center',
+                  padding: '12px 6px',
+                  height: '45px'
+                }
+              }}>
                 <TableRow>
                   <TableCell>이름</TableCell>
                   <TableCell>생년월일</TableCell>
@@ -500,13 +442,40 @@ const SeniorList = () => {
                   <TableCell>복용 약물</TableCell>
                   <TableCell>특이사항</TableCell>
                 </TableRow>
-              </StyledTableHead>
-              <StyledTableBody>
+              </TableHead>
+              <TableBody sx={{
+                '& .MuiTableRow-root': {
+                  '&:nth-of-type(even)': {
+                    backgroundColor: '#f8f9fa'
+                  },
+                  // 데이터가 있는 행만 호버 효과 적용
+                  '&.data-row:hover': {
+                    backgroundColor: '#e3f2fd',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  },
+                  // 5행마다 굵은 구분선 (마지막 행 제외)
+                  '&:nth-of-type(5):not(:last-child)': {
+                    '& .MuiTableCell-root': {
+                      borderBottom: '3px solid #1976d2'
+                    }
+                  }
+                },
+                '& .MuiTableCell-root': {
+                  borderBottom: '1px solid #1976d2',
+                  fontFamily: 'Pretendard',
+                  fontSize: '12px',
+                  color: '#333',
+                  textAlign: 'center',
+                  padding: '8px 6px',
+                  height: '35px'
+                }
+              }}>
                 {seniors.map((senior) => (
                   <TableRow 
                     key={senior.id}
+                    className="data-row"
                     onClick={() => handleRowClick(senior.id)}
-                    style={{ cursor: 'pointer' }}
                   >
                     <TableCell>{senior.name}</TableCell>
                     <TableCell>{senior.birthDate}</TableCell>
@@ -519,9 +488,16 @@ const SeniorList = () => {
                     <TableCell>{senior.specialNotes}</TableCell>
                   </TableRow>
                 ))}
-                {/* 빈 행들 (디자인을 위해) */}
                 {Array.from({ length: Math.max(0, 10 - seniors.length) }).map((_, index) => (
-                  <TableRow key={`empty-${index}`}>
+                  <TableRow 
+                    key={`empty-${index}`}
+                    sx={{
+                      '& .MuiTableCell-root': {
+                        userSelect: 'none',
+                        pointerEvents: 'none'
+                      }
+                    }}
+                  >
                     <TableCell>&nbsp;</TableCell>
                     <TableCell>&nbsp;</TableCell>
                     <TableCell>&nbsp;</TableCell>
@@ -533,15 +509,19 @@ const SeniorList = () => {
                     <TableCell>&nbsp;</TableCell>
                   </TableRow>
                 ))}
-              </StyledTableBody>
+              </TableBody>
             </Table>
-          </StyledTableContainer>
+          </TableContainer>
 
           {/* 페이지네이션 */}
-          <PaginationContainer>
-            <Typography variant="body2" sx={{ mr: 2, color: '#666' }}>
-              {currentPage}/{totalPages}
-            </Typography>
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            marginTop: '15px',
+            padding: '10px 0',
+            gap: '8px'
+          }}>
             <Pagination 
               count={totalPages}
               page={currentPage}
@@ -550,17 +530,13 @@ const SeniorList = () => {
               showFirstButton 
               showLastButton
             />
-          </PaginationContainer>
-        </MainContent>
-      </ContentContainer>
-      
-      {/* 비밀번호 확인 모달 */}
-      <PasswordConfirmModal 
-        open={showPasswordModal}
-        onClose={() => setShowPasswordModal(false)}
-        onConfirm={handlePasswordConfirm}
-      />
-    </MainContainer>
+            <Typography variant="body2" sx={{ color: '#666' }}>
+              {currentPage}/{totalPages}
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 

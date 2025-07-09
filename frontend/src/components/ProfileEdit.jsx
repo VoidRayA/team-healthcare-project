@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
 import {
   Box,
@@ -19,7 +18,6 @@ import {
   ListItemIcon,
   ListItemText
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import {
   DashboardOutlined,
   PeopleOutlined,
@@ -31,156 +29,7 @@ import {
   EditOutlined
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
-
-// 홈 화면과 동일한 스타일 구조
-const MainContainer = styled(Box)({
-  width: '100vw',
-  height: '100vh',
-  backgroundColor: '#CCE5FF',
-  display: 'flex',  
-  gap: '0px',
-  overflow: 'hidden'
-});
-
-const ContentContainer = styled(Paper)({
-  backgroundColor: '#ffffff',  
-  flex: 1,
-  display: 'flex',
-  overflow: 'auto',
-  margin: '1vw 1vw 1vw 240px',
-  height: 'calc(100vh - 2vw)',
-  minHeight: 'calc(100vh - 2vw)'
-});
-
-const Sidebar = styled(Paper)({
-  width: '240px',
-  height: '100vh',
-  backgroundColor: '#1976d2',
-  borderRadius: '0 20px 20px 0',
-  display: 'flex',
-  flexDirection: 'column',
-  padding: '20px 0',
-  color: 'white',
-  boxSizing: 'border-box',
-  flexShrink: 0,
-  position: 'fixed',
-  left: 0,
-  top: 0,
-  zIndex: 1000
-});
-
-const SidebarMenu = styled(List)({
-  padding: '0 20px',
-  flex: 1,
-  '& .MuiListItem-root': {
-    borderRadius: '12px',
-    marginBottom: '8px',
-    color: 'white',
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    '&.active': {
-      backgroundColor: 'rgba(255,255,255,0.2)',
-    },
-  },
-  '& .MuiListItemIcon-root': {
-    color: 'white',
-    minWidth: '40px',
-  }
-});
-
-const MainContent = styled(Box)({
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  padding: '40px'
-});
-
-const HeaderSection = styled(Box)({
-  marginBottom: '40px'
-});
-
-const ProfileEditCard = styled(Paper)({
-  backgroundColor: '#ffffff',
-  border: '1px solid #e0e0e0',
-  borderRadius: '15px',
-  padding: '40px',
-  maxWidth: '800px',
-  margin: '0 auto'
-});
-
-const StyledTextField = styled(TextField)({
-  marginBottom: '20px',
-  '& .MuiOutlinedInput-root': {
-    height: '55px',
-    backgroundColor: '#FFFFFF',
-    borderRadius: '10px',
-    '& fieldset': {
-      borderColor: '#e0e0e0',
-      borderWidth: '1px'
-    },
-    '&:hover fieldset': {
-      borderColor: '#1976d2'
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#1976d2',
-      borderWidth: '2px'
-    }
-  },
-  '& .MuiInputBase-input': {
-    fontSize: '16px',
-    color: '#333',
-    padding: '0 15px'
-  }
-});
-
-const StyledFormControl = styled(FormControl)({
-  marginBottom: '20px',
-  '& .MuiOutlinedInput-root': {
-    height: '55px',
-    backgroundColor: '#FFFFFF',
-    borderRadius: '10px',
-    '& fieldset': {
-      borderColor: '#e0e0e0',
-      borderWidth: '1px'
-    },
-    '&:hover fieldset': {
-      borderColor: '#1976d2'
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#1976d2',
-      borderWidth: '2px'
-    }
-  }
-});
-
-const UpdateButton = styled(Button)({
-  height: '50px',
-  backgroundColor: '#1976d2',
-  borderRadius: '10px',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  textTransform: 'none',
-  marginRight: '10px',
-  minWidth: '120px',
-  '&:hover': {
-    backgroundColor: '#1565c0'
-  }
-});
-
-const CancelButton = styled(Button)({
-  height: '50px',
-  backgroundColor: '#666',
-  borderRadius: '10px',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  textTransform: 'none',
-  minWidth: '120px',
-  '&:hover': {
-    backgroundColor: '#555'
-  }
-});
+import { getUserInfo, clearAuthData, getAuthToken } from '../utils/auth';
 
 const ProfileEdit = () => {
   const navigate = useNavigate();
@@ -214,15 +63,13 @@ const ProfileEdit = () => {
   }, []);
 
   const loadGuardianInfo = () => {
-    const savedName = localStorage.getItem('guardianName');
-    const savedLoginId = localStorage.getItem('loginId');
-    const savedRole = localStorage.getItem('role');
+    const userInfo = getUserInfo();
     
-    if (savedName && savedLoginId) {
+    if (userInfo) {
       setGuardianInfo({
-        name: savedName,
-        loginId: savedLoginId,
-        role: savedRole || 'GUARDIAN'
+        name: userInfo.name,
+        loginId: userInfo.loginId,
+        role: userInfo.role || 'GUARDIAN'
       });
     }
   };
@@ -231,29 +78,26 @@ const ProfileEdit = () => {
     try {
       setInitialLoading(true);
       
-      const currentLoginId = localStorage.getItem('loginId');
-      if (!currentLoginId) {
+      const userInfo = getUserInfo();
+      if (!userInfo) {
         setError('로그인 정보를 찾을 수 없습니다.');
         navigate('/');
         return;
       }
 
-      const token = localStorage.getItem('jwt');
+      const token = getAuthToken();
       if (!token) {
         setError('로그인이 필요합니다.');
         navigate('/');
         return;
       }
-
-      // 임시로 localStorage 정보 사용
-      const guardianName = localStorage.getItem('guardianName');
       
       setFormData({
-        loginId: currentLoginId,
+        loginId: userInfo.loginId,
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
-        guardianName: guardianName || '',
+        guardianName: userInfo.name || '',
         phone: '',
         email: '',
         relationship: ''
@@ -338,7 +182,7 @@ const ProfileEdit = () => {
     setSuccess('');
 
     try {
-      const token = localStorage.getItem('jwt');
+      const token = getAuthToken();
       if (!token) {
         setError('로그인이 필요합니다.');
         navigate('/');
@@ -358,11 +202,6 @@ const ProfileEdit = () => {
       }
 
       console.log('회원정보 수정 요청 데이터:', updateData);
-
-      // TODO: 백엔드 API 호출
-      // const response = await axios.put('http://localhost:8080/api/guardian/profile', updateData, {
-      //   headers: { 'Authorization': `Bearer ${token}` }
-      // });
 
       setSuccess('회원정보가 성공적으로 수정되었습니다!');
       
@@ -387,12 +226,12 @@ const ProfileEdit = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('jwt');
-    localStorage.removeItem('loginId');
-    localStorage.removeItem('guardianName');
-    localStorage.removeItem('role');
+    clearAuthData();
     
     alert('로그아웃 되었습니다.');
+    
+    // 커스텀 이벤트 발생
+    window.dispatchEvent(new Event('authStateChange'));
     window.location.reload();
   };
 
@@ -406,22 +245,90 @@ const ProfileEdit = () => {
     { text: '메시지', icon: MessageOutlined }
   ];
 
+  // 공통 텍스트 필드 스타일
+  const textFieldSx = {
+    marginBottom: '20px',
+    '& .MuiOutlinedInput-root': {
+      height: '55px',
+      backgroundColor: '#FFFFFF',
+      borderRadius: '10px',
+      '& fieldset': {
+        borderColor: '#e0e0e0',
+        borderWidth: '1px'
+      },
+      '&:hover fieldset': {
+        borderColor: '#1976d2'
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#1976d2',
+        borderWidth: '2px'
+      }
+    },
+    '& .MuiInputBase-input': {
+      fontSize: '16px',
+      color: '#333',
+      padding: '0 15px'
+    }
+  };
+
+  // 비활성화된 텍스트 필드 스타일
+  const disabledTextFieldSx = {
+    ...textFieldSx,
+    '& .MuiOutlinedInput-root.Mui-disabled': {
+      backgroundColor: '#f8f9fa',
+      color: '#495057'
+    },
+    '& .MuiInputLabel-root.Mui-disabled': {
+      color: '#6c757d'
+    }
+  };
+
   // 초기 로딩 중
   if (initialLoading) {
     return (
-      <MainContainer>
-        <Box display="flex" justifyContent="center" alignItems="center" flex={1}>
+      <Box sx={{
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: '#CCE5FF',
+        display: 'flex',  
+        gap: 0,
+        overflow: 'hidden'
+      }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
           <CircularProgress size={50} />
           <Typography sx={{ ml: 2 }}>사용자 정보를 불러오는 중...</Typography>
         </Box>
-      </MainContainer>
+      </Box>
     );
   }
 
   return (
-    <MainContainer>
+    <Box sx={{
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: '#CCE5FF',
+      display: 'flex',  
+      gap: 0,
+      overflow: 'hidden'
+    }}>
       {/* 사이드바 */}
-      <Sidebar elevation={0}>
+      <Paper sx={{
+        width: '240px',
+        height: '100vh',
+        backgroundColor: '#1976d2',
+        borderRadius: '0 20px 20px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '20px 0',
+        color: 'white',
+        boxSizing: 'border-box',
+        flexShrink: 0,
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        zIndex: 1000,
+        boxShadow: 10
+      }}>
         {/* 사용자 정보 영역 */}
         <Box sx={{ 
           px: 2, 
@@ -463,7 +370,30 @@ const ProfileEdit = () => {
           </Typography>
         </Box>
 
-        <SidebarMenu>
+        <List sx={{
+          padding: '0 20px',
+          flex: 1,
+          '& .MuiListItem-root': {
+            borderRadius: 1.5,
+            marginBottom: 1,
+            color: 'white',
+            cursor: 'pointer',
+            transition: theme => theme.transitions.create(['background-color', 'transform'], {
+              duration: theme.transitions.duration.short,
+            }),
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              transform: 'translateX(4px)'
+            },
+            '&.active': {
+              backgroundColor: 'rgba(255,255,255,0.2)',
+            },
+          },
+          '& .MuiListItemIcon-root': {
+            color: 'white',
+            minWidth: '40px',
+          }
+        }}>
           {menuItems.map((item, index) => {
             const IconComponent = item.icon;
             return (
@@ -487,16 +417,19 @@ const ProfileEdit = () => {
               </ListItem>
             );
           })}
-        </SidebarMenu>
+        </List>
 
         {/* 로그아웃 버튼 */}
         <Box sx={{ px: 2 }}>
           <ListItem
             onClick={handleLogout}
             sx={{
-              borderRadius: '12px',
+              borderRadius: 1.5,
               color: 'white',
               cursor: 'pointer',
+              transition: theme => theme.transitions.create(['background-color'], {
+                duration: theme.transitions.duration.short,
+              }),
               '&:hover': {
                 backgroundColor: 'rgba(255,255,255,0.1)',
               }
@@ -508,57 +441,73 @@ const ProfileEdit = () => {
             <ListItemText primary="로그아웃" />
           </ListItem>
         </Box>
-      </Sidebar>
+      </Paper>
 
-      <ContentContainer elevation={0}>
-        <MainContent>
+      <Paper sx={{
+        backgroundColor: '#ffffff',  
+        flex: 1,
+        display: 'flex',
+        overflow: 'auto',
+        margin: '1vw 1vw 1vw 240px',
+        height: 'calc(100vh - 2vw)',
+        minHeight: 'calc(100vh - 2vw)',
+        borderRadius: 1,
+        boxShadow: 3
+      }}>
+        <Box sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '40px'
+        }}>
           {/* 헤더 */}
-          <HeaderSection>
+          <Box sx={{ marginBottom: '40px' }}>
             <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#333', mb: 1 }}>
               회원정보 관리
             </Typography>
             <Typography variant="body1" color="text.secondary">
               개인정보를 안전하게 관리하세요.
             </Typography>
-          </HeaderSection>
+          </Box>
 
           {/* 회원정보 수정 폼 */}
-          <ProfileEditCard elevation={0}>
+          <Paper sx={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e0e0e0',
+            borderRadius: '15px',
+            padding: '40px',
+            maxWidth: '800px',
+            margin: '0 auto',
+            boxShadow: 1
+          }}>
             <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3, color: '#333' }}>
               ✏️ 회원정보 수정
             </Typography>
 
             {/* 아이디 (읽기 전용) */}
-            <StyledTextField
+            <TextField
               variant="outlined"
               label="로그인 아이디"
               name="loginId"
               fullWidth
               value={formData.loginId}
               disabled
-              sx={{
-                '& .MuiOutlinedInput-root.Mui-disabled': {
-                  backgroundColor: '#f8f9fa',
-                  color: '#495057'
-                },
-                '& .MuiInputLabel-root.Mui-disabled': {
-                  color: '#6c757d'
-                }
-              }}
+              sx={disabledTextFieldSx}
             />
 
             {/* 이름 */}
-            <StyledTextField
+            <TextField
               variant="outlined"
               label="이름"
               name="guardianName"
               fullWidth
               value={formData.guardianName}
               onChange={handleChange}
+              sx={textFieldSx}
             />
 
             {/* 전화번호 */}
-            <StyledTextField
+            <TextField
               variant="outlined"
               label="전화번호"
               placeholder="010-1234-5678"
@@ -566,10 +515,11 @@ const ProfileEdit = () => {
               fullWidth
               value={formData.phone}
               onChange={handleChange}
+              sx={textFieldSx}
             />
 
             {/* 이메일 */}
-            <StyledTextField
+            <TextField
               variant="outlined"
               label="이메일"
               name="email"
@@ -577,10 +527,29 @@ const ProfileEdit = () => {
               fullWidth
               value={formData.email}
               onChange={handleChange}
+              sx={textFieldSx}
             />
 
             {/* 관계 */}
-            <StyledFormControl fullWidth>
+            <FormControl fullWidth sx={{
+              marginBottom: '20px',
+              '& .MuiOutlinedInput-root': {
+                height: '55px',
+                backgroundColor: '#FFFFFF',
+                borderRadius: '10px',
+                '& fieldset': {
+                  borderColor: '#e0e0e0',
+                  borderWidth: '1px'
+                },
+                '&:hover fieldset': {
+                  borderColor: '#1976d2'
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#1976d2',
+                  borderWidth: '2px'
+                }
+              }
+            }}>
               <InputLabel>관계</InputLabel>
               <Select
                 name="relationship"
@@ -598,7 +567,7 @@ const ProfileEdit = () => {
                 <MenuItem value="손녀">손녀</MenuItem>
                 <MenuItem value="기타">기타</MenuItem>
               </Select>
-            </StyledFormControl>
+            </FormControl>
 
             {/* 비밀번호 변경 섹션 */}
             <Typography 
@@ -616,7 +585,7 @@ const ProfileEdit = () => {
             </Typography>
 
             {/* 현재 비밀번호 */}
-            <StyledTextField
+            <TextField
               variant="outlined"
               label="현재 비밀번호"
               placeholder="변경시에만 입력"
@@ -625,10 +594,11 @@ const ProfileEdit = () => {
               fullWidth
               value={formData.currentPassword}
               onChange={handleChange}
+              sx={textFieldSx}
             />
 
             {/* 새 비밀번호 */}
-            <StyledTextField
+            <TextField
               variant="outlined"
               label="새 비밀번호"
               placeholder="6자 이상"
@@ -637,10 +607,11 @@ const ProfileEdit = () => {
               fullWidth
               value={formData.newPassword}
               onChange={handleChange}
+              sx={textFieldSx}
             />
 
             {/* 새 비밀번호 확인 */}
-            <StyledTextField
+            <TextField
               variant="outlined"
               label="새 비밀번호 확인"
               name="confirmPassword"
@@ -648,26 +619,51 @@ const ProfileEdit = () => {
               fullWidth
               value={formData.confirmPassword}
               onChange={handleChange}
+              sx={textFieldSx}
             />
 
             {/* 버튼 영역 */}
             <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-              <UpdateButton
+              <Button
                 variant="contained"
                 onClick={handleUpdate}
                 disabled={loading}
                 startIcon={loading && <CircularProgress size={20} color="inherit" />}
+                sx={{
+                  height: '50px',
+                  backgroundColor: '#1976d2',
+                  borderRadius: '10px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  textTransform: 'none',
+                  minWidth: '120px',
+                  '&:hover': {
+                    backgroundColor: '#1565c0'
+                  }
+                }}
               >
                 {loading ? '수정 중...' : '정보 수정'}
-              </UpdateButton>
+              </Button>
 
-              <CancelButton
+              <Button
                 variant="contained"
                 onClick={handleCancel}
                 disabled={loading}
+                sx={{
+                  height: '50px',
+                  backgroundColor: '#666',
+                  borderRadius: '10px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  textTransform: 'none',
+                  minWidth: '120px',
+                  '&:hover': {
+                    backgroundColor: '#555'
+                  }
+                }}
               >
                 취소
-              </CancelButton>
+              </Button>
             </Box>
 
             {/* 메시지 표시 */}
@@ -681,10 +677,10 @@ const ProfileEdit = () => {
                 {success}
               </Alert>
             )}
-          </ProfileEditCard>
-        </MainContent>
-      </ContentContainer>
-    </MainContainer>
+          </Paper>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 

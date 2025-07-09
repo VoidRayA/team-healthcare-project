@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// API 클라이언트 import로 axios 대체 (2025.07.08)
 import { register } from '../api/apiClient';
 
 import {
@@ -19,240 +18,6 @@ import {
   FormControlLabel,
   Link
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
-
-// main/GJoinpage.jsx CSS 디자인을 기반으로 한 스타일링
-const GJoinPage = styled(Box)({
-  position: 'relative',
-  width: '100vw',
-  height: '100vh',
-  background: 'linear-gradient(180deg, rgba(0, 124, 255, 0.2) 0%, rgba(0, 188, 255, 0.2) 100%)',
-  overflow: 'hidden'
-});
-
-const MainBoard = styled(Paper)({
-  position: 'absolute',
-  width: '1820px',
-  height: '1000px',
-  left: 'calc(50% - 910px)',
-  top: 'calc(50% - 500px)',
-  background: '#FFFFFF',
-  borderRadius: '10px',
-  padding: '40px',
-  boxSizing: 'border-box'
-});
-
-const PageTitle = styled(Typography)({
-  position: 'absolute',
-  width: '215px',
-  height: '45px',
-  left: 'calc(50% - 107.5px)',
-  top: '64px',
-  fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  fontStyle: 'normal',
-  fontWeight: 700,
-  fontSize: '38px',
-  lineHeight: '45px',
-  color: '#000000',
-  textAlign: 'center'
-});
-
-const FormContainer = styled(Box)({
-  position: 'absolute',
-  width: '1300px',
-  height: '412px',
-  left: 'calc(50% - 650px)',
-  top: '158px',
-  display: 'flex'
-});
-
-const LabelContainer = styled(Box)({
-  width: '250px',
-  height: '410px',
-  background: 'rgba(51, 153, 255, 0.3)',
-  borderRadius: '0px',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-around',
-  alignItems: 'flex-end',
-  paddingRight: '20px'
-});
-
-const InputContainer = styled(Box)({
-  width: '1050px',
-  height: '410px',
-  borderTop: '4px solid #00458B',
-  display: 'flex',
-  flexDirection: 'column',
-  position: 'relative'
-});
-
-const FormLabel = styled(Typography)({
-  fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  fontStyle: 'normal',
-  fontWeight: 700,
-  fontSize: '25.5px',
-  lineHeight: '30px',
-  color: '#000000',
-  height: '65px',
-  display: 'flex',
-  alignItems: 'center'
-});
-
-const StyledTextField = styled(TextField)({
-  width: '1049px',
-  height: '65px',
-  '& .MuiOutlinedInput-root': {
-    height: '65px',
-    backgroundColor: '#FFFFFF',
-    borderRadius: '0px',
-    border: 'none',
-    borderBottom: '1px solid #0869CC',
-    '& fieldset': {
-      border: 'none'
-    },
-    '&:hover fieldset': {
-      border: 'none'
-    },
-    '&.Mui-focused fieldset': {
-      border: 'none'
-    }
-  },
-  '& .MuiInputBase-input': {
-    fontSize: '20px',
-    fontWeight: 700,
-    color: '#B4B4B4',
-    fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    padding: '24px'
-  }
-});
-
-const StyledFormControl = styled(FormControl)({
-  width: '1049px',
-  height: '65px',
-  '& .MuiOutlinedInput-root': {
-    height: '65px',
-    backgroundColor: '#FFFFFF',
-    borderRadius: '0px',
-    border: 'none',
-    borderBottom: '1px solid #0869CC',
-    '& fieldset': {
-      border: 'none'
-    },
-    '&:hover fieldset': {
-      border: 'none'
-    },
-    '&.Mui-focused fieldset': {
-      border: 'none'
-    }
-  },
-  '& .MuiInputBase-input': {
-    fontSize: '20px',
-    fontWeight: 700,
-    color: '#333',
-    fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-  },
-  '& .MuiInputLabel-root': {
-    fontSize: '20px',
-    fontWeight: 700,
-    color: '#B4B4B4',
-    fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-  }
-});
-
-const ConsentSection = styled(Box)({
-  position: 'absolute',
-  width: '1298px',
-  height: '162px',
-  left: 'calc(50% - 649px)',
-  top: '621px'
-});
-
-const ConsentHeader = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  marginBottom: '15px',
-  paddingBottom: '10px',
-  borderBottom: '1px solid #D9D9D9'
-});
-
-const ConsentItem = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  height: '32px',
-  marginBottom: '8px'
-});
-
-const ConsentText = styled(Typography)({
-  fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  fontStyle: 'normal',
-  fontWeight: 700,
-  fontSize: '17px',
-  lineHeight: '20px',
-  color: '#000000'
-});
-
-const ViewLink = styled(Link)({
-  fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  fontStyle: 'normal',
-  fontWeight: 700,
-  fontSize: '14px',
-  lineHeight: '17px',
-  color: '#8C929A',
-  textDecoration: 'underline',
-  cursor: 'pointer'
-});
-
-const SubmitButton = styled(Button)({
-  position: 'absolute',
-  width: '230px',
-  height: '80px',
-  left: 'calc(50% - 115px)',
-  top: '852px',
-  background: '#0869CC',
-  borderRadius: '30px',
-  fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  fontStyle: 'normal',
-  fontWeight: 700,
-  fontSize: '30px',
-  lineHeight: '36px',
-  color: '#FFFFFF',
-  textTransform: 'none',
-  '&:hover': {
-    background: '#0650A3'
-  },
-  '&:disabled': {
-    opacity: 0.7,
-    background: '#0869CC'
-  }
-});
-
-const BackButton = styled(Button)({
-  position: 'absolute',
-  width: '120px',
-  height: '40px',
-  left: '40px',
-  top: '40px',
-  background: '#666',
-  borderRadius: '20px',
-  color: '#FFFFFF',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  textTransform: 'none',
-  '&:hover': {
-    background: '#555'
-  }
-});
-
-const ErrorBox = styled(Box)({
-  position: 'absolute',
-  width: '600px',
-  left: 'calc(50% - 300px)',
-  top: '950px',
-  display: 'flex',
-  justifyContent: 'center'
-});
 
 const GJoinpage = () => {
   const navigate = useNavigate();
@@ -454,64 +219,279 @@ const GJoinpage = () => {
     navigate('/');
   };
 
+  // 공통 텍스트 필드 스타일
+  const textFieldSx = {
+    width: '1049px',
+    height: '65px',
+    '& .MuiOutlinedInput-root': {
+      height: '65px',
+      backgroundColor: '#FFFFFF',
+      borderRadius: '0px',
+      border: 'none',
+      borderBottom: '1px solid #0869CC',
+      '& fieldset': {
+        border: 'none'
+      },
+      '&:hover fieldset': {
+        border: 'none'
+      },
+      '&.Mui-focused fieldset': {
+        border: 'none'
+      }
+    },
+    '& .MuiInputBase-input': {
+      fontSize: '20px',
+      fontWeight: 700,
+      color: '#B4B4B4',
+      fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      padding: '24px'
+    }
+  };
+
+  // FormControl 스타일
+  const formControlSx = {
+    width: '1049px',
+    height: '65px',
+    '& .MuiOutlinedInput-root': {
+      height: '65px',
+      backgroundColor: '#FFFFFF',
+      borderRadius: '0px',
+      border: 'none',
+      borderBottom: '1px solid #0869CC',
+      '& fieldset': {
+        border: 'none'
+      },
+      '&:hover fieldset': {
+        border: 'none'
+      },
+      '&.Mui-focused fieldset': {
+        border: 'none'
+      }
+    },
+    '& .MuiInputBase-input': {
+      fontSize: '20px',
+      fontWeight: 700,
+      color: '#333',
+      fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: '20px',
+      fontWeight: 700,
+      color: '#B4B4B4',
+      fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    }
+  };
+
   return (
-    <GJoinPage>
-      <MainBoard elevation={3}>
+    <Box sx={{
+      position: 'relative',
+      width: '100vw',
+      height: '100vh',
+      background: 'linear-gradient(180deg, rgba(0, 124, 255, 0.2) 0%, rgba(0, 188, 255, 0.2) 100%)',
+      overflow: 'hidden'
+    }}>
+      <Paper sx={{
+        position: 'absolute',
+        width: '1820px',
+        height: '1000px',
+        left: 'calc(50% - 910px)',
+        top: 'calc(50% - 500px)',
+        background: '#FFFFFF',
+        borderRadius: '10px',
+        padding: '40px',
+        boxSizing: 'border-box',
+        boxShadow: 3
+      }}>
         {/* 돌아가기 버튼 */}
-        <BackButton onClick={handleBack} disabled={loading}>
+        <Button 
+          onClick={handleBack} 
+          disabled={loading}
+          sx={{
+            position: 'absolute',
+            width: '120px',
+            height: '40px',
+            left: '40px',
+            top: '40px',
+            background: '#666',
+            borderRadius: '20px',
+            color: '#FFFFFF',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            textTransform: 'none',
+            '&:hover': {
+              background: '#555'
+            }
+          }}
+        >
           ← 돌아가기
-        </BackButton>
+        </Button>
 
         {/* 페이지 제목 */}
-        <PageTitle>회원 정보 입력</PageTitle>
+        <Typography sx={{
+          position: 'absolute',
+          width: '215px',
+          height: '45px',
+          left: 'calc(50% - 107.5px)',
+          top: '64px',
+          fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+          fontStyle: 'normal',
+          fontWeight: 700,
+          fontSize: '38px',
+          lineHeight: '45px',
+          color: '#000000',
+          textAlign: 'center'
+        }}>
+          회원 정보 입력
+        </Typography>
 
         {/* 폼 컨테이너 */}
-        <FormContainer>
+        <Box sx={{
+          position: 'absolute',
+          width: '1300px',
+          height: '412px',
+          left: 'calc(50% - 650px)',
+          top: '158px',
+          display: 'flex'
+        }}>
           {/* 라벨 컨테이너 */}
-          <LabelContainer>
-            <FormLabel>아이디</FormLabel>
-            <FormLabel>비밀번호</FormLabel>
-            <FormLabel>비밀번호 확인</FormLabel>
-            <FormLabel>이름</FormLabel>
-            <FormLabel>연락처</FormLabel>
-            <FormLabel>이메일</FormLabel>
-          </LabelContainer>
+          <Box sx={{
+            width: '250px',
+            height: '410px',
+            background: 'rgba(51, 153, 255, 0.3)',
+            borderRadius: '0px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+            alignItems: 'flex-end',
+            paddingRight: '20px'
+          }}>
+            <Typography sx={{
+              fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '25.5px',
+              lineHeight: '30px',
+              color: '#000000',
+              height: '65px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              아이디
+            </Typography>
+            <Typography sx={{
+              fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '25.5px',
+              lineHeight: '30px',
+              color: '#000000',
+              height: '65px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              비밀번호
+            </Typography>
+            <Typography sx={{
+              fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '25.5px',
+              lineHeight: '30px',
+              color: '#000000',
+              height: '65px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              비밀번호 확인
+            </Typography>
+            <Typography sx={{
+              fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '25.5px',
+              lineHeight: '30px',
+              color: '#000000',
+              height: '65px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              이름
+            </Typography>
+            <Typography sx={{
+              fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '25.5px',
+              lineHeight: '30px',
+              color: '#000000',
+              height: '65px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              연락처
+            </Typography>
+            <Typography sx={{
+              fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '25.5px',
+              lineHeight: '30px',
+              color: '#000000',
+              height: '65px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              이메일
+            </Typography>
+          </Box>
 
           {/* 입력 컨테이너 */}
-          <InputContainer>
-            <StyledTextField
+          <Box sx={{
+            width: '1050px',
+            height: '410px',
+            borderTop: '4px solid #00458B',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative'
+          }}>
+            <TextField
               placeholder="영문, 숫자 조합 4자 이상"
               name="loginId"
               value={formData.loginId}
               onChange={handleChange}
+              sx={textFieldSx}
             />
-            <StyledTextField
+            <TextField
               placeholder="영문, 숫자 조합 6자 이상"
               name="loginPw"
               type="password"
               value={formData.loginPw}
               onChange={handleChange}
+              sx={textFieldSx}
             />
-            <StyledTextField
+            <TextField
               placeholder="비밀번호를 한번 더 입력해주세요"
               name="confirmPassword"
               type="password"
               value={formData.confirmPassword}
               onChange={handleChange}
+              sx={textFieldSx}
             />
-            <StyledTextField
+            <TextField
               placeholder="ex) 홍길동"
               name="guardianName"
               value={formData.guardianName}
               onChange={handleChange}
+              sx={textFieldSx}
             />
-            <StyledTextField
+            <TextField
               placeholder="ex) 01012345678"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
+              sx={textFieldSx}
             />
-            <StyledFormControl>
+            <FormControl sx={formControlSx}>
               <InputLabel>관계를 선택해주세요</InputLabel>
               <Select
                 name="relationship"
@@ -529,13 +509,25 @@ const GJoinpage = () => {
                 <MenuItem value="손녀">손녀</MenuItem>
                 <MenuItem value="기타">기타</MenuItem>
               </Select>
-            </StyledFormControl>
-          </InputContainer>
-        </FormContainer>
+            </FormControl>
+          </Box>
+        </Box>
 
         {/* 개인정보 수집 동의 */}
-        <ConsentSection>
-          <ConsentHeader>
+        <Box sx={{
+          position: 'absolute',
+          width: '1298px',
+          height: '162px',
+          left: 'calc(50% - 649px)',
+          top: '621px'
+        }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            marginBottom: '15px',
+            paddingBottom: '10px',
+            borderBottom: '1px solid #D9D9D9'
+          }}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -556,9 +548,15 @@ const GJoinpage = () => {
                 </Typography>
               }
             />
-          </ConsentHeader>
+          </Box>
 
-          <ConsentItem>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            height: '32px',
+            marginBottom: '8px'
+          }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Checkbox
                 name="terms"
@@ -566,12 +564,41 @@ const GJoinpage = () => {
                 onChange={handleConsentChange}
                 sx={{ '& .MuiSvgIcon-root': { fontSize: 18 } }}
               />
-              <ConsentText>서비스 이용약관 (필수)</ConsentText>
+              <Typography sx={{
+                fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                fontStyle: 'normal',
+                fontWeight: 700,
+                fontSize: '17px',
+                lineHeight: '20px',
+                color: '#000000'
+              }}>
+                서비스 이용약관 (필수)
+              </Typography>
             </Box>
-            <ViewLink onClick={() => navigate('/terms')}>보기</ViewLink>
-          </ConsentItem>
+            <Link 
+              onClick={() => navigate('/terms')}
+              sx={{
+                fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                fontStyle: 'normal',
+                fontWeight: 700,
+                fontSize: '14px',
+                lineHeight: '17px',
+                color: '#8C929A',
+                textDecoration: 'underline',
+                cursor: 'pointer'
+              }}
+            >
+              보기
+            </Link>
+          </Box>
 
-          <ConsentItem>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            height: '32px',
+            marginBottom: '8px'
+          }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Checkbox
                 name="privacy"
@@ -579,12 +606,41 @@ const GJoinpage = () => {
                 onChange={handleConsentChange}
                 sx={{ '& .MuiSvgIcon-root': { fontSize: 18 } }}
               />
-              <ConsentText>개인정보 처리방침 (필수)</ConsentText>
+              <Typography sx={{
+                fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                fontStyle: 'normal',
+                fontWeight: 700,
+                fontSize: '17px',
+                lineHeight: '20px',
+                color: '#000000'
+              }}>
+                개인정보 처리방침 (필수)
+              </Typography>
             </Box>
-            <ViewLink onClick={() => navigate('/privacy')}>보기</ViewLink>
-          </ConsentItem>
+            <Link 
+              onClick={() => navigate('/privacy')}
+              sx={{
+                fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                fontStyle: 'normal',
+                fontWeight: 700,
+                fontSize: '14px',
+                lineHeight: '17px',
+                color: '#8C929A',
+                textDecoration: 'underline',
+                cursor: 'pointer'
+              }}
+            >
+              보기
+            </Link>
+          </Box>
 
-          <ConsentItem>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            height: '32px',
+            marginBottom: '8px'
+          }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Checkbox
                 name="location"
@@ -592,12 +648,38 @@ const GJoinpage = () => {
                 onChange={handleConsentChange}
                 sx={{ '& .MuiSvgIcon-root': { fontSize: 18 } }}
               />
-              <ConsentText>위치기반 서비스 이용약관 (필수)</ConsentText>
+              <Typography sx={{
+                fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                fontStyle: 'normal',
+                fontWeight: 700,
+                fontSize: '17px',
+                lineHeight: '20px',
+                color: '#000000'
+              }}>
+                위치기반 서비스 이용약관 (필수)
+              </Typography>
             </Box>
-            <ViewLink>보기</ViewLink>
-          </ConsentItem>
+            <Link sx={{
+              fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '14px',
+              lineHeight: '17px',
+              color: '#8C929A',
+              textDecoration: 'underline',
+              cursor: 'pointer'
+            }}>
+              보기
+            </Link>
+          </Box>
 
-          <ConsentItem>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            height: '32px',
+            marginBottom: '8px'
+          }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Checkbox
                 name="marketing"
@@ -605,25 +687,75 @@ const GJoinpage = () => {
                 onChange={handleConsentChange}
                 sx={{ '& .MuiSvgIcon-root': { fontSize: 18 } }}
               />
-              <ConsentText>마케팅 정보 수신 동의 (선택)</ConsentText>
+              <Typography sx={{
+                fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                fontStyle: 'normal',
+                fontWeight: 700,
+                fontSize: '17px',
+                lineHeight: '20px',
+                color: '#000000'
+              }}>
+                마케팅 정보 수신 동의 (선택)
+              </Typography>
             </Box>
-            <ViewLink>보기</ViewLink>
-          </ConsentItem>
-        </ConsentSection>
+            <Link sx={{
+              fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              fontStyle: 'normal',
+              fontWeight: 700,
+              fontSize: '14px',
+              lineHeight: '17px',
+              color: '#8C929A',
+              textDecoration: 'underline',
+              cursor: 'pointer'
+            }}>
+              보기
+            </Link>
+          </Box>
+        </Box>
 
         {/* 회원가입 버튼 */}
-        <SubmitButton
+        <Button
           onClick={handleRegister}
           disabled={loading}
+          sx={{
+            position: 'absolute',
+            width: '230px',
+            height: '80px',
+            left: 'calc(50% - 115px)',
+            top: '852px',
+            background: '#0869CC',
+            borderRadius: '30px',
+            fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+            fontStyle: 'normal',
+            fontWeight: 700,
+            fontSize: '30px',
+            lineHeight: '36px',
+            color: '#FFFFFF',
+            textTransform: 'none',
+            '&:hover': {
+              background: '#0650A3'
+            },
+            '&:disabled': {
+              opacity: 0.7,
+              background: '#0869CC'
+            }
+          }}
         >
           {loading ? (
             <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} />
           ) : null}
           {loading ? '가입 중...' : '회원가입'}
-        </SubmitButton>
+        </Button>
 
         {/* 에러/성공 메시지 */}
-        <ErrorBox>
+        <Box sx={{
+          position: 'absolute',
+          width: '600px',
+          left: 'calc(50% - 300px)',
+          top: '950px',
+          display: 'flex',
+          justifyContent: 'center'
+        }}>
           {error && (
             <Alert 
               severity="error" 
@@ -648,9 +780,9 @@ const GJoinpage = () => {
               {success}
             </Alert>
           )}
-        </ErrorBox>
-      </MainBoard>
-    </GJoinPage>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 

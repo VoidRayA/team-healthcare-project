@@ -13,90 +13,140 @@ import Terms from './components/policy/Terms';
 import Privacy from './components/policy/Privacy';
 import Support from './components/policy/Support';
 import About from './components/policy/About';
+import ProtectedRoute from './components/ProtectedRoute';
+import { isAuthenticated } from './utils/auth';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('jwt'));
+  const [authState, setAuthState] = useState(isAuthenticated());
 
   // 디버깅을 위해 현재 상태 출력
-  console.log('현재 인증 상태:', isAuthenticated);
-  console.log('localStorage jwt:', localStorage.getItem('jwt'));
+  console.log('현재 인증 상태:', authState);
+  console.log('sessionStorage jwt:', sessionStorage.getItem('jwt'));
 
   useEffect(() => {
-    // localStorage 변경 감지를 위한 커스텀 이벤트 리스너
-    const handleStorageChange = () => {
-      setIsAuthenticated(!!localStorage.getItem('jwt'));
-    };
+    // 주기적으로 인증 상태 확인 (토큰 만료 체크)
+    const interval = setInterval(() => {
+      const currentAuth = isAuthenticated();
+      if (currentAuth !== authState) {
+        setAuthState(currentAuth);
+      }
+    }, 30000); // 30초마다 확인
 
     // 페이지 포커스시 인증 상태 재확인
     const handleFocus = () => {
-      setIsAuthenticated(!!localStorage.getItem('jwt'));
+      setAuthState(isAuthenticated());
     };
 
-    // 주기적으로 인증 상태 확인 (폴링 방식)
-    const interval = setInterval(() => {
-      const currentAuth = !!localStorage.getItem('jwt');
-      if (currentAuth !== isAuthenticated) {
-        setIsAuthenticated(currentAuth);
-      }
-    }, 1000); // 1초마다 확인
+    // storage 이벤트는 sessionStorage에서는 동작하지 않으므로
+    // 대신 커스텀 이벤트를 사용할 수 있습니다
+    const handleAuthChange = () => {
+      setAuthState(isAuthenticated());
+    };
 
     window.addEventListener('focus', handleFocus);
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('authStateChange', handleAuthChange);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authStateChange', handleAuthChange);
     };
-  }, [isAuthenticated]);
+  }, [authState]);
 
   return (
     <BrowserRouter>      
       <Routes>
         <Route 
           path="/" 
-          element={!isAuthenticated ? <Login /> : <Navigate to="/home" replace />} 
+          element={!authState ? <Login /> : <Navigate to="/home" replace />} 
+        />
+        <Route 
+          path="/login" 
+          element={<Navigate to="/" replace />} 
         />
         <Route 
           path="/register" 
-          element={!isAuthenticated ? <Register /> : <Navigate to="/home" replace />} 
+          element={!authState ? <Register /> : <Navigate to="/home" replace />} 
         />
         <Route 
           path="/gjoin" 
-          element={!isAuthenticated ? <GJoinpage /> : <Navigate to="/home" replace />} 
+          element={!authState ? <GJoinpage /> : <Navigate to="/home" replace />} 
         />
+        
+        {/* Protected Routes */}
         <Route 
           path="/profile/edit" 
-          element={isAuthenticated ? <ProfileEdit /> : <Navigate to="/" replace />} 
+          element={
+            <ProtectedRoute>
+              <ProfileEdit />
+            </ProtectedRoute>
+          } 
         />
         <Route 
           path="/profile/management" 
-          element={isAuthenticated ? <ProfileManagement /> : <Navigate to="/" replace />} 
+          element={
+            <ProtectedRoute>
+              <ProfileManagement />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/ProfileManagement" 
+          element={
+            <ProtectedRoute>
+              <ProfileManagement />
+            </ProtectedRoute>
+          } 
         />
         <Route 
           path="/home" 
-          element={isAuthenticated ? <Home /> : <Navigate to="/" replace />} 
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          } 
         />
         <Route 
           path="/seniors" 
-          element={isAuthenticated ? <SeniorList /> : <Navigate to="/" replace />} 
+          element={
+            <ProtectedRoute>
+              <SeniorList />
+            </ProtectedRoute>
+          } 
         />
         <Route 
           path="/sjoin" 
-          element={isAuthenticated ? <Sjoinpage /> : <Navigate to="/" replace />} 
+          element={
+            <ProtectedRoute>
+              <Sjoinpage />
+            </ProtectedRoute>
+          } 
         />
         <Route 
           path="/senior/edit/:id" 
-          element={isAuthenticated ? <Sjoinpage /> : <Navigate to="/" replace />} 
+          element={
+            <ProtectedRoute>
+              <Sjoinpage />
+            </ProtectedRoute>
+          } 
         />
         <Route 
           path="/daily" 
-          element={<Daily />} 
+          element={
+            <ProtectedRoute>
+              <Daily />
+            </ProtectedRoute>
+          } 
         />
         <Route 
           path="/schedule" 
-          element={<Daily />} 
+          element={
+            <ProtectedRoute>
+              <Daily />
+            </ProtectedRoute>
+          } 
         />
+        
         {/* 정책 페이지들 - 로그인 없이도 접근 가능 */}
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />

@@ -17,7 +17,6 @@ import {
   ListItemIcon,
   ListItemText
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import {
   DashboardOutlined,
   PeopleOutlined,
@@ -29,193 +28,7 @@ import {
   EditOutlined
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
-
-// Home.jsx와 동일한 스타일 구조
-const MainContainer = styled(Box)({
-  width: '100vw',
-  height: '100vh',
-  backgroundColor: '#CCE5FF',
-  display: 'flex',  
-  gap: '0px',
-  overflow: 'hidden'
-});
-
-const ContentContainer = styled(Paper)({
-  backgroundColor: '#ffffff',  
-  flex: 1,
-  display: 'flex',
-  overflow: 'auto',
-  margin: '1vw 1vw 1vw 240px',
-  height: 'calc(100vh - 2vw)',
-  minHeight: 'calc(100vh - 2vw)'
-});
-
-const Sidebar = styled(Paper)({
-  width: '240px',
-  height: '100vh',
-  backgroundColor: '#1976d2',
-  borderRadius: '0 20px 20px 0',
-  display: 'flex',
-  flexDirection: 'column',
-  padding: '20px 0',
-  color: 'white',
-  boxSizing: 'border-box',
-  flexShrink: 0,
-  position: 'fixed',
-  left: 0,
-  top: 0,
-  zIndex: 1000
-});
-
-const SidebarMenu = styled(List)({
-  padding: '0 20px',
-  flex: 1,
-  '& .MuiListItem-root': {
-    borderRadius: '12px',
-    marginBottom: '8px',
-    color: 'white',
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    '&.active': {
-      backgroundColor: 'rgba(255,255,255,0.2)',
-    },
-  },
-  '& .MuiListItemIcon-root': {
-    color: 'white',
-    minWidth: '40px',
-  }
-});
-
-// 메인 콘텐츠 - ProfileManagement와 동일
-const MainContent = styled(Box)({
-  flex: 1,
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: '40px'
-});
-
-// ProfileManagement와 동일한 폼 컨테이너
-const FormContainer = styled(Box)({
-  width: '100%',
-  maxWidth: '900px',
-  backgroundColor: 'transparent',
-  padding: '40px',
-  position: 'relative'
-});
-
-// 헤더 섹션 - ProfileManagement 스타일
-const HeaderSection = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '32px',
-  color: '#000000',
-  textAlign: 'center',
-  marginBottom: '40px'
-});
-
-// Figma 디자인과 동일한 입력 행 - ProfileManagement 사이즈 적용
-const InputRow = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  height: '60px',
-  borderBottom: '1px solid #0869CC',
-  '&:first-of-type': {
-    borderTop: '4px solid #00458B'
-  }
-});
-
-// 라벨 섹션 (왼쪽 파란색 배경) - ProfileManagement 사이즈
-const LabelSection = styled(Box)({
-  width: '200px',
-  height: '100%',
-  backgroundColor: 'rgba(51, 153, 255, 0.3)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '18px',
-  color: '#000000'
-});
-
-// 입력 섹션 (오른쪽 흰색 배경) - ProfileManagement 사이즈
-const InputSection = styled(Box)({
-  flex: 1,
-  height: '100%',
-  backgroundColor: '#FFFFFF',
-  display: 'flex',
-  alignItems: 'center',
-  paddingLeft: '24px',
-  paddingRight: '24px'
-});
-
-// 텍스트 필드 스타일
-const StyledTextField = styled(TextField)({
-  width: '100%',
-  '& .MuiOutlinedInput-root': {
-    backgroundColor: 'transparent',
-    border: 'none',
-    '& fieldset': {
-      border: 'none'
-    },
-    '&:hover fieldset': {
-      border: 'none'
-    },
-    '&.Mui-focused fieldset': {
-      border: 'none'
-    }
-  },
-  '& .MuiInputBase-input': {
-    fontFamily: 'Pretendard',
-    fontWeight: 500,
-    fontSize: '16px',
-    color: '#333',
-    padding: '0',
-    '&::placeholder': {
-      color: '#B4B4B4',
-      opacity: 1
-    }
-  }
-});
-
-// 라디오 버튼 스타일
-const StyledRadioGroup = styled(RadioGroup)({
-  display: 'flex',
-  flexDirection: 'row',
-  gap: '20px',
-  '& .MuiFormControlLabel-root': {
-    '& .MuiFormControlLabel-label': {
-      fontFamily: 'Pretendard',
-      fontWeight: 500,
-      fontSize: '16px',
-      color: '#333'
-    }
-  }
-});
-
-// 등록 버튼 - ProfileManagement UpdateButton 스타일
-const RegisterButton = styled(Button)({
-  width: '200px',
-  height: '60px',
-  backgroundColor: '#0869CC',
-  borderRadius: '30px',
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '20px',
-  color: '#FFFFFF',
-  textTransform: 'none',
-  margin: '40px auto 0 auto',
-  display: 'block',
-  '&:hover': {
-    backgroundColor: '#0653A3'
-  },
-  '&:disabled': {
-    backgroundColor: '#ccc'
-  }
-});
+import { getUserInfo, clearAuthData, getAuthToken } from '../utils/auth';
 
 const Sjoinpage = () => {
   const navigate = useNavigate();
@@ -247,15 +60,13 @@ const Sjoinpage = () => {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    const savedName = localStorage.getItem('guardianName');
-    const savedLoginId = localStorage.getItem('loginId');
-    const savedRole = localStorage.getItem('role');
+    const userInfo = getUserInfo();
     
-    if (savedName && savedLoginId) {
+    if (userInfo) {
       setGuardianInfo({
-        name: savedName,
-        loginId: savedLoginId,
-        role: savedRole || 'GUARDIAN'
+        name: userInfo.name,
+        loginId: userInfo.loginId,
+        role: userInfo.role || 'GUARDIAN'
       });
     }
 
@@ -324,7 +135,7 @@ const Sjoinpage = () => {
     setSuccess('');
 
     try {
-      const token = localStorage.getItem('jwt');
+      const token = getAuthToken();
       if (!token) {
         setError('로그인이 필요합니다.');
         navigate('/');
@@ -369,12 +180,12 @@ const Sjoinpage = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('jwt');
-    localStorage.removeItem('loginId');
-    localStorage.removeItem('guardianName');
-    localStorage.removeItem('role');
+    clearAuthData();
     
     alert('로그아웃 되었습니다.');
+    
+    // 커스텀 이벤트 발생
+    window.dispatchEvent(new Event('authStateChange'));
     window.location.reload();
   };
 
@@ -388,10 +199,77 @@ const Sjoinpage = () => {
     { text: '메시지', icon: MessageOutlined }
   ];
 
+  // 공통 텍스트 필드 스타일
+  const textFieldSx = {
+    width: '100%',
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: 'transparent',
+      border: 'none',
+      '& fieldset': {
+        border: 'none'
+      },
+      '&:hover fieldset': {
+        border: 'none'
+      },
+      '&.Mui-focused fieldset': {
+        border: 'none'
+      }
+    },
+    '& .MuiInputBase-input': {
+      fontFamily: 'Pretendard',
+      fontWeight: 500,
+      fontSize: '16px',
+      color: '#333',
+      padding: '0',
+      '&::placeholder': {
+        color: '#B4B4B4',
+        opacity: 1
+      }
+    }
+  };
+
+  // 라디오 그룹 스타일
+  const radioGroupSx = {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '20px',
+    '& .MuiFormControlLabel-root': {
+      '& .MuiFormControlLabel-label': {
+        fontFamily: 'Pretendard',
+        fontWeight: 500,
+        fontSize: '16px',
+        color: '#333'
+      }
+    }
+  };
+
   return (
-    <MainContainer>
+    <Box sx={{
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: '#CCE5FF',
+      display: 'flex',  
+      gap: 0,
+      overflow: 'hidden'
+    }}>
       {/* 사이드바 - Home.jsx와 완전히 동일 */}
-      <Sidebar elevation={0}>
+      <Paper sx={{
+        width: '240px',
+        height: '100vh',
+        backgroundColor: '#1976d2',
+        borderRadius: '0 20px 20px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '20px 0',
+        color: 'white',
+        boxSizing: 'border-box',
+        flexShrink: 0,
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        zIndex: 1000,
+        boxShadow: 10
+      }}>
         {/* 사용자 정보 영역 */}
         <Box sx={{ 
           px: 2, 
@@ -433,7 +311,30 @@ const Sjoinpage = () => {
           </Typography>
         </Box>
 
-        <SidebarMenu>
+        <List sx={{
+          padding: '0 20px',
+          flex: 1,
+          '& .MuiListItem-root': {
+            borderRadius: 1.5,
+            marginBottom: 1,
+            color: 'white',
+            cursor: 'pointer',
+            transition: theme => theme.transitions.create(['background-color', 'transform'], {
+              duration: theme.transitions.duration.short,
+            }),
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              transform: 'translateX(4px)'
+            },
+            '&.active': {
+              backgroundColor: 'rgba(255,255,255,0.2)',
+            },
+          },
+          '& .MuiListItemIcon-root': {
+            color: 'white',
+            minWidth: '40px',
+          }
+        }}>
           {menuItems.map((item, index) => {
             const IconComponent = item.icon;
             return (
@@ -459,16 +360,19 @@ const Sjoinpage = () => {
               </ListItem>
             );
           })}
-        </SidebarMenu>
+        </List>
 
         {/* 로그아웃 버튼 */}
         <Box sx={{ px: 2 }}>
           <ListItem
             onClick={handleLogout}
             sx={{
-              borderRadius: '12px',
+              borderRadius: 1.5,
               color: 'white',
               cursor: 'pointer',
+              transition: theme => theme.transitions.create(['background-color'], {
+                duration: theme.transitions.duration.short,
+              }),
               '&:hover': {
                 backgroundColor: 'rgba(255,255,255,0.1)',
               }
@@ -480,170 +384,462 @@ const Sjoinpage = () => {
             <ListItemText primary="로그아웃" />
           </ListItem>
         </Box>
-      </Sidebar>
+      </Paper>
 
-      <ContentContainer elevation={0}>
-        <MainContent>
-          <FormContainer>
+      <Paper sx={{
+        backgroundColor: '#ffffff',  
+        flex: 1,
+        display: 'flex',
+        overflow: 'auto',
+        margin: '1vw 1vw 1vw 240px',
+        height: 'calc(100vh - 2vw)',
+        minHeight: 'calc(100vh - 2vw)',
+        borderRadius: 1,
+        boxShadow: 3
+      }}>
+        <Box sx={{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '40px'
+        }}>
+          <Box sx={{
+            width: '100%',
+            maxWidth: '900px',
+            backgroundColor: 'transparent',
+            padding: '40px',
+            position: 'relative'
+          }}>
             {/* 헤더 */}
-            <HeaderSection>
+            <Typography sx={{
+              fontFamily: 'Pretendard',
+              fontWeight: 700,
+              fontSize: '32px',
+              color: '#000000',
+              textAlign: 'center',
+              marginBottom: '40px'
+            }}>
               {isEditMode ? '보호 대상자 정보 수정' : '보호 대상자 정보 입력'}
-            </HeaderSection>
+            </Typography>
 
             {/* Figma와 동일한 테이블 형태 폼 */}
             <Box>
               {/* 이름 */}
-              <InputRow>
-                <LabelSection>이름</LabelSection>
-                <InputSection>
-                  <StyledTextField
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '60px',
+                borderBottom: '1px solid #0869CC',
+                borderTop: '4px solid #00458B'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  height: '100%',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000'
+                }}>
+                  이름
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  height: '100%',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '24px',
+                  paddingRight: '24px'
+                }}>
+                  <TextField
                     name="seniorName"
                     value={formData.seniorName}
                     onChange={handleChange}
                     placeholder="ex) 홍길동"
                     variant="outlined"
+                    sx={textFieldSx}
                   />
-                </InputSection>
-              </InputRow>
+                </Box>
+              </Box>
 
               {/* 생년월일 */}
-              <InputRow>
-                <LabelSection>생년월일</LabelSection>
-                <InputSection>
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '60px',
+                borderBottom: '1px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  height: '100%',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000'
+                }}>
+                  생년월일
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  height: '100%',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '24px',
+                  paddingRight: '24px'
+                }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: '20px', width: '100%' }}>
-                    <StyledTextField
+                    <TextField
                       name="birthDate"
                       value={formData.birthDate}
                       onChange={handleChange}
                       placeholder="ex) 19820909"
                       variant="outlined"
-                      sx={{ flex: 1 }}
+                      sx={{ ...textFieldSx, flex: 1 }}
                     />
                     <FormControl component="fieldset">
-                      <StyledRadioGroup
+                      <RadioGroup
                         name="calendarType"
                         value={formData.calendarType || '양력'}
                         onChange={handleChange}
+                        sx={radioGroupSx}
                       >
                         <FormControlLabel value="음력" control={<Radio />} label="음력" />
                         <FormControlLabel value="양력" control={<Radio />} label="양력" />
-                      </StyledRadioGroup>
+                      </RadioGroup>
                     </FormControl>
                   </Box>
-                </InputSection>
-              </InputRow>
+                </Box>
+              </Box>
 
               {/* 성별 */}
-              <InputRow>
-                <LabelSection>성별</LabelSection>
-                <InputSection>
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '60px',
+                borderBottom: '1px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  height: '100%',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000'
+                }}>
+                  성별
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  height: '100%',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '24px',
+                  paddingRight: '24px'
+                }}>
                   <FormControl component="fieldset">
-                    <StyledRadioGroup
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
+                    <RadioGroup
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleChange}
+                      sx={radioGroupSx}
                     >
-                    <FormControlLabel value="남성" control={<Radio />} label="남성" />
-                    <FormControlLabel value="여성" control={<Radio />} label="여성" />
-                    </StyledRadioGroup>
+                      <FormControlLabel value="남성" control={<Radio />} label="남성" />
+                      <FormControlLabel value="여성" control={<Radio />} label="여성" />
+                    </RadioGroup>
                   </FormControl>
-                </InputSection>
-              </InputRow>
+                </Box>
+              </Box>
 
               {/* 주소 */}
-              <InputRow>
-                <LabelSection>주소</LabelSection>
-                <InputSection>
-                  <StyledTextField
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '60px',
+                borderBottom: '1px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  height: '100%',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000'
+                }}>
+                  주소
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  height: '100%',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '24px',
+                  paddingRight: '24px'
+                }}>
+                  <TextField
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
                     placeholder="ex) 주소를 입력해주세요"
                     variant="outlined"
+                    sx={textFieldSx}
                   />
-                </InputSection>
-              </InputRow>
+                </Box>
+              </Box>
 
               {/* 보호 대상자 연락처 */}
-              <InputRow>
-                <LabelSection>보호 대상자 연락처</LabelSection>
-                <InputSection>
-                  <StyledTextField
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '60px',
+                borderBottom: '1px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  height: '100%',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000'
+                }}>
+                  보호 대상자 연락처
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  height: '100%',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '24px',
+                  paddingRight: '24px'
+                }}>
+                  <TextField
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="ex) 01012345678"
                     variant="outlined"
+                    sx={textFieldSx}
                   />
-                </InputSection>
-              </InputRow>
+                </Box>
+              </Box>
 
               {/* 비상 연락처 */}
-              <InputRow>
-                <LabelSection>비상 연락처</LabelSection>
-                <InputSection>
-                  <StyledTextField
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '60px',
+                borderBottom: '1px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  height: '100%',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000'
+                }}>
+                  비상 연락처
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  height: '100%',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '24px',
+                  paddingRight: '24px'
+                }}>
+                  <TextField
                     name="emergencyContact"
                     value={formData.emergencyContact}
                     onChange={handleChange}
                     placeholder="ex) 01012345678 (보호자, 가족, 이웃 등)"
                     variant="outlined"
+                    sx={textFieldSx}
                   />
-                </InputSection>
-              </InputRow>
+                </Box>
+              </Box>
 
               {/* 주요 지병 */}
-              <InputRow>
-                <LabelSection>주요 지병</LabelSection>
-                <InputSection>
-                  <StyledTextField
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '60px',
+                borderBottom: '1px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  height: '100%',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000'
+                }}>
+                  주요 지병
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  height: '100%',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '24px',
+                  paddingRight: '24px'
+                }}>
+                  <TextField
                     name="medicalConditions"
                     value={formData.medicalConditions}
                     onChange={handleChange}
                     placeholder="ex) 주요 지병을 입력해주세요"
                     variant="outlined"
+                    sx={textFieldSx}
                   />
-                </InputSection>
-              </InputRow>
+                </Box>
+              </Box>
 
               {/* 복용중인 주요 약물 */}
-              <InputRow>
-                <LabelSection>복용중인 주요 약물</LabelSection>
-                <InputSection>
-                  <StyledTextField
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '60px',
+                borderBottom: '1px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  height: '100%',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000'
+                }}>
+                  복용중인 주요 약물
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  height: '100%',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '24px',
+                  paddingRight: '24px'
+                }}>
+                  <TextField
                     name="medications"
                     value={formData.medications}
                     onChange={handleChange}
                     placeholder="ex) 복용중인 주요 약물이 있다면 입력해주세요"
                     variant="outlined"
+                    sx={textFieldSx}
                   />
-                </InputSection>
-              </InputRow>
+                </Box>
+              </Box>
 
               {/* 특이 사항 */}
-              <InputRow>
-                <LabelSection>특이 사항</LabelSection>
-                <InputSection>
-                  <StyledTextField
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '60px',
+                borderBottom: '1px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  height: '100%',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000'
+                }}>
+                  특이 사항
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  height: '100%',
+                  backgroundColor: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '24px',
+                  paddingRight: '24px'
+                }}>
+                  <TextField
                     name="specialNotes"
                     value={formData.specialNotes}
                     onChange={handleChange}
                     placeholder="ex) 특이사항을 입력해주세요"
                     variant="outlined"
+                    sx={textFieldSx}
                   />
-                </InputSection>
-              </InputRow>
+                </Box>
+              </Box>
             </Box>
 
             {/* 등록/수정 버튼 */}
-            <RegisterButton
+            <Button
               variant="contained"
               onClick={handleSubmit}
               disabled={loading}
               startIcon={loading && <CircularProgress size={20} color="inherit" />}
+              sx={{
+                width: '200px',
+                height: '60px',
+                backgroundColor: '#0869CC',
+                borderRadius: '30px',
+                fontFamily: 'Pretendard',
+                fontWeight: 700,
+                fontSize: '20px',
+                color: '#FFFFFF',
+                textTransform: 'none',
+                margin: '40px auto 0 auto',
+                display: 'block',
+                '&:hover': {
+                  backgroundColor: '#0653A3'
+                },
+                '&:disabled': {
+                  backgroundColor: '#ccc'
+                }
+              }}
             >
               {loading ? (isEditMode ? '수정 중...' : '등록 중...') : (isEditMode ? '수정하기' : '등록하기')}
-            </RegisterButton>
+            </Button>
 
             {/* 메시지 표시 */}
             {error && (
@@ -656,10 +852,10 @@ const Sjoinpage = () => {
                 {success}
               </Alert>
             )}
-          </FormContainer>
-        </MainContent>
-      </ContentContainer>
-    </MainContainer>
+          </Box>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 

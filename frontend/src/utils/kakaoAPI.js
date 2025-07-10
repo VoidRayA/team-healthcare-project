@@ -170,7 +170,7 @@ export const searchPlacesByKeyword = async (query, options = {}) => {
           x: parseFloat(place.x),
           y: parseFloat(place.y),
           placeUrl: place.place_url,
-          distance: place.distance ? parseInt(place.distance) : null
+          distance: place.distance ? (parseInt(place.distance) >= 1000 ? `${(parseInt(place.distance) / 1000).toFixed(1)}km` : `${parseInt(place.distance)}m`) : null
         })),
         totalCount: data.meta.total_count,
         hasMore: !data.meta.is_end
@@ -233,7 +233,7 @@ export const searchPlacesByCategory = async (categoryCode, x, y, options = {}) =
           x: parseFloat(place.x),
           y: parseFloat(place.y),
           placeUrl: place.place_url,
-          distance: parseInt(place.distance)
+          distance: parseInt(place.distance) >= 1000 ? `${(parseInt(place.distance) / 1000).toFixed(1)}km` : `${parseInt(place.distance)}m`
         })),
         totalCount: data.meta.total_count,
         hasMore: !data.meta.is_end

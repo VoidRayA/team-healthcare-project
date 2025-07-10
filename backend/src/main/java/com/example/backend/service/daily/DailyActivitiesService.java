@@ -136,73 +136,7 @@ public class DailyActivitiesService {
             return new ArrayList<>(); // 오류 시 빈 리스트 반환
         }
     }
-    
-//    /**
-//     * 활동 내용 설명 생성 메서드
-//     * 목적: DailyActivities 데이터를 사용자가 읽기 쉬운 문장으로 변환
-//     * 예시: "식사 3회 약 복용 완료 외출 활동"
-//     * 주의: 엔티티 필드 타입에 맞춰 처리 (int, Byte 등)
-//     */
-//    private String generateActivityDescription(DailyActivities activity) {
-//        StringBuilder desc = new StringBuilder();
-//
-//        // mealCount는 primitive int이므로 null 체크 불필요
-//        if (activity.getMealCount() > 0) {
-//            desc.append("식사 ").append(activity.getMealCount()).append("회 ");
-//        }
-//
-//        // medicationTaken은 Byte 타입 (0=false, 1=true)
-//        if (activity.getMedicationTaken() != null) {
-//            if (activity.getMedicationTaken() == 1) {
-//                desc.append("약 복용 완료 ");
-//            } else {
-//                desc.append("약 복용 미완료 ");
-//            }
-//        }
-//
-//        // outdoorActivity는 Byte 타입 (0=false, 1=true)
-//        if (activity.getOutdoorActivity() != null && activity.getOutdoorActivity() == 1) {
-//            desc.append("외출 활동 ");
-//        }
-//
-//        if (desc.length() == 0) {
-//            desc.append("일일 활동 기록 완료");
-//        }
-//
-//        return desc.toString().trim();
-//    }
-//
-//    /**
-//     * 활동 상태 판단 메서드
-//     * 목적: 활동 내용을 분석하여 상태를 결정
-//     * 반환값:
-//     *   - "success": 정상 상태 (식사 2회 이상, 약 복용, 수면 양호)
-//     *   - "warning": 주의 상태 (식사 부족, 약 미복용)
-//     *   - "error": 긴급 상태 (수면 매우 나쁨, 불면)
-//     * 주의: Byte 타입 필드는 1=true, 0=false로 처리
-//     */
-//    private String determineActivityStatus(DailyActivities activity) {
-//        // 기본적으로 정상
-//        boolean isGood = true;
-//
-//        // 식사 횟수 부족 (primitive int이므로 null 체크 불필요)
-//        if (activity.getMealCount() < 2) {
-//            isGood = false;
-//        }
-//
-//        // 약 복용 안 함 (Byte 타입)
-//        if (activity.getMedicationTaken() != null && activity.getMedicationTaken() == 0) {
-//            isGood = false;
-//        }
-//
-//        // 수면 상태 나쁨
-//        if (activity.getSleepQuality() != null &&
-//            (activity.getSleepQuality().contains("나쁨") || activity.getSleepQuality().contains("불면"))) {
-//            return "error"; // 긴급
-//        }
-//
-//        return isGood ? "success" : "warning";
-//    }
+
 
     // 활동기록 생성 서비스
     public SeniorDto.SeniorDailyDto createDaily(Integer seniorId, DailyActivitiesDto dto, Guardians guardian) {

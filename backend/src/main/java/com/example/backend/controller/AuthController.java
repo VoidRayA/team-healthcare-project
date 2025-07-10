@@ -6,7 +6,6 @@ import com.example.backend.DB.Seniors;
 import com.example.backend.config.JwtTokenProvider;
 import com.example.backend.dto.SeniorDto;
 import com.example.backend.dto.login.AuthResponseDto;
-import com.example.backend.dto.login.AuthResponseDto;
 import com.example.backend.dto.login.LoginRequestDto;
 import com.example.backend.dto.login.RegisterRequestDto;
 import com.example.backend.repository.GuardianRepository;

@@ -3,11 +3,13 @@ package com.example.backend.controller;
 import com.example.backend.DB.DailyActivities;
 import com.example.backend.DB.Guardians;
 import com.example.backend.DB.Seniors;
+import com.example.backend.DB.UserSetting;
 import com.example.backend.config.CustomUserDetails;
 import com.example.backend.dto.SeniorDto;
 import com.example.backend.dto.seviceDto.DailyActivitiesDto;
 import com.example.backend.repository.SeniorRepository;
 import com.example.backend.service.daily.DailyActivitiesService;
+import com.example.backend.service.UserSettingService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,25 +19,151 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 
 @RestController
-@RequestMapping("/api/seniors/{id}/dailyActivities")
 @RequiredArgsConstructor
 public class DailyController {
     private final DailyActivitiesService dailyActivitiesService;
     private final SeniorRepository seniorRepository;
+    private final UserSettingService userSettingService;
 
     // =================================================================
-    // 홈 화면용 최근 활동 현황 API 추가 (2025.07.02 신규 추가)
-    // 목적: 프론트엔드 홈 화면의 '최근 활동 현황' 섹션에 데이터 제공
-    // 경로: /api/seniors/0/dailyActivities/recent-activities (주의: Senior ID는 사용안함)
-    // 방식: Guardian이 관리하는 모든 Senior의 최근 활동을 취합하여 반환
+    // UserSetting 드롭다운 API들 (2025.07.08 신규 추가)
     // =================================================================
-    @GetMapping("/recent-activities")
+
+    /**
+     * 드롭다운 항목 조회
+     * 새로운 DB 구조에 맞게 수정
+     */
+    @GetMapping("/api/user-settings/dropdown-items")
+    public ResponseEntity<List<String>> getDropdownItems(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(defaultValue = "1") Long guardianId) {
+        try {
+            Guardians guardian = currentUser.getGuardians();
+            if (guardian == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            
+            // 새로운 서비스 메서드 호출 - String 리스트 반환
+            List<String> dropdownItems = userSettingService.getDropdownItems(guardian.getId());
+            
+            System.out.println("=== 드롭다운 API 디버깅 ===");
+            System.out.println("Guardian ID: " + guardian.getId());
+            System.out.println("드롭다운 항목 개수: " + dropdownItems.size());
+            System.out.println("드롭다운 항목들: " + dropdownItems);
+            
+            return ResponseEntity.ok(dropdownItems);
+        } catch (Exception e) {
+            System.err.println("드롭다운 조회 오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * 일일 활동 저장
+     */
+    @PostMapping("/api/daily-activities/save")
+    public ResponseEntity<Map<String, Object>> saveDailyActivities(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestBody Map<String, Object> requestData) {
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, String> selectedItems = (Map<String, String>) requestData.get("selectedItems");
+            String date = (String) requestData.get("date");
+            
+            System.out.println("=== 일일 활동 저장 API 디버깅 ===");
+            System.out.println("선택된 항목들: " + selectedItems);
+            System.out.println("날짜: " + date);
+            
+            // TODO: 실제 저장 로직 구현
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "저장되었습니다.");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("저장 오류: " + e.getMessage());
+            e.printStackTrace();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "서버 오류가 발생했습니다.");
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 드롭다운 항목 추가 API
+     * 사용자가 새로운 항목을 추가할 때 사용
+     */
+    @PostMapping("/api/user-settings/dropdown-item")
+    public ResponseEntity<Map<String, Object>> addDropdownItem(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestBody Map<String, String> requestData) {
+        try {
+            Guardians guardian = currentUser.getGuardians();
+            if (guardian == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "Guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            
+            String itemValue = requestData.get("itemValue");
+            String category = requestData.getOrDefault("category", "일정관리");
+            
+            System.out.println("=== 드롭다운 항목 추가 API 디버깅 ===");
+            System.out.println("Guardian ID: " + guardian.getId());
+            System.out.println("추가할 항목: " + itemValue);
+            System.out.println("카테고리: " + category);
+            
+            // 중복 체크
+            Optional<UserSetting> existing = userSettingService.findByValueAndGuardianId(itemValue, guardian.getId());
+            if (existing.isPresent()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "이미 존재하는 항목입니다.");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+            }
+            
+            // 새 항목 저장
+            UserSetting newItem = userSettingService.saveOrUpdateDropdownItem(guardian.getId(), category, itemValue);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "항목이 추가되었습니다.");
+            response.put("item", newItem.getValues());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("항목 추가 오류: " + e.getMessage());
+            e.printStackTrace();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "서버 오류가 발생했습니다.");
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    
+    // =================================================================
+    // 기존 DailyActivities API들
+    // =================================================================
+    
+    /**
+     * 홈 화면용 최근 활동 현황 API
+     */
+    @GetMapping("/api/seniors/{id}/dailyActivities/recent-activities")
     public ResponseEntity<?> getRecentActivities(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @PathVariable Integer id, // 경로 상 필요하지만 실제로는 사용하지 않음 (0 전달)
@@ -62,7 +190,7 @@ public class DailyController {
     // =================================================================
 
     // 활동 기록 조회
-    @GetMapping("/{activityId}")
+    @GetMapping("/api/seniors/{id}/dailyActivities/{activityId}")
     public ResponseEntity<?> getDaily(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @PathVariable Integer id,
@@ -88,7 +216,7 @@ public class DailyController {
         }
     }
     // 전체 활동 기록 조회
-    @GetMapping
+    @GetMapping("/api/seniors/{id}/dailyActivities")
     public ResponseEntity<?> getDailyList(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @PathVariable Integer id, // seniors의 id
@@ -133,7 +261,7 @@ public class DailyController {
     }
 
     // 활동 기록 생성
-    @PostMapping
+    @PostMapping("/api/seniors/{id}/dailyActivities")
     public ResponseEntity<?> postDaily(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @RequestParam(defaultValue = "0") int page,
@@ -194,7 +322,7 @@ public class DailyController {
     }
 
     // 활동 기록 삭제
-    @DeleteMapping("/{activityId}")
+    @DeleteMapping("/api/seniors/{id}/dailyActivities/{activityId}")
     public ResponseEntity<?> deleteDaily(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @PathVariable Integer id,
@@ -232,7 +360,7 @@ public class DailyController {
         }
     }
     // 활동기록 수정
-    @PutMapping("/{activityId}")
+    @PutMapping("/api/seniors/{id}/dailyActivities/{activityId}")
     public ResponseEntity<SeniorDto.SeniorUpdateDailyDto> updateDailyActivity(
             @PathVariable Integer seniorId,
             @PathVariable Integer activityId,

@@ -2,8 +2,13 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
+import GJoinpage from './components/GJoinpage';
 import ProfileEdit from './components/ProfileEdit';
+import ProfileManagement from './components/ProfileManagement';
 import Home from './components/Home';
+import SeniorList from './components/SeniorList';
+import Sjoinpage from './components/Sjoinpage';
+import Daily from './components/Daily';
 import Terms from './components/policy/Terms';
 import Privacy from './components/policy/Privacy';
 import Support from './components/policy/Support';
@@ -57,12 +62,40 @@ function App() {
           element={!isAuthenticated ? <Register /> : <Navigate to="/home" replace />} 
         />
         <Route 
+          path="/gjoin" 
+          element={!isAuthenticated ? <GJoinpage /> : <Navigate to="/home" replace />} 
+        />
+        <Route 
           path="/profile/edit" 
           element={isAuthenticated ? <ProfileEdit /> : <Navigate to="/" replace />} 
         />
         <Route 
+          path="/profile/management" 
+          element={isAuthenticated ? <ProfileManagement /> : <Navigate to="/" replace />} 
+        />
+        <Route 
           path="/home" 
           element={isAuthenticated ? <Home /> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/seniors" 
+          element={isAuthenticated ? <SeniorList /> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/sjoin" 
+          element={isAuthenticated ? <Sjoinpage /> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/senior/edit/:id" 
+          element={isAuthenticated ? <Sjoinpage /> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/daily" 
+          element={<Daily />} 
+        />
+        <Route 
+          path="/schedule" 
+          element={<Daily />} 
         />
         {/* 정책 페이지들 - 로그인 없이도 접근 가능 */}
         <Route path="/terms" element={<Terms />} />

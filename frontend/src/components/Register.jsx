@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { register } from '../api/apiClient';
 
 import {
   Box,
@@ -10,358 +10,495 @@ import {
   Paper,
   Alert,
   CircularProgress,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Link
+  Checkbox,
+  FormControlLabel,
+  Link,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import personAddIcon from '../images/lock_icon.png';
-import image3 from '../images/image3.png';
 
-// 로그인과 동일한 스타일
-const RegisterPage = styled(Box)({
+// ProfileManagement.jsx와 동일한 페이지 컨테이너
+const PageContainer = styled(Box)({
+  position: 'relative',
+  width: '100vw',
+  height: '100vh',
+  background: 'linear-gradient(180deg, rgba(0, 124, 255, 0.05) 0%, rgba(0, 188, 255, 0.05) 100%)',
   display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
+  justifyContent: 'center',
   alignItems: 'center',
-  height: '100vh', // minHeight에서 height로 변경
-  padding: '20px',
-  backgroundColor: '#01b1ff',
-  overflow: 'hidden' // 스크롤 방지
+  overflow: 'auto',
+  padding: '20px 0'
 });
 
-const RegisterContent = styled(Box)({
+// ProfileManagement.jsx와 동일한 메인 보드 (크기 최적화)
+const MainBoard = styled(Paper)({
+  position: 'relative',
+  width: '1200px', // 1820px에서 1200px로 축소
+  maxWidth: '90vw',
+  height: '800px', // 1000px에서 800px로 축소
+  maxHeight: '90vh',
+  backgroundColor: '#FFFFFF',
+  borderRadius: '10px',
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+  overflow: 'auto',
   display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  flex: 1,
-  width: '100%'
+  flexDirection: 'column',
+  alignItems: 'center'
 });
 
-const RegisterContainer = styled(Paper)(({ theme }) => ({
+// ProfileManagement.jsx와 동일한 페이지 제목 (크기 최적화)
+const PageTitle = styled(Typography)({
+  position: 'absolute',
+  top: '50px', // 80px에서 50px로 조정
+  fontFamily: 'Pretendard',
+  fontWeight: 700,
+  fontSize: '28px', // 32px에서 28px로 축소
+  lineHeight: '34px', // 38px에서 34px로 축소
+  color: '#000000',
+  textAlign: 'center'
+});
+
+// ProfileManagement.jsx와 동일한 입력 폼 컨테이너 (크기 최적화)
+const FormContainer = styled(Box)({
+  position: 'absolute',
+  top: '100px', // 140px에서 100px로 조정
+  width: '900px', // 1000px에서 900px로 축소
+  maxWidth: '90%',
+  height: 'auto'
+});
+
+// ProfileManagement.jsx와 동일한 입력 테이블
+const InputTable = styled(Box)({
+  position: 'relative',
+  width: '100%',
+  backgroundColor: '#ffffff',
+  border: 'none'
+});
+
+// ProfileManagement.jsx와 동일한 입력 행 (크기 최적화)
+const InputRow = styled(Box)({
+  position: 'relative',
+  width: '100%',
+  height: '50px', // 55px에서 50px로 축소
   display: 'flex',
-  justifyContent: 'center',
   alignItems: 'center',
-  backgroundColor: 'white',
-  borderRadius: '30px',
-  padding: '60px',
-  gap: '60px',
-  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-  maxWidth: '1200px',
-  width: '90%', // 100%에서 90%로 변경
-  [theme.breakpoints.down('lg')]: {
-    padding: '40px',
-    gap: '40px',
-    maxWidth: '1000px'
-  },
-  [theme.breakpoints.down('md')]: {
-    flexDirection: 'column',
-    padding: '30px 20px',
-    gap: '30px',
-    maxWidth: '600px'
-  },
-  [theme.breakpoints.down('sm')]: {
-    padding: '20px 15px',
-    maxWidth: '95%',
-    borderRadius: '20px'
+  borderBottom: '1px solid #0869CC',
+  '&:first-of-type': {
+    borderTop: '4px solid #00458B'
   }
-}));
+});
 
-const RegisterImage = styled(Box)(({ theme }) => ({
-  backgroundImage: `url(${image3})`,
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
-  borderRadius: '20px',
-  width: '400px',
-  height: '600px',
-  flexShrink: 0,
-  [theme.breakpoints.down('lg')]: {
-    width: '350px',
-    height: '500px'
-  },
-  [theme.breakpoints.down('md')]: {
-    width: '100%',
-    maxWidth: '450px', // RegisterBox와 비슷하게
-    height: '320px' // 높이 증가
-  },
-  [theme.breakpoints.down('sm')]: {
-    width: '100%',
-    maxWidth: '400px',
-    height: '280px'
-  }
-}));
-
-const RegisterBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  justifyContent: 'center',
-  width: '450px',
-  flexDirection: 'column',
-  gap: '20px',
-  backgroundColor: 'transparent',
-  [theme.breakpoints.down('lg')]: {
-    width: '400px'
-  },
-  [theme.breakpoints.down('md')]: {
-    width: '100%',
-    maxWidth: '450px'
-  }
-}));
-
-const RegisterHeader = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  justifyContent: 'flex-start',
-  alignItems: 'center',
-  flexDirection: 'row',
-  gap: '15px',
-  marginBottom: '20px',
-  [theme.breakpoints.down('sm')]: {
-    gap: '10px'
-  }
-}));
-
-const IconBox = styled(Box)(({ theme }) => ({
-  width: '50px',
-  height: '50px',
-  backgroundColor: '#00458B',
-  borderRadius: '8px',
+// ProfileManagement.jsx와 동일한 라벨 섹션 (크기 최적화)
+const LabelSection = styled(Box)({
+  position: 'absolute',
+  left: '0px',
+  width: '180px', // 200px에서 180px로 축소
+  height: '100%',
+  backgroundColor: 'rgba(51, 153, 255, 0.3)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  flexShrink: 0,
-  '& img': {
-    width: '30px',
-    height: '30px',
-    filter: 'brightness(0) invert(1)'
-  },
-  [theme.breakpoints.down('sm')]: {
-    width: '40px',
-    height: '40px',
-    '& img': {
-      width: '24px',
-      height: '24px'
-    }
-  }
-}));
+  fontFamily: 'Pretendard',
+  fontWeight: 700,
+  fontSize: '18px', // 22px에서 18px로 축소
+  color: '#000000'
+});
 
-const RegisterTitle = styled(Typography)(({ theme }) => ({
-  fontFamily: '"NanumHuman OTF", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  fontWeight: 600,
-  fontSize: '48px',
-  lineHeight: 1.2,
-  color: '#00458B',
-  margin: 0,
-  [theme.breakpoints.down('md')]: {
-    fontSize: '36px'
-  },
-  [theme.breakpoints.down('sm')]: {
-    fontSize: '28px'
-  }
-}));
+// ProfileManagement.jsx와 동일한 입력 섹션 (위치 조정)
+const InputSection = styled(Box)({
+  position: 'absolute',
+  left: '180px', // 200px에서 180px로 조정
+  right: '0px',
+  height: '100%',
+  backgroundColor: '#FFFFFF',
+  display: 'flex',
+  alignItems: 'center',
+  paddingLeft: '24px',
+  paddingRight: '24px'
+});
 
-const StyledTextField = styled(TextField)(({ theme }) => ({
+// ProfileManagement.jsx와 동일한 텍스트 필드 (크기 최적화)
+const StyledTextField = styled(TextField)({
+  width: '100%',
   '& .MuiOutlinedInput-root': {
-    height: '55px',
-    backgroundColor: '#FFFFFF',
-    borderRadius: '15px',
+    backgroundColor: 'transparent',
+    border: 'none',
     '& fieldset': {
-      borderColor: '#00BCFF',
-      borderWidth: '2px'
+      border: 'none'
     },
     '&:hover fieldset': {
-      borderColor: '#00BCFF'
+      border: 'none'
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#007CFF',
-      boxShadow: '0 0 6px rgba(0, 124, 255, 0.3)'
+      border: 'none'
     }
   },
   '& .MuiInputBase-input': {
-    fontSize: '16px',
+    fontFamily: 'Pretendard',
+    fontWeight: 700,
+    fontSize: '16px', // 18px에서 16px로 축소
     color: '#333',
-    padding: '0 15px'
-  },
-  [theme.breakpoints.down('md')]: {
-    '& .MuiOutlinedInput-root': {
-      height: '50px'
+    padding: '0',
+    '&::placeholder': {
+      color: '#B4B4B4',
+      opacity: 1
     }
   }
-}));
+});
 
-const StyledFormControl = styled(FormControl)(({ theme }) => ({
-  '& .MuiOutlinedInput-root': {
-    height: '55px',
-    backgroundColor: '#FFFFFF',
-    borderRadius: '15px',
-    '& fieldset': {
-      borderColor: '#00BCFF',
-      borderWidth: '2px'
-    },
-    '&:hover fieldset': {
-      borderColor: '#00BCFF'
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#007CFF',
-      boxShadow: '0 0 6px rgba(0, 124, 255, 0.3)'
-    }
-  },
-  '& .MuiInputBase-input': {
-    fontSize: '16px',
-    color: '#333'
-  }
-}));
+// 동의 섹션 컨테이너 (크기 최적화)
+const AgreementContainer = styled(Box)({
+  position: 'absolute',
+  top: '430px', // 500px에서 430px로 조정
+  width: '900px', // 1000px에서 900px로 축소
+  maxWidth: '90%',
+  height: '160px' // 높이 명시
+});
 
-const RegisterButton = styled(Button)(({ theme }) => ({
-  height: '60px',
-  backgroundColor: '#3399FF',
-  borderRadius: '15px',
-  fontSize: '18px',
-  fontWeight: 'bold',
+// 동의 섹션 제목 (크기 조정)
+const AgreementTitle = styled(Typography)({
+  fontFamily: 'Pretendard',
+  fontWeight: 700,
+  fontSize: '20px', // 24px에서 20px로 축소
+  color: '#00458B',
+  textAlign: 'center',
+  marginBottom: '20px' // 30px에서 20px로 축소
+});
+
+// 개별 동의 항목 (크기 최적화)
+const AgreementItem = styled(Box)({
+  display: 'flex',
+  alignItems: 'center',
+  height: '28px', // 40px에서 28px로 축소
+  marginBottom: '8px', // 16px에서 8px로 축소
+  paddingLeft: '4px' // 정렬 개선
+});
+
+const AgreementLabel = styled(Typography)({
+  fontFamily: 'Pretendard',
+  fontWeight: 600,
+  fontSize: '16px', // 크기 유지
+  color: '#000000',
+  marginLeft: '8px'
+});
+
+// 버튼 컨테이너 (크기 최적화)
+const ButtonContainer = styled(Box)({
+  position: 'absolute',
+  bottom: '50px', // 60px에서 50px로 조정
+  left: '50%',
+  transform: 'translateX(-50%)',
+  width: '460px', // 420px에서 460px로 확대
+  height: '65px',
+  display: 'flex',
+  gap: '20px'
+});
+
+// 회원가입 버튼 (크기 최적화)
+const RegisterButton = styled(Button)({
+  width: '220px', // 200px에서 220px로 확대
+  height: '65px',
+  backgroundColor: '#0869CC',
+  borderRadius: '30px',
+  fontFamily: 'Pretendard',
+  fontWeight: 700,
+  fontSize: '20px', // 24px에서 20px로 축소
+  color: '#FFFFFF',
   textTransform: 'none',
-  transition: 'all 0.3s ease',
-  '&:hover:not(:disabled)': {
-    backgroundColor: '#2288EE',
-    boxShadow: '0 5px 15px rgba(51, 153, 255, 0.4)'
+  '&:hover': {
+    backgroundColor: '#0653A3'
   },
   '&:disabled': {
-    opacity: 0.7,
-    backgroundColor: '#3399FF'
-  },
-  [theme.breakpoints.down('md')]: {
-    height: '55px'
+    backgroundColor: '#ccc'
   }
-}));
+});
 
-const BackButton = styled(Button)(({ theme }) => ({
-  height: '60px',
+// 로그인으로 돌아가기 버튼 (크기 최적화)
+const BackButton = styled(Button)({
+  width: '220px', // 200px에서 220px로 확대
+  height: '65px',
   backgroundColor: '#666',
-  borderRadius: '15px',
-  fontSize: '18px',
-  fontWeight: 'bold',
+  borderRadius: '30px',
+  fontFamily: 'Pretendard',
+  fontWeight: 700,
+  fontSize: '20px', // 20px 유지
+  color: '#FFFFFF',
   textTransform: 'none',
-  transition: 'all 0.3s ease',
   '&:hover': {
-    backgroundColor: '#555',
-    transform: 'translateY(-2px)',
-    boxShadow: '0 5px 15px rgba(102, 102, 102, 0.4)'
-  },
-  '&:active': {
-    transform: 'translateY(0)'
-  },
-  [theme.breakpoints.down('md')]: {
-    height: '55px'
+    backgroundColor: '#555'
   }
-}));
-
-const ErrorBox = styled(Box)({
-  display: 'flex',
-  textAlign: 'center',
-  justifyContent: 'center',
-  minHeight: '50px',
-  alignItems: 'center',
-  flexDirection: 'column',
-  margin: '10px 0'
 });
 
-// 푸터 스타일 컴포넌트 추가
-const Footer = styled(Box)(({ theme }) => ({
-  width: '100%',
-  padding: '20px',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: '10px',
-  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-  backdropFilter: 'blur(10px)',
-  borderRadius: '15px 15px 0 0',
-  marginTop: '20px',
-  boxShadow: '0 -5px 20px rgba(0, 0, 0, 0.1)',
-  [theme.breakpoints.down('sm')]: {
-    padding: '15px'
-  }
-}));
+// 에러 컨테이너 (위치 최적화)
+const ErrorContainer = styled(Box)({
+  position: 'absolute',
+  top: '620px', // 680px에서 620px로 조정
+  width: '900px', // 1000px에서 900px로 축소
+  maxWidth: '90%',
+  minHeight: '50px'
+});
 
-const FooterLinks = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: '20px',
-  flexWrap: 'wrap',
-  justifyContent: 'center',
-  [theme.breakpoints.down('sm')]: {
-    gap: '15px',
-    flexDirection: 'column',
-    alignItems: 'center'
-  }
-}));
+// 필수 표시 스타일
+const RequiredMark = styled('span')({
+  color: '#ff4444',
+  fontWeight: 'bold',
+  marginLeft: '4px'
+});
 
-const FooterLink = styled(Link)({
+// 팝업 스타일
+const StyledDialog = styled(Dialog)({
+  '& .MuiDialog-paper': {
+    borderRadius: '20px',
+    maxWidth: '700px',
+    width: '90%',
+    maxHeight: '80vh',
+    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
+  }
+});
+
+const DialogTitleStyled = styled(DialogTitle)({
+  fontFamily: 'Pretendard',
+  fontWeight: 700,
+  fontSize: '22px',
   color: '#00458B',
-  fontSize: '14px',
-  textDecoration: 'none',
-  transition: 'all 0.3s ease',
-  '&:hover': {
-    color: '#007CFF',
-    textDecoration: 'underline'
-  }
+  textAlign: 'center',
+  borderBottom: '2px solid #e8f4fd',
+  backgroundColor: '#f8fbff',
+  padding: '24px'
 });
 
-const CopyrightText = styled(Typography)({
-  color: '#666',
-  fontSize: '12px',
-  textAlign: 'center'
+const DialogContentStyled = styled(DialogContent)({
+  fontFamily: 'Pretendard',
+  fontSize: '15px',
+  lineHeight: 1.8,
+  color: '#333',
+  padding: '32px 28px',
+  backgroundColor: '#ffffff'
+});
+
+const LoadingOverlay = styled(Box)({
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: 'rgba(255, 255, 255, 0.8)',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  alignItems: 'center',
+  gap: '20px',
+  zIndex: 1000,
+  borderRadius: '10px'
 });
 
 const Register = () => {
   const navigate = useNavigate();
   
+  const [formData, setFormData] = useState({
+    loginId: '',
+    loginPw: '',
+    confirmPw: '',
+    guardianName: '',
+    phone: '',
+    email: ''
+  });
+  
+  const [agreements, setAgreements] = useState({
+    service: false,
+    privacy: false,
+    location: false
+  });
+  
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  // 팝업 상태
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState(''); // 'service', 'privacy', 'location', 'marketing'
+  
+  // 약관 내용
+  const termsContent = {
+    service: {
+      title: '서비스 이용약관',
+      content: `제1조 (목적)
+이 약관은 헬스케어 관리 시스템(이하 '회사')이 제공하는 서비스의 이용에 관한 기본적인 사항을 정합니다.
+
+제2조 (서비스 내용)
+1. 어르신 건강 모니터링 서비스
+2. 응급 상황 대응 서비스
+3. 가족 연결 서비스
+4. 기타 건강관리 관련 서비스
+
+제3조 (이용자의 의무)
+이용자는 정확한 정보를 제공하고, 서비스를 올바른 목적으로 이용하여야 합니다.`
+    },
+    privacy: {
+      title: '개인정보 처리방침',
+      content: `제1조 (개인정보 수집 목적)
+회사는 다음의 목적을 위해 개인정보를 수집합니다.
+1. 서비스 제공 및 운영
+2. 이용자 식별 및 인증
+3. 응급 상황 대응
+
+제2조 (수집하는 개인정보 항목)
+필수항목: 아이디, 비밀번호, 이름
+선택항목: 연락처, 이메일
+
+제3조 (개인정보 보유 및 이용기간)
+원칙적으로 서비스 이용기간 동안 보유하며, 탈퇴 시 즉시 파기합니다.`
+    },
+    location: {
+      title: '위치기반 서비스 이용약관',
+      content: `제1조 (위치정보 수집 목적)
+어르신의 안전한 일상생활을 위해 위치정보를 활용합니다.
+1. 응급 상황 시 위치 파악
+2. 안전구역 설정 및 모니터링
+3. 이동 경로 및 패턴 분석
+
+제2조 (위치정보 수집 방법)
+GPS, WiFi, 비콘 등을 통해 위치정보를 수집합니다.
+
+제3조 (위치정보 제3자 제공)
+응급 상황 시 소방서, 경찰서, 병원 등에 제공될 수 있습니다.`
+    }
+  };
+
+  // 약관 내용을 HTML 형태로 렌더링
+  const renderTermsContent = (type) => {
+    const content = termsContent[type];
+    if (!content) return null;
+    
+    if (type === 'service') {
+      return (
+        <div>
+          <h4>제1조 (목적)</h4>
+          <p>이 약관은 헬스케어 관리 시스템(이하 '회사')이 제공하는 서비스의 이용에 관한 기본적인 사항을 정합니다.</p>
+          
+          <h4>제2조 (서비스 내용)</h4>
+          <ul>
+            <li>어르신 건강 모니터링 서비스</li>
+            <li>응급 상황 대응 서비스</li>
+            <li>가족 연결 서비스</li>
+            <li>기타 건강관리 관련 서비스</li>
+          </ul>
+          
+          <h4>제3조 (이용자의 의무)</h4>
+          <p>이용자는 정확한 정보를 제공하고, 서비스를 올바른 목적으로 이용하여야 합니다.</p>
+        </div>
+      );
+    }
+    
+    if (type === 'privacy') {
+      return (
+        <div>
+          <h4>제1조 (개인정보 수집 목적)</h4>
+          <p>회사는 다음의 목적을 위해 개인정보를 수집합니다.</p>
+          <ul>
+            <li>서비스 제공 및 운영</li>
+            <li>이용자 식별 및 인증</li>
+            <li>응급 상황 대응</li>
+          </ul>
+          
+          <h4>제2조 (수집하는 개인정보 항목)</h4>
+          <p><strong>필수항목:</strong> 아이디, 비밀번호, 이름</p>
+          <p><strong>선택항목:</strong> 연락처, 이메일</p>
+          
+          <h4>제3조 (개인정보 보유 및 이용기간)</h4>
+          <p>원칙적으로 서비스 이용기간 동안 보유하며, 탈퇴 시 즉시 파기합니다.</p>
+        </div>
+      );
+    }
+    
+    if (type === 'location') {
+      return (
+        <div>
+          <h4>제1조 (위치정보 수집 목적)</h4>
+          <p>어르신의 안전한 일상생활을 위해 위치정보를 활용합니다.</p>
+          <ul>
+            <li>응급 상황 시 위치 파악</li>
+            <li>안전구역 설정 및 모니터링</li>
+            <li>이동 경로 및 패턴 분석</li>
+          </ul>
+          
+          <h4>제2조 (위치정보 수집 방법)</h4>
+          <p>GPS, WiFi, 비콘 등을 통해 위치정보를 수집합니다.</p>
+          
+          <h4>제3조 (위치정보 제3자 제공)</h4>
+          <p>응급 상황 시 소방서, 경찰서, 병원 등에 제공될 수 있습니다.</p>
+        </div>
+      );
+    }
+    
+    return <div>{content?.content}</div>;
+  };
+  
+  // 팝업 열기 함수
+  const handleViewTerms = (type) => {
+    setDialogType(type);
+    setDialogOpen(true);
+  };
+
+  // 팝업 닫기 함수
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setDialogType('');
+  };
+
+  // 확인 했을 때 동의도 하기
+  const handleAcceptTerms = () => {
+    setAgreements(prev => ({
+      ...prev,
+      [dialogType]: true
+    }));
+    handleCloseDialog();
+  };
+
   // 페이지 진입시 스크롤 방지
   useEffect(() => {
-    // 스크롤 방지 (강력하게)
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
     document.body.style.height = '100vh';
     
-    // 컴포넌트 언마운트시 스크롤 복원
     return () => {
       document.documentElement.style.overflow = 'auto';
       document.body.style.overflow = 'auto';
       document.body.style.height = 'auto';
     };
   }, []);
-  
-  // ✅ 백엔드 RegisterRequestDto와 정확히 일치하는 필드들
-  const [formData, setFormData] = useState({
-    loginId: '',          // 로그인 ID
-    loginPw: '',          // 비밀번호
-    confirmPassword: '',  // 비밀번호 확인 (프론트엔드 검증용)
-    guardianName: '',     // 보호자 이름
-    phone: '',            // 전화번호
-    email: '',            // 이메일
-    relationship: ''      // 관계 (아버지, 어머니, 자녀 등)
-  });
-  
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (event) => {
-    setFormData({
-      ...formData,
-      [event.target.name]: event.target.value,
-    });
-    setError(''); // 입력시 에러 메시지 초기화
+  // 입력값 변경 핸들러
+  const handleInputChange = (field) => (event) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: event.target.value
+    }));
+    
+    // 입력 변경시 에러/성공 메시지 클리어
+    if (error) setError('');
+    if (success) setSuccess('');
+  };
+
+  // 동의 체크박스 핸들러
+  const handleAgreementChange = (field) => (event) => {
+    setAgreements(prev => ({
+      ...prev,
+      [field]: event.target.checked
+    }));
   };
 
   const validateForm = () => {
-    // 필수 필드 체크
     if (!formData.loginId.trim()) {
       setError('아이디를 입력해주세요.');
       return false;
     }
     
-    if (formData.loginId.length < 4) {
-      setError('아이디는 4자 이상이어야 합니다.');
+    if (formData.loginId.length < 4 || formData.loginId.length > 12) {
+      setError('아이디는 4~12자 영문, 숫자 조합이어야 합니다.');
       return false;
     }
 
@@ -370,12 +507,12 @@ const Register = () => {
       return false;
     }
 
-    if (formData.loginPw.length < 6) {
-      setError('비밀번호는 6자 이상이어야 합니다.');
+    if (formData.loginPw.length < 6 || formData.loginPw.length > 12) {
+      setError('비밀번호는 6~12자 영문, 숫자 조합이어야 합니다.');
       return false;
     }
 
-    if (formData.loginPw !== formData.confirmPassword) {
+    if (formData.loginPw !== formData.confirmPw) {
       setError('비밀번호가 일치하지 않습니다.');
       return false;
     }
@@ -385,32 +522,26 @@ const Register = () => {
       return false;
     }
 
-    if (!formData.phone.trim()) {
-      setError('전화번호를 입력해주세요.');
-      return false;
+    // 연락처는 선택사항이지만, 입력된 경우 유효성 검사
+    if (formData.phone.trim()) {
+      const phoneRegex = /^[0-9-]+$/;
+      if (!phoneRegex.test(formData.phone)) {
+        setError('연락처는 숫자와 하이픈만 입력 가능합니다.');
+        return false;
+      }
     }
 
-    // 전화번호 형식 체크
-    const phoneRegex = /^[0-9-]+$/;
-    if (!phoneRegex.test(formData.phone)) {
-      setError('전화번호는 숫자와 하이픈만 입력 가능합니다.');
-      return false;
+    // 이메일도 선택사항이지만, 입력된 경우 유효성 검사
+    if (formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setError('올바른 이메일 형식을 입력해주세요.');
+        return false;
+      }
     }
 
-    if (!formData.email.trim()) {
-      setError('이메일을 입력해주세요.');
-      return false;
-    }
-
-    // 이메일 형식 체크
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError('올바른 이메일 형식을 입력해주세요.');
-      return false;
-    }
-
-    if (!formData.relationship.trim()) {
-      setError('관계를 선택해주세요.');
+    if (!agreements.service || !agreements.privacy || !agreements.location) {
+      setError('필수 약관에 동의해주세요.');
       return false;
     }
 
@@ -427,47 +558,36 @@ const Register = () => {
     setSuccess('');
 
     try {
-      // ✅ 백엔드 RegisterRequestDto와 정확히 일치하는 데이터 전송
       const requestData = {
-        loginId: formData.loginId,
+        loginId: formData.loginId.trim(),
         loginPw: formData.loginPw,
-        guardianName: formData.guardianName,
-        phone: formData.phone,
-        email: formData.email,
-        relationship: formData.relationship
-        // role은 백엔드에서 자동으로 GUARDIAN으로 설정됨
+        guardianName: formData.guardianName.trim(),
+        phone: formData.phone.trim() || null, // 빈 문자열이면 null로 전송
+        email: formData.email.trim() || null, // 빈 문자열이면 null로 전송
+        role: 'GUARDIAN'
       };
 
       console.log('회원가입 요청 데이터:', requestData);
 
-      const response = await axios.post(
-        'http://localhost:8080/api/auth/register',
-        requestData,
-        { 
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 10000
-        }
-      );
+      const response = await register(requestData);
+      console.log('회원가입 성공:', response);
 
-      console.log('회원가입 응답:', response.data);
-      
       setSuccess('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.');
       
       // 3초 후 로그인 페이지로 이동
       setTimeout(() => {
         navigate('/');
       }, 3000);
-      
+
     } catch (err) {
-      console.error('회원가입 에러:', err);
+      console.error('회원가입 오류:', err);
       
-      if (err.response?.status === 400) {
-        const errorMessage = err.response.data?.error || '입력 정보를 다시 확인해주세요.';
-        setError(errorMessage);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
       } else if (err.response?.status === 409) {
         setError('이미 존재하는 아이디입니다.');
-      } else if (err.code === 'ECONNABORTED') {
-        setError('서버 응답 시간이 초과되었습니다.');
+      } else if (err.response?.status === 400) {
+        setError('입력 정보를 다시 확인해주세요.');
       } else if (err.code === 'ERR_NETWORK') {
         setError('서버에 연결할 수 없습니다. 백엔드 서버를 확인해주세요.');
       } else {
@@ -483,178 +603,334 @@ const Register = () => {
   };
 
   return (
-    <RegisterPage>
-      <RegisterContent>
-        <RegisterContainer elevation={0}>
-          {/* 왼쪽 배경 이미지 영역 */}
-          <RegisterImage />
+    <PageContainer>
+      <MainBoard>
+        {loading && (
+          <LoadingOverlay>
+            <CircularProgress size={50} sx={{ color: '#0869CC' }} />
+            <Typography sx={{ 
+              color: '#0869CC', 
+              fontSize: '18px', 
+              fontWeight: 'bold',
+              fontFamily: 'Pretendard'
+            }}>
+              회원가입 중...
+            </Typography>
+          </LoadingOverlay>
+        )}
 
-          <RegisterBox>
-            {/* 아이콘 + 회원가입 텍스트 */}
-            <RegisterHeader>
-              <IconBox>
-                <img src={personAddIcon} alt="register" />
-              </IconBox>
-              <RegisterTitle>회원가입</RegisterTitle>
-            </RegisterHeader>
+        {/* 페이지 제목 */}
+        <PageTitle>
+          회원가입
+        </PageTitle>
 
-            {/* 아이디 입력 */}
-            <StyledTextField
-              variant="outlined"
-              placeholder="아이디 (4자 이상)"
-              name="loginId"
-              fullWidth
-              value={formData.loginId}
-              onChange={handleChange}
-            />
+        {/* 입력 폼 */}
+        <FormContainer>
+          <InputTable>
+            {/* 아이디 */}
+            <InputRow>
+              <LabelSection>아이디<RequiredMark>*</RequiredMark></LabelSection>
+              <InputSection>
+                <StyledTextField
+                  placeholder="영문, 숫자 조합 4~12자"
+                  value={formData.loginId}
+                  onChange={handleInputChange('loginId')}
+                  variant="outlined"
+                />
+              </InputSection>
+            </InputRow>
 
-            {/* 비밀번호 입력 */}
-            <StyledTextField
-              variant="outlined"
-              placeholder="비밀번호 (6자 이상)"
-              name="loginPw"
-              type="password"
-              fullWidth
-              value={formData.loginPw}
-              onChange={handleChange}
-            />
+            {/* 비밀번호 */}
+            <InputRow>
+              <LabelSection>비밀번호<RequiredMark>*</RequiredMark></LabelSection>
+              <InputSection>
+                <StyledTextField
+                  type="password"
+                  placeholder="영문, 숫자 조합 6~12자"
+                  value={formData.loginPw}
+                  onChange={handleInputChange('loginPw')}
+                  variant="outlined"
+                />
+              </InputSection>
+            </InputRow>
 
             {/* 비밀번호 확인 */}
-            <StyledTextField
-              variant="outlined"
-              placeholder="비밀번호 확인"
-              name="confirmPassword"
-              type="password"
-              fullWidth
-              value={formData.confirmPassword}
-              onChange={handleChange}
+            <InputRow>
+              <LabelSection>비밀번호 확인<RequiredMark>*</RequiredMark></LabelSection>
+              <InputSection>
+                <StyledTextField
+                  type="password"
+                  placeholder="비밀번호를 한번 더 입력해주세요"
+                  value={formData.confirmPw}
+                  onChange={handleInputChange('confirmPw')}
+                  variant="outlined"
+                />
+              </InputSection>
+            </InputRow>
+
+            {/* 이름 */}
+            <InputRow>
+              <LabelSection>이름<RequiredMark>*</RequiredMark></LabelSection>
+              <InputSection>
+                <StyledTextField
+                  placeholder="이름을 입력하세요"
+                  value={formData.guardianName}
+                  onChange={handleInputChange('guardianName')}
+                  variant="outlined"
+                />
+              </InputSection>
+            </InputRow>
+
+            {/* 연락처 */}
+            <InputRow>
+              <LabelSection>연락처</LabelSection>
+              <InputSection>
+                <StyledTextField
+                  placeholder="ex) 010-1234-5678"
+                  value={formData.phone}
+                  onChange={handleInputChange('phone')}
+                  variant="outlined"
+                />
+              </InputSection>
+            </InputRow>
+
+            {/* 이메일 */}
+            <InputRow>
+              <LabelSection>이메일</LabelSection>
+              <InputSection>
+                <StyledTextField
+                  placeholder="이메일을 입력하세요"
+                  value={formData.email}
+                  onChange={handleInputChange('email')}
+                  variant="outlined"
+                />
+              </InputSection>
+            </InputRow>
+          </InputTable>
+        </FormContainer>
+
+        {/* 개인정보 수집 동의 */}
+        <AgreementContainer>
+          <AgreementTitle>📋 개인정보 수집 및 이용 동의</AgreementTitle>
+          
+          <AgreementItem>
+            <Checkbox
+              checked={agreements.service}
+              onChange={handleAgreementChange('service')}
+              sx={{
+                color: '#1976d2',
+                '&.Mui-checked': { color: '#1976d2' }
+              }}
             />
-
-            {/* 이름 입력 */}
-            <StyledTextField
-              variant="outlined"
-              placeholder="이름"
-              name="guardianName"
-              fullWidth
-              value={formData.guardianName}
-              onChange={handleChange}
-            />
-
-            {/* 전화번호 입력 */}
-            <StyledTextField
-              variant="outlined"
-              placeholder="전화번호 (예: 010-1234-5678)"
-              name="phone"
-              fullWidth
-              value={formData.phone}
-              onChange={handleChange}
-            />
-
-            {/* 이메일 입력 */}
-            <StyledTextField
-              variant="outlined"
-              placeholder="이메일"
-              name="email"
-              type="email"
-              fullWidth
-              value={formData.email}
-              onChange={handleChange}
-            />
-
-            {/* ✅ 관계 선택 (새로 추가) */}
-            <StyledFormControl fullWidth>
-              <InputLabel>관계</InputLabel>
-              <Select
-                name="relationship"
-                value={formData.relationship}
-                onChange={handleChange}
-                label="관계"
-              >
-                <MenuItem value="아버지">아버지</MenuItem>
-                <MenuItem value="어머니">어머니</MenuItem>
-                <MenuItem value="아들">아들</MenuItem>
-                <MenuItem value="딸">딸</MenuItem>
-                <MenuItem value="며느리">며느리</MenuItem>
-                <MenuItem value="사위">사위</MenuItem>
-                <MenuItem value="손자">손자</MenuItem>
-                <MenuItem value="손녀">손녀</MenuItem>
-                <MenuItem value="기타">기타</MenuItem>
-              </Select>
-            </StyledFormControl>
-
-            {/* 회원가입 버튼 */}
-            <RegisterButton
-              variant="contained"
-              fullWidth
-              onClick={handleRegister}
-              disabled={loading}
-              startIcon={loading && <CircularProgress size={20} color="inherit" />}
+            <AgreementLabel>서비스 이용약관 동의 (필수)</AgreementLabel>
+            <Link 
+              component="button" 
+              variant="body2" 
+              onClick={() => handleViewTerms('service')}
+              sx={{ 
+                marginLeft: 'auto', 
+                color: '#0869CC', 
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                fontFamily: 'Pretendard',
+                fontSize: '14px'
+              }}
             >
-              {loading ? '가입 중...' : '회원가입'}
-            </RegisterButton>
+              보기
+            </Link>
+          </AgreementItem>
 
-            {/* 돌아가기 버튼 */}
-            <BackButton
-              variant="contained"
-              fullWidth
-              onClick={handleBack}
-              disabled={loading}
+          <AgreementItem>
+            <Checkbox
+              checked={agreements.privacy}
+              onChange={handleAgreementChange('privacy')}
+              sx={{
+                color: '#1976d2',
+                '&.Mui-checked': { color: '#1976d2' }
+              }}
+            />
+            <AgreementLabel>개인정보 처리방침 동의 (필수)</AgreementLabel>
+            <Link 
+              component="button" 
+              variant="body2" 
+              onClick={() => handleViewTerms('privacy')}
+              sx={{ 
+                marginLeft: 'auto', 
+                color: '#0869CC', 
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                fontFamily: 'Pretendard',
+                fontSize: '14px'
+              }}
             >
-              로그인으로 돌아가기
-            </BackButton>
+              보기
+            </Link>
+          </AgreementItem>
 
-            {/* 메시지 표시 */}
-            <ErrorBox>
-              {error && (
-                <Alert 
-                  severity="error" 
-                  sx={{ 
-                    width: '100%',
-                    fontSize: '14px',
-                    borderRadius: '10px'
-                  }}
-                >
-                  {error}
-                </Alert>
-              )}
-              {success && (
-                <Alert 
-                  severity="success" 
-                  sx={{ 
-                    width: '100%',
-                    fontSize: '14px',
-                    borderRadius: '10px'
-                  }}
-                >
-                  {success}
-                </Alert>
-              )}
-            </ErrorBox>
-          </RegisterBox>
-        </RegisterContainer>
-      </RegisterContent>
+          <AgreementItem>
+            <Checkbox
+              checked={agreements.location}
+              onChange={handleAgreementChange('location')}
+              sx={{
+                color: '#1976d2',
+                '&.Mui-checked': { color: '#1976d2' }
+              }}
+            />
+            <AgreementLabel>위치기반 서비스 이용약관 동의 (필수)</AgreementLabel>
+            <Link 
+              component="button" 
+              variant="body2" 
+              onClick={() => handleViewTerms('location')}
+              sx={{ 
+                marginLeft: 'auto', 
+                color: '#0869CC', 
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                fontFamily: 'Pretendard',
+                fontSize: '14px'
+              }}
+            >
+              보기
+            </Link>
+          </AgreementItem>
+        </AgreementContainer>
 
-      {/* 푸터 추가 */}
-      <Footer>
-        <FooterLinks>
-          <FooterLink href="/terms">
-            이용약관
-          </FooterLink>
-          <FooterLink href="/privacy">
-            개인정보처리방침
-          </FooterLink>
-          <FooterLink href="/support">
-            고객센터
-          </FooterLink>
-          <FooterLink href="/about">
-            서비스 소개
-          </FooterLink>
-        </FooterLinks>
-        <CopyrightText>
-          © 2025 Healthcare Management System. All rights reserved.
-        </CopyrightText>
-      </Footer>
-    </RegisterPage>
+        {/* 에러/성공 메시지 */}
+        <ErrorContainer>
+          {error && (
+            <Alert 
+              severity="error" 
+              sx={{ 
+                width: '100%',
+                fontSize: '16px',
+                borderRadius: '8px'
+              }}
+            >
+              {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert 
+              severity="success" 
+              sx={{ 
+                width: '100%',
+                fontSize: '16px',
+                borderRadius: '8px'
+              }}
+            >
+              {success}
+            </Alert>
+          )}
+        </ErrorContainer>
+
+        {/* 버튼들 (가로 배치) */}
+        <ButtonContainer>
+          <RegisterButton
+            variant="contained"
+            onClick={handleRegister}
+            disabled={loading}
+          >
+            회원가입
+          </RegisterButton>
+
+          <BackButton
+            variant="contained"
+            onClick={handleBack}
+            disabled={loading}
+          >
+            로그인으로 돌아가기
+          </BackButton>
+        </ButtonContainer>
+        
+        {/* 약관 팝업 */}
+        <StyledDialog 
+          open={dialogOpen} 
+          onClose={handleCloseDialog}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitleStyled>
+            {termsContent[dialogType]?.title}
+          </DialogTitleStyled>
+          <DialogContentStyled>
+          <Box sx={{ 
+          whiteSpace: 'pre-line', 
+          minHeight: '300px',
+          '& h4': {
+          color: '#00458B',
+          fontWeight: 700,
+          fontSize: '16px',
+            marginTop: '24px',
+              marginBottom: '12px',
+            paddingLeft: '8px',
+              borderLeft: '4px solid #0869CC'
+            },
+            '& p': {
+              marginBottom: '16px',
+              color: '#555'
+            },
+            '& ul': {
+              paddingLeft: '20px',
+              marginBottom: '16px'
+            },
+            '& li': {
+              marginBottom: '8px',
+              color: '#666'
+            }
+          }}>
+            {dialogType && renderTermsContent(dialogType)}
+          </Box>
+          </DialogContentStyled>
+          <DialogActions sx={{ 
+            padding: '20px 28px', 
+            backgroundColor: '#f8fbff',
+            borderTop: '1px solid #e8f4fd'
+          }}>
+            <Button
+              onClick={handleCloseDialog}
+              variant="outlined"
+              sx={{
+                fontFamily: 'Pretendard',
+                fontWeight: 600,
+                fontSize: '16px',
+                color: '#666',
+                borderColor: '#ddd',
+                borderRadius: '10px',
+                padding: '12px 24px',
+                minWidth: '100px',
+                '&:hover': {
+                  borderColor: '#999',
+                  backgroundColor: '#f5f5f5'
+                }
+              }}
+            >
+              닫기
+            </Button>
+            <Button
+              onClick={handleAcceptTerms}
+              variant="contained"
+              sx={{
+                fontFamily: 'Pretendard',
+                fontWeight: 600,
+                fontSize: '16px',
+                backgroundColor: '#0869CC',
+                borderRadius: '10px',
+                padding: '12px 24px',
+                minWidth: '140px',
+                marginLeft: '12px',
+                boxShadow: '0 4px 12px rgba(8, 105, 204, 0.3)',
+                '&:hover': {
+                  backgroundColor: '#0653A3',
+                  boxShadow: '0 6px 16px rgba(8, 105, 204, 0.4)'
+                }
+              }}
+            >
+              확인 및 동의
+            </Button>
+          </DialogActions>
+        </StyledDialog>
+      </MainBoard>
+    </PageContainer>
   );
 };
 

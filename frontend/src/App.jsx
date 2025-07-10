@@ -15,6 +15,9 @@ import Support from './components/policy/Support';
 import About from './components/policy/About';
 import ProtectedRoute from './components/ProtectedRoute';
 import { isAuthenticated } from './utils/auth';
+import MapExample from './components/MapExample';
+import MapDebugTest from './components/MapDebugTest';
+import MapDemo from './components/MapDemo';
 
 function App() {
   const [authState, setAuthState] = useState(isAuthenticated());
@@ -152,6 +155,11 @@ function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/support" element={<Support />} />
         <Route path="/about" element={<About />} />
+        
+        {/* 지도 테스트 페이지 */}
+        <Route path="/map-test" element={<MapExample />} />
+        <Route path="/map-debug" element={<MapDebugTest />} />
+        <Route path="/map-demo" element={<MapDemo />} />
       </Routes>
     </BrowserRouter>
   );

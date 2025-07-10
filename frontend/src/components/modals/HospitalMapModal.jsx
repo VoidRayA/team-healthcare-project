@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -11,149 +11,69 @@ import {
   ListItemText,
   Chip,
   Paper,
-  Button,
-  CircularProgress
+  Button
 } from '@mui/material';
-import { Close, LocalHospital, Phone, LocationOn, Navigation } from '@mui/icons-material';
+import { Close, LocalHospital, Phone, LocationOn, Navigation, MyLocation } from '@mui/icons-material';
+import KakaoMap from '../KakaoMap';
 
 const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
-  const mapContainer = useRef(null);
-  const mapInstance = useRef(null);
-  const markersRef = useRef([]);
   const [selectedHospital, setSelectedHospital] = useState(null);
-  const [map, setMap] = useState(null);
-  const [mapLoading, setMapLoading] = useState(true);
+  const [mapRef, setMapRef] = useState(null);
 
-  useEffect(() => {
-    console.log('HospitalMapModal useEffect - open:', open);
-    console.log('hospitals:', hospitals);
-    console.log('currentPosition:', currentPosition);
+  // 지도용 마커 데이터 생성
+  const markers = React.useMemo(() => {
+    const allMarkers = [];
     
-    if (open && mapContainer.current) {
-      setMapLoading(true);
-      
-      // 카카오맵이 로드될 때까지 대기
-      const checkKakaoMap = setInterval(() => {
-        if (window.kakao && window.kakao.maps) {
-          clearInterval(checkKakaoMap);
-          console.log('카카오맵 로드 완료!');
-          
-          try {
-            // 지도 초기화
-            const options = {
-              center: new window.kakao.maps.LatLng(
-                currentPosition?.latitude || 35.1796,
-                currentPosition?.longitude || 129.0756
-              ),
-              level: 5
-            };
-
-            const mapObj = new window.kakao.maps.Map(mapContainer.current, options);
-            mapInstance.current = mapObj;
-            setMap(mapObj);
-            setMapLoading(false);
-
-            // 현재 위치 마커 추가
-            if (currentPosition) {
-              const currentMarker = new window.kakao.maps.Marker({
-                position: new window.kakao.maps.LatLng(currentPosition.latitude, currentPosition.longitude),
-                map: mapObj,
-                image: new window.kakao.maps.MarkerImage(
-                  'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
-                  new window.kakao.maps.Size(24, 35)
-                )
-              });
-
-              // 현재 위치에 인포윈도우 추가
-              const currentInfowindow = new window.kakao.maps.InfoWindow({
-                content: '<div style="padding:5px;font-size:12px;">현재 위치</div>'
-              });
-              currentInfowindow.open(mapObj, currentMarker);
-            }
-
-            // 병원 마커 추가
-            hospitals.forEach((hospital, index) => {
-              console.log(`병원 ${index}:`, hospital);
-              
-              if (hospital.latitude && hospital.longitude) {
-                const position = new window.kakao.maps.LatLng(
-                  parseFloat(hospital.latitude), 
-                  parseFloat(hospital.longitude)
-                );
-                
-                const marker = new window.kakao.maps.Marker({
-                  position: position,
-                  map: mapObj,
-                  title: hospital.yadmNm
-                });
-
-                // 마커 클릭 이벤트
-                window.kakao.maps.event.addListener(marker, 'click', () => {
-                  setSelectedHospital(hospital);
-                  
-                  // 지도 중심 이동
-                  mapObj.panTo(position);
-                });
-
-                markersRef.current.push(marker);
-              }
-            });
-
-            // 모든 마커가 보이도록 지도 범위 재설정
-            if (markersRef.current.length > 0 || currentPosition) {
-              const bounds = new window.kakao.maps.LatLngBounds();
-              
-              // 현재 위치 포함
-              if (currentPosition) {
-                bounds.extend(new window.kakao.maps.LatLng(currentPosition.latitude, currentPosition.longitude));
-              }
-              
-              // 병원 위치들 포함
-              markersRef.current.forEach(marker => {
-                bounds.extend(marker.getPosition());
-              });
-              
-              // 범위가 너무 좁으면 레벨 조정
-              if (markersRef.current.length === 0 && currentPosition) {
-                mapObj.setLevel(4);
-              } else {
-                mapObj.setBounds(bounds);
-              }
-            }
-          } catch (error) {
-            console.error('카카오맵 초기화 오류:', error);
-            setMapLoading(false);
-          }
-        }
-      }, 100); // 100ms마다 체크
-      
-      // 10초 후에도 로드되지 않으면 타임아웃
-      setTimeout(() => {
-        if (mapLoading) {
-          clearInterval(checkKakaoMap);
-          setMapLoading(false);
-          console.error('카카오맵 로드 타임아웃');
-        }
-      }, 10000);
+    // 현재 위치 마커를 먼저 추가 (파란색 특별 마커)
+    if (currentPosition) {
+      allMarkers.push({
+        lat: currentPosition.latitude,
+        lng: currentPosition.longitude,
+        title: '내 위치',
+        content: `
+          <div style="padding: 10px; text-align: center;">
+            <strong style="color: #1976d2; font-size: 14px;">📍 현재 위치</strong><br/>
+            <span style="font-size: 12px; color: #666;">
+              위도: ${currentPosition.latitude.toFixed(6)}<br/>
+              경도: ${currentPosition.longitude.toFixed(6)}
+            </span>
+          </div>
+        `,
+        isCurrentLocation: true // 현재 위치 식별용
+      });
     }
+    
+    // 병원 마커들 추가
+    const hospitalMarkers = hospitals.map((hospital) => ({
+      lat: parseFloat(hospital.latitude),
+      lng: parseFloat(hospital.longitude),
+      title: hospital.yadmNm,
+      content: `
+        <div style="padding: 10px; min-width: 200px;">
+          <strong style="font-size: 14px;">🏥 ${hospital.yadmNm}</strong><br/>
+          <span style="font-size: 12px; color: #666;">
+            ${hospital.addr}<br/>
+            ${hospital.telno && hospital.telno !== '전화번호 정보 없음' ? `📞 ${hospital.telno}` : ''}
+            ${hospital.distance ? `<br/>📏 거리: ${hospital.distance}` : ''}
+          </span>
+        </div>
+      `,
+      isHospital: true
+    }));
 
-    return () => {
-      // 클린업: 마커 제거
-      markersRef.current.forEach(marker => marker.setMap(null));
-      markersRef.current = [];
-    };
-  }, [open, hospitals, currentPosition]);
+    return [...allMarkers, ...hospitalMarkers];
+  }, [hospitals, currentPosition]);
 
   const handleHospitalClick = (hospital) => {
     setSelectedHospital(hospital);
     
-    if (mapInstance.current && hospital.latitude && hospital.longitude) {
+    if (mapRef && hospital.latitude && hospital.longitude) {
       const position = new window.kakao.maps.LatLng(
         parseFloat(hospital.latitude), 
         parseFloat(hospital.longitude)
       );
-      mapInstance.current.panTo(position);
-      mapInstance.current.setLevel(3);
+      mapRef.panTo(position);
+      mapRef.setLevel(3);
     }
   };
 
@@ -161,6 +81,38 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
     // 카카오맵 길찾기 URL
     const url = `https://map.kakao.com/link/to/${encodeURIComponent(hospital.yadmNm)},${hospital.latitude},${hospital.longitude}`;
     window.open(url, '_blank');
+  };
+
+  const handleMapLoad = (map) => {
+    setMapRef(map);
+    
+    // 지도 로드 후 커스텀 마커 스타일 적용
+    if (window.kakao && window.kakao.maps && currentPosition) {
+      // 현재 위치에 특별한 마커 추가
+      const markerImage = new window.kakao.maps.MarkerImage(
+        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
+        new window.kakao.maps.Size(24, 35)
+      );
+      
+      const currentMarker = new window.kakao.maps.Marker({
+        position: new window.kakao.maps.LatLng(currentPosition.latitude, currentPosition.longitude),
+        map: map,
+        image: markerImage,
+        title: '현재 위치'
+      });
+    }
+  };
+
+  // 현재 위치 버튼
+  const handleCenterToCurrentLocation = () => {
+    if (mapRef && currentPosition) {
+      const position = new window.kakao.maps.LatLng(
+        currentPosition.latitude,
+        currentPosition.longitude
+      );
+      mapRef.panTo(position);
+      mapRef.setLevel(3);
+    }
   };
 
   return (
@@ -188,6 +140,15 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
           <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
             주변 병원 지도
           </Typography>
+          {currentPosition && (
+            <Chip
+              icon={<MyLocation />}
+              label="현재 위치 기준"
+              size="small"
+              color="primary"
+              variant="outlined"              
+            />
+          )}
         </Box>
         <IconButton onClick={onClose} sx={{ color: '#666' }}>
           <Close />
@@ -243,16 +204,16 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
                   }
                   secondary={
                     <Box component="span">
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }} component="span">
+                      <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
                         <LocationOn sx={{ fontSize: 16, color: '#666' }} />
-                        <Typography variant="caption" color="text.secondary" component="span">
+                        <Typography component="span" variant="caption" color="text.secondary">
                           {hospital.addr}
                         </Typography>
                       </Box>
                       {hospital.telno && hospital.telno !== '전화번호 정보 없음' && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }} component="span">
+                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           <Phone sx={{ fontSize: 16, color: '#666' }} />
-                          <Typography variant="caption" color="text.secondary" component="span">
+                          <Typography component="span" variant="caption" color="text.secondary">
                             {hospital.telno}
                           </Typography>
                         </Box>
@@ -267,34 +228,45 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
 
         {/* 오른쪽: 지도 */}
         <Box sx={{ flex: 1, position: 'relative' }}>
-          {/* 로딩 표시 */}
-          {mapLoading && (
-            <Box sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              zIndex: 1
-            }}>
-              <CircularProgress />
-              <Typography sx={{ mt: 2 }}>지도를 불러오는 중...</Typography>
-            </Box>
-          )}
-          
-          {/* 지도 컨테이너 */}
-          <div
-            ref={mapContainer}
-            style={{
-              width: '100%',
-              height: '100%'
-            }}
+          {/* KakaoMap 컴포넌트 사용 */}
+          <KakaoMap
+            width="100%"
+            height="100%"
+            markers={markers}
+            level={5}
+            initialCenter={
+              currentPosition 
+                ? { lat: currentPosition.latitude, lng: currentPosition.longitude }
+                : { lat: 35.1796, lng: 129.0756 }
+            }
+            onMapLoad={handleMapLoad}
           />
+          
+          {/* 현재 위치로 이동 버튼 */}
+          {currentPosition && (
+            <Paper
+              elevation={2}
+              sx={{
+                position: 'absolute',
+                top: 10,
+                right: 10,
+                zIndex: 2
+              }}
+            >
+              <IconButton
+                onClick={handleCenterToCurrentLocation}
+                sx={{
+                  backgroundColor: 'white',
+                  '&:hover': {
+                    backgroundColor: '#f5f5f5'
+                  }
+                }}
+                title="현재 위치로 이동"
+              >
+                <MyLocation color="primary" />
+              </IconButton>
+            </Paper>
+          )}
           
           {/* 선택된 병원 정보 오버레이 */}
           {selectedHospital && (

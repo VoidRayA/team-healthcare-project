@@ -1,3 +1,54 @@
+/**
+ * 일정관리 관련 API 함수들 (2025.07.10 추가)
+ */
+
+/**
+ * 드롭다운 항목 조회 (일정관리 카테고리)
+ * @returns {Promise} 드롭다운 항목 목록
+ */
+export const getScheduleDropdownItems = async () => {
+  try {
+    const response = await apiClient.get('/api/user-settings/dropdown-items');
+    return response.data;
+  } catch (error) {
+    console.error('일정 드롭다운 항목 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 새로운 일정 항목 추가
+ * @param {string} itemValue - 추가할 일정 항목
+ * @returns {Promise} 추가 결과
+ */
+export const addScheduleItem = async (itemValue) => {
+  try {
+    const response = await apiClient.post('/api/user-settings/dropdown-item', {
+      itemValue: itemValue,
+      category: '일정관리'
+    });
+    return response.data;
+  } catch (error) {
+    console.error('일정 항목 추가 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 일일 활동 저장 (오늘의 할 일)
+ * @param {Object} data - 저장할 일정 데이터
+ * @returns {Promise} 저장 결과
+ */
+export const saveTodaySchedule = async (data) => {
+  try {
+    const response = await apiClient.post('/api/daily-activities/save', data);
+    return response.data;
+  } catch (error) {
+    console.error('오늘의 할 일 저장 실패:', error);
+    throw error;
+  }
+};
+
 // =================================================================
 // API 클라이언트 통합 설정 (2025.07.08 통합 버전)
 // 목적: axios 대신 중앙화된 API 클라이언트 사용
@@ -18,7 +69,7 @@ const apiClient = axios.create({
 // 요청 인터셉터 - 자동 JWT 토큰 추가
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('jwt');
+    const token = sessionStorage.getItem('jwt');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -43,10 +94,10 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       console.error('인증 만료. 로그인이 필요합니다.');
       // 토큰 제거 및 로그인 페이지로 리다이렉트
-      localStorage.removeItem('jwt');
-      localStorage.removeItem('loginId');
-      localStorage.removeItem('guardianName');
-      localStorage.removeItem('role');
+      sessionStorage.removeItem('jwt');
+      sessionStorage.removeItem('loginId');
+      sessionStorage.removeItem('guardianName');
+      sessionStorage.removeItem('role');
       
       // 자동 로그아웃 및 리다이렉트 (2025.07.08 활성화)
       alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
@@ -54,7 +105,7 @@ apiClient.interceptors.response.use(
       // 현재 페이지 정보 저장 (로그인 후 돌아오기 용)
       const currentPath = window.location.pathname;
       if (currentPath !== '/' && currentPath !== '/register') {
-        localStorage.setItem('redirectAfterLogin', currentPath);
+        sessionStorage.setItem('redirectAfterLogin', currentPath);
       }
       
       window.location.href = '/';

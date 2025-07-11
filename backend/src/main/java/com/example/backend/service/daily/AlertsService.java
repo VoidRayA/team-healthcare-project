@@ -5,6 +5,7 @@ import com.example.backend.DB.Guardians;
 import com.example.backend.DB.Seniors;
 import com.example.backend.DB.VitalSigns;
 import com.example.backend.DB.care.VitalSignsThreshold;
+import com.example.backend.config.CustomUserDetails;
 import com.example.backend.dto.seviceDto.AlertsDto;
 import com.example.backend.repository.AlertsRepository;
 import com.example.backend.repository.SeniorRepository;
@@ -14,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,7 +32,7 @@ public class AlertsService {
     private final SeniorRepository seniorRepository;
 
     // 알림 생성및 보호자에게 전달하는 서비스(특이 사항이 생길 때만)
-    public AlertsDto.AlertsCreateDto createDto(Integer vitalSignsId, String customTitle, String customDescription){
+    public AlertsDto.AlertsCreateDto createDto(Integer vitalSignsId, String customTitle, String customDescription, CustomUserDetails currentUser){
         VitalSigns vitalSigns = vitalSignRepository.findById(vitalSignsId)
                 .orElseThrow(() -> new EntityNotFoundException("VitalSigns 찾을 수 없습니다."));
 
@@ -37,10 +40,13 @@ public class AlertsService {
         String title = customTitle != null ? customTitle : generateAutoTitle(vitalSigns, alertType);
         String description = customDescription != null ? customDescription : generateAutoDescription(vitalSigns, alertType);
 
+        Guardians guardian = currentUser.getGuardians(); // `CustomUserDetails`에서 guardian 객체를 받아옴
+
         Alerts alerts = Alerts.builder()
                 .alertType(alertType)
                 .title(title)
                 .description(description)
+                .confirmedBy(guardian)  // `confirmedBy`에 보호자 객체 설정
                 .seniors(vitalSigns.getSenior())
                 .vitalSigns(vitalSigns)
                 .isConfirmed(false)
@@ -66,8 +72,8 @@ public class AlertsService {
     }
     // 보호자 확인용 서비스(미확인) 및 확인 홈화면에서 구현
     // 모든 알림 조회(페이징)
-    public AlertsDto.AlertsPageDto getAlerts(Integer seniorId, Guardians guardian, int page, int size){
-        Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
+    public AlertsDto.AlertsPageDto getAlerts(Integer seniorId, Integer guardianId, int page, int size){
+        Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardianId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
 
         Pageable pageable = PageRequest.of(page, size);
@@ -160,9 +166,12 @@ public class AlertsService {
         if (!vitalSigns.isNormal()) {
             String alertType = VitalSignsThreshold.determineAlertType(vitalSigns);
 
+            UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            CustomUserDetails currentUser = (CustomUserDetails) userDetails;
+
             // INFO 타입이 아닌 경우에만 알림 생성 (WARNING, EMERGENCY만)
             if (!"INFO".equals(alertType)) {
-                createDto(vitalSignsId, null, null);
+                createDto(vitalSignsId, null, null, currentUser);
             }
         }
     }

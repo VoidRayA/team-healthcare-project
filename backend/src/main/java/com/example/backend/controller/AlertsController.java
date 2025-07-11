@@ -36,7 +36,8 @@ public class AlertsController {
             AlertsDto.AlertsCreateDto createDto = alertsService.createDto(
                     dto.relatedVitalId(),
                     dto.title(),
-                    dto.description()
+                    dto.description(),
+                    currentUser
             );
 
             if (createDto == null) {
@@ -66,7 +67,7 @@ public class AlertsController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
             }
 
-            AlertsDto.AlertsPageDto alertsPage = alertsService.getAlerts(seniorId, guardian, page, size);
+            AlertsDto.AlertsPageDto alertsPage = alertsService.getAlerts(seniorId, guardian.getId(), page, size);
             return ResponseEntity.ok(alertsPage);
         } catch (Exception e) {
             System.err.println("오류 발생: " + e.getMessage());

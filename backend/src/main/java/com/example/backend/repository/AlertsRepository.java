@@ -53,7 +53,7 @@ public interface AlertsRepository extends JpaRepository<Alerts, Integer> {
     List<Alerts> findRecentAlerts(@Param("seniors") Seniors seniors, @Param("since") LocalDateTime since);
 
     // 특정 VitalSigns와 연관된 알림 조회
-    List<Alerts> findByVitalSignsVitalSignsId(Integer vitalSignsId);
+    List<Alerts> findByVitalSignsId(Integer vitalSignsId);
 
     // 특정 타입의 알림 조회 (페이징)
     Page<Alerts> findBySeniorsAndAlertTypeOrderByCreatedAtDesc(

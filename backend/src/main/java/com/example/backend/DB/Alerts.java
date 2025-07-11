@@ -61,4 +61,10 @@ public class Alerts {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    // guardian_id를 seniors를 통해 가져올 수 있도록 getter 추가
+    @Transient
+    public Integer getGuardianId() {
+        return seniors != null && seniors.getGuardian() != null ? seniors.getGuardian().getId() : null;
+    }
 }

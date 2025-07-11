@@ -5,6 +5,7 @@
 // =================================================================
 
 import axios from 'axios';
+import { getAuthToken, getRefreshToken, updateAccessToken, clearAuthData } from '../utils/auth';
 
 // 기본 API 클라이언트 생성
 const apiClient = axios.create({
@@ -15,14 +16,23 @@ const apiClient = axios.create({
   },
 });
 
+// 토큰 갱신 중복 방지를 위한 변수
+let refreshPromise = null;
+
 // 요청 인터셉터 - 자동 JWT 토큰 추가
 apiClient.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem('jwt');
+    const token = getAuthToken();
+    console.log('=== API 요청 상세 ===');
+    console.log('토큰 존재:', !!token);
     if (token) {
+      console.log('토큰 첫 20자:', token.substring(0, 20) + '...');
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.log('토큰 없음 - 인증 헤더 미추가');
     }
     console.log(`API 요청: ${config.method?.toUpperCase()} ${config.url}`, config.data);
+    console.log('요청 헤더:', config.headers);
     return config;
   },
   (error) => {
@@ -31,22 +41,72 @@ apiClient.interceptors.request.use(
   }
 );
 
-// 응답 인터셉터 - 에러 처리
+// 응답 인터셉터 - 에러 처리 및 토큰 자동 갱신
 apiClient.interceptors.response.use(
   (response) => {
     console.log(`API 응답: ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
     return response;
   },
-  (error) => {
+  async (error) => {
     console.error('API 응답 에러:', error);
     
-    if (error.response?.status === 401) {
+    const originalRequest = error.config;
+    
+    // 401 에러이고 재시도하지 않은 요청인 경우
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // 로그인 요청 자체가 실패한 경우는 갱신 시도하지 않음
+      if (originalRequest.url.includes('/auth/login')) {
+        return Promise.reject(error);
+      }
+      
+      originalRequest._retry = true;
+      
+      // Refresh Token으로 토큰 갱신 시도
+      const refreshToken = getRefreshToken();
+      
+      if (refreshToken) {
+        // 중복 갱신 방지
+        if (!refreshPromise) {
+          refreshPromise = axios.post(
+            'http://localhost:8080/api/auth/refresh',
+            { refreshToken },
+            { headers: { 'Content-Type': 'application/json' } }
+          )
+          .then(response => {
+            const { accessToken, refreshToken: newRefreshToken, expiresIn } = response.data;
+            
+            // 새 토큰 저장
+            updateAccessToken(accessToken, expiresIn);
+            if (newRefreshToken) {
+              localStorage.setItem('refreshToken', newRefreshToken);
+            }
+            
+            return accessToken;
+          })
+          .catch(error => {
+            // 토큰 갱신 실패 시 로그아웃
+            clearAuthData();
+            window.location.href = '/';
+            throw error;
+          })
+          .finally(() => {
+            refreshPromise = null;
+          });
+        }
+        
+        try {
+          const newToken = await refreshPromise;
+          // 새 토큰으로 원래 요청 재시도
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return apiClient(originalRequest);
+        } catch (refreshError) {
+          return Promise.reject(refreshError);
+        }
+      }
+      
+      // Refresh Token이 없으면 로그아웃
       console.error('인증 만료. 로그인이 필요합니다.');
-      // 토큰 제거 및 로그인 페이지로 리다이렉트
-      sessionStorage.removeItem('jwt');
-      sessionStorage.removeItem('loginId');
-      sessionStorage.removeItem('guardianName');
-      sessionStorage.removeItem('role');
+      clearAuthData();
       
       // 자동 로그아웃 및 리다이렉트 (2025.07.08 활성화)
       alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
@@ -309,7 +369,7 @@ export const getBusanHospitals = async () => {
 
 /**
  * 로그인 API
- * @param {Object} loginData - 로그인 정보 { loginId, password }
+ * @param {Object} loginData - 로그인 정보 { loginId, loginPw }
  * @returns {Promise} 로그인 응답 데이터
  */
 export const login = async (loginData) => {
@@ -318,6 +378,57 @@ export const login = async (loginData) => {
     return response.data;
   } catch (error) {
     console.error('로그인 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 로그아웃 API
+ * @returns {Promise} 로그아웃 응답
+ */
+export const logout = async () => {
+  try {
+    // JWT에서 tokenId 추출
+    const token = getAuthToken();
+    let tokenId = null;
+    
+    if (token) {
+      try {
+        // JWT 디코딩하여 tokenId 추출
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        tokenId = payload.jti; // JWT ID (tokenId)
+      } catch (e) {
+        console.error('JWT 파싱 오류:', e);
+      }
+    }
+    
+    // tokenId를 body에 포함하여 로그아웃 요청
+    const response = await apiClient.post('/api/auth/logout', {
+      tokenId: tokenId
+    });
+    
+    clearAuthData();
+    return response.data;
+  } catch (error) {
+    console.error('로그아웃 실패:', error);
+    // 에러가 발생해도 로컬 데이터는 정리
+    clearAuthData();
+    throw error;
+  }
+};
+
+/**
+ * 모든 기기에서 로그아웃 API
+ * @returns {Promise} 로그아웃 응답
+ */
+export const logoutAll = async () => {
+  try {
+    const response = await apiClient.post('/api/auth/logout-all');
+    clearAuthData();
+    return response.data;
+  } catch (error) {
+    console.error('전체 로그아웃 실패:', error);
+    clearAuthData();
     throw error;
   }
 };

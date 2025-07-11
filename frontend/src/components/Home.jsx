@@ -38,9 +38,10 @@ import { getSeniorsForDate, getAllSeniors, getSeniorDailyActivities, getSchedule
 import { searchAddressToCoord, searchPlacesByKeyword } from '../utils/kakaoAPI';
 // 향상된 주소 검색 import
 import { enhancedAddressSearch, validateSearchResult } from '../utils/enhancedAddressSearch';
-import { getUserInfo, clearAuthData, getAuthToken } from '../utils/auth';
+import { getUserInfo, clearAuthData, getAuthToken, getRefreshToken } from '../utils/auth';
 // 개선된 위치 서비스 import
 import { getCurrentPosition, checkGeolocationSupport } from '../utils/geolocation';
+import { parseJwt } from '../utils/auth'; // JWT payload 디코더
 // Chart.js import
 import { Chart, registerables } from 'chart.js/auto';
 
@@ -924,15 +925,26 @@ const Home = () => {
     } finally {
       setActivitiesLoading(false);
     }
-  };
+  };  
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const accessToken = getAuthToken();
+    const tokenId = accessToken ? parseJwt(accessToken)?.jti : null;
+  
+    try {
+      if (tokenId) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tokenId }), // ✅ key는 tokenId
+        });
+      }
+    } catch (e) {
+      console.warn('로그아웃 실패:', e);
+    }
+  
     clearAuthData();
-    
     alert('로그아웃 되었습니다.');
-    
-    // 커스텀 이벤트 발생
-    window.dispatchEvent(new Event('authStateChange'));
     window.location.reload();
   };
 

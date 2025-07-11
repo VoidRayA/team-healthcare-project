@@ -15,7 +15,7 @@ import image3 from '../images/image3.png';
 import { login } from '../api/apiClient';
 import { saveAuthData } from '../utils/auth';
 
-// 스타일드 컴포넌트들
+// 스타일드 컴포넌트들 (기존과 동일)
 const LoginPage = styled(Box)({
   display: 'flex',
   justifyContent: 'center',
@@ -249,34 +249,28 @@ const Login = () => {
     try {
       // 실제 백엔드 API 호출
       const response = await login(user);
-      console.log('로그인 응답:', response);
       
       // Stateful JWT 처리
-      const { accessToken, refreshToken, loginId, guardianName, role } = response;
+      const { accessToken, refreshToken, loginId, guardianName, role, expiresIn } = response;
       
       if (accessToken && refreshToken) {
         // 토큰 및 사용자 정보 저장
         saveAuthData(accessToken, refreshToken, {
-          loginId: loginId,
-          guardianName: guardianName,
-          role: role
-        });
-        
-        // 저장 확인
-        console.log('로그인 성공, 저장된 데이터:', {
-          jwt: sessionStorage.getItem('jwt'),
-          loginId: sessionStorage.getItem('loginId'),
-          guardianName: sessionStorage.getItem('guardianName'),
-          role: sessionStorage.getItem('role')
+          loginId,
+          guardianName,
+          role
         });
         
         alert(`로그인 성공! ${guardianName}님 환영합니다.`);
         
-        // 페이지 이동
-        setTimeout(() => {
+        // 로그인 후 리다이렉트 처리
+        const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+        if (redirectPath) {
+          sessionStorage.removeItem('redirectAfterLogin');
+          navigate(redirectPath);
+        } else {
           navigate('/home');
-        }, 100);
-        
+        }
       } else {
         setError('로그인 응답이 올바르지 않습니다.');
       }

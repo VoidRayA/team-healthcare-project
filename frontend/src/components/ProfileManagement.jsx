@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getGuardianProfile, updateGuardianProfile } from '../api/apiClient';
+import { getGuardianProfile, updateGuardianProfile, logout } from '../api/apiClient';
 import PasswordConfirmModal from './PasswordConfirmModal';
 import { clearAuthData } from '../utils/auth';
 
@@ -192,18 +192,30 @@ const ProfileManagement = () => {
   };
 
   // 로그아웃
-  const handleLogout = () => {
-    // 비밀번호 확인 상태 촇4리어
-    sessionStorage.removeItem('passwordVerified');
-    
-    // 모든 인증 데이터 클리어
-    clearAuthData();
-    
-    alert('로그아웃 되었습니다.');
-    
-    // 커스텀 이벤트 발생
-    window.dispatchEvent(new Event('authStateChange'));
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      // 백엔드 로그아웃 API 호출 (토큰 비활성화)
+      await logout();
+      
+      // 비밀번호 확인 상태 클리어
+      sessionStorage.removeItem('passwordVerified');
+      
+      // 모든 인증 데이터 클리어
+      clearAuthData();
+      
+      alert('로그아웃 되었습니다.');
+      
+      // 커스텀 이벤트 발생
+      window.dispatchEvent(new Event('authStateChange'));
+      navigate('/');
+    } catch (error) {
+      console.error('로그아웃 실패:', error);
+      // 에러가 발생해도 로컬 데이터는 삭제
+      sessionStorage.removeItem('passwordVerified');
+      clearAuthData();
+      window.dispatchEvent(new Event('authStateChange'));
+      navigate('/');
+    }
   };
 
   // 비밀번호 확인 모달 핸들러

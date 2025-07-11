@@ -48,6 +48,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/**",     // 인증 관련 API (로그인, 회원가입)
                                 "/api/public/**",   // 공개 API
+                                "/api/hospital/route/**", // 경로 검색 API (2025.07.10 추가)
+                                "/api/hospital/kakao/**",  // 카카오 병원 검색 API
+                                "/api/hospital/busan",     // 부산 병원 목록 API
                                 "/health",          // 헬스체크
                                 "/actuator/**"      // Spring Boot Actuator
                         ).permitAll()

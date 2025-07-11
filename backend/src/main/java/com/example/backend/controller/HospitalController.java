@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.dto.HospitalDetailItem;
 import com.example.backend.service.ApiService;
 import com.example.backend.service.KakaoApiService;
+import com.example.backend.service.TmapApiTester;
 import com.example.backend.service.location.HospitalLocationService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,10 +18,13 @@ public class HospitalController {
     private final HospitalLocationService hospitalLocationService;
     private final KakaoApiService kakaoApiService;
 
-    public HospitalController(ApiService apiService, HospitalLocationService hospitalLocationService, KakaoApiService kakaoApiService) {
+    private final TmapApiTester tmapApiTester;
+
+    public HospitalController(ApiService apiService, HospitalLocationService hospitalLocationService, KakaoApiService kakaoApiService, TmapApiTester tmapApiTester) {
         this.apiService = apiService;
         this.hospitalLocationService = hospitalLocationService;
         this.kakaoApiService = kakaoApiService;
+        this.tmapApiTester = tmapApiTester;
     }
 
     @GetMapping("/busan")
@@ -67,5 +71,54 @@ public class HospitalController {
             @RequestParam(value = "lon", defaultValue = "129.0756") double lon
     ) {
         return kakaoApiService.searchBusanHospitals(query, page, size, lat, lon);
+    }
+    
+    /**
+     * T-map API를 사용한 도보 경로 검색 (2025.07.10 신규 추가)
+     * @param startLat 출발지 위도
+     * @param startLon 출발지 경도
+     * @param endLat 도착지 위도
+     * @param endLon 도착지 경도
+     * @param startName 출발지 이름 (선택사항)
+     * @param endName 도착지 이름 (선택사항)
+     * @return T-map API 경로 정보
+     */
+    @GetMapping("/route/tmap")
+    public String getTmapWalkingRoute(
+            @RequestParam("startLat") double startLat,
+            @RequestParam("startLon") double startLon,
+            @RequestParam("endLat") double endLat,
+            @RequestParam("endLon") double endLon,
+            @RequestParam(value = "startName", defaultValue = "현재위치") String startName,
+            @RequestParam(value = "endName", defaultValue = "목적지") String endName
+    ) {
+        return kakaoApiService.getTmapWalkingRoute(startLat, startLon, endLat, endLon, startName, endName);
+    }
+    
+    /**
+     * 카카오 Directions API를 사용한 도보 경로 검색 (2025.07.10 신규 추가)
+     * @param startLat 출발지 위도
+     * @param startLon 출발지 경도
+     * @param endLat 도착지 위도
+     * @param endLon 도착지 경도
+     * @return 카카오 Directions API 경로 정보
+     */
+    @GetMapping("/route/kakao")
+    public String getKakaoWalkingRoute(
+            @RequestParam("startLat") double startLat,
+            @RequestParam("startLon") double startLon,
+            @RequestParam("endLat") double endLat,
+            @RequestParam("endLon") double endLon
+    ) {
+        return kakaoApiService.getKakaoWalkingRoute(startLat, startLon, endLat, endLon);
+    }
+    
+    /**
+     * T-map API 종합 테스트 (모든 방법 시도)
+     */
+    @GetMapping("/test/tmap-all")
+    public String testAllTmapMethods() {
+        tmapApiTester.testAllTmapMethods();
+        return "T-map API 종합 테스트 완료. 콘솔 로그를 확인하세요.";
     }
 }

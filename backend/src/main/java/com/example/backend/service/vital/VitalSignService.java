@@ -87,7 +87,7 @@ public class VitalSignService {
 
     // 삭제 서비스
     @Transactional
-    public SeniorDto.SeniorVitalDto deleteVital(Integer seniorId, Integer vitalId, Guardians guardian){
+    public SeniorDto.SeniorVitalDto deleteVital(Integer seniorId, Long vitalId, Guardians guardian){
         Seniors seniors = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
                 .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
         List<VitalSigns> vitalSigns = Optional.ofNullable(seniors.getVitalSigns())
@@ -107,7 +107,7 @@ public class VitalSignService {
     }
     // 수정 서비스
     @Transactional
-    public SeniorDto.SeniorVitalDto updateVital(Integer seniorId, Integer vitalId, VitalSignsDto.VitalUpdateDto updateDto, Guardians guardian){
+    public SeniorDto.SeniorVitalDto updateVital(Integer seniorId, Long vitalId, VitalSignsDto.VitalUpdateDto updateDto, Guardians guardian){
         Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
                 .orElseThrow(() -> new SecurityException("해당 노인에 대한 접근 권한이 없습니다."));
 

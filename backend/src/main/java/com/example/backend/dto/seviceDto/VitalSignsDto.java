@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class VitalSignsDto {
-    private Integer id;
+    private Long id;
     private LocalDateTime measurementTime;  // 측정시간
     private Integer bloodPressureHigh;          // 수축기 혈압
     private Integer bloodPressureLow;         // 이완기 혈압
@@ -41,7 +41,7 @@ public class VitalSignsDto {
     // 조회 요청을 위한 Dto
     @Builder
     public record VitalSearchDto(
-            Integer id,
+            Long id,
             LocalDateTime measurementTime,
             Integer bloodPressureHigh,
             Integer bloodPressureLow,
@@ -67,11 +67,11 @@ public class VitalSignsDto {
     }
     // 삭제 요청을 위한 Dto
     public record VitalDeleteDto(
-            Integer id
+            Long id
     ){}
     // 수정 요청을 위한 Dto
     public record VitalUpdateDto(
-            Integer id,
+            Long id,
             LocalDateTime measurementTime,
             Integer bloodPressureHigh,
             Integer bloodPressureLow,

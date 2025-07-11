@@ -1,4 +1,4 @@
-package com.example.backend.DB;
+package com.example.backend.DB.care;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

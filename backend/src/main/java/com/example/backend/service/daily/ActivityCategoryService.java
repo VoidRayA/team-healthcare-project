@@ -2,7 +2,7 @@ package com.example.backend.service.daily;
 
 import com.example.backend.DB.Guardians;
 import com.example.backend.DB.Seniors;
-import com.example.backend.DB.ActivityCategory;
+import com.example.backend.DB.care.ActivityCategory;
 import com.example.backend.dto.seviceDto.ActivityCategoryDto;
 import com.example.backend.repository.SeniorRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;

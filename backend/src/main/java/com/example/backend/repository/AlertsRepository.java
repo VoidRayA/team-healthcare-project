@@ -17,6 +17,9 @@ public interface AlertsRepository extends JpaRepository<Alerts, Integer> {
     // 특정 시니어의 미확인 알림 조회 (생성일 기준 내림차순)
     List<Alerts> findBySeniorsAndIsConfirmedFalseOrderByCreatedAtDesc(Seniors seniors);
 
+    // 특정 시니어의 확인 알림 조회 (생성일 기준 내림차순)
+    List<Alerts> findBySeniorsAndIsConfirmedOrderByCreatedAtDesc(Seniors senior, boolean isConfirmed);
+
     // 특정 시니어의 모든 알림 조회 (페이징)
     Page<Alerts> findBySeniorsOrderByCreatedAtDesc(Seniors seniors, Pageable pageable);
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -6,40 +6,32 @@ import {
   IconButton,
   Box,
   Typography,
+  List,
+  ListItem,
+  ListItemText,
   Chip,
   Paper,
-  Button,
-  Alert,
-  LinearProgress
+  Button
 } from '@mui/material';
-import { Close, LocalHospital, Phone, LocationOn, Navigation, MyLocation, Route } from '@mui/icons-material';
+import { Close, LocalHospital, Phone, LocationOn, Navigation, MyLocation } from '@mui/icons-material';
 import KakaoMap from '../KakaoMap';
-
-// T-map API 비활성화 - SK OpenAPI 도메인 등록 문제
-// 임시로 카카오 API 만 사용
 
 const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
   const [selectedHospital, setSelectedHospital] = useState(null);
   const [mapRef, setMapRef] = useState(null);
   const [showRoute, setShowRoute] = useState(false);
   const [routeInfo, setRouteInfo] = useState(null);
-  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
-  const [routeError, setRouteError] = useState(null);
-  // T-map 관련 상태 제거
 
   const handleClose = () => {
-    clearRoute();
-    setRouteError(null);
+    clearRoute(); // 모달 닫힐 때 경로 제거
     onClose();
   };
-
-  // T-map API 제거 - 카카오 API만 사용
 
   // 지도용 마커 데이터 생성
   const markers = React.useMemo(() => {
     const allMarkers = [];
     
-    // 현재 위치 마커
+    // 현재 위치 마커를 먼저 추가 (파란색 특별 마커)
     if (currentPosition) {
       allMarkers.push({
         lat: currentPosition.latitude,
@@ -60,11 +52,11 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
             </span>
           </div>
         `,
-        isCurrentLocation: true
+        isCurrentLocation: true // 현재 위치 식별용
       });
     }
     
-    // 병원 마커들
+    // 병원 마커들 추가
     const hospitalMarkers = hospitals.map((hospital) => ({
       lat: parseFloat(hospital.latitude),
       lng: parseFloat(hospital.longitude),
@@ -85,170 +77,224 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
     return [...allMarkers, ...hospitalMarkers];
   }, [hospitals, currentPosition]);
 
-  // 백엔드 T-map API 호출 (강제 시도)
-  const tryBackendTmapRoute = async (hospital) => {
-    try {
-      console.log('🚀 백엔드 T-map 도보 경로 API 호출... (강제 시도)');
-      
-      const response = await fetch(
-        `http://localhost:8080/api/hospital/route/tmap?startLat=${currentPosition.latitude}&startLon=${currentPosition.longitude}&endLat=${hospital.latitude}&endLon=${hospital.longitude}&startName=현재위치&endName=${encodeURIComponent(hospital.yadmNm)}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        }
+  const handleHospitalClick = (hospital) => {
+    setSelectedHospital(hospital);
+    
+    if (mapRef && hospital.latitude && hospital.longitude) {
+      const position = new window.kakao.maps.LatLng(
+        parseFloat(hospital.latitude), 
+        parseFloat(hospital.longitude)
       );
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ 백엔드 T-map API 응답:', data);
-        
-        // T-map 응답 처리 (GeoJSON 형식)
-        if (data && data.features && data.features.length > 0) {
-          return drawTmapRoute(data, hospital);
-        }
-      } else {
-        console.error('❌ 백엔드 T-map API 오류:', response.status, await response.text());
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('❌ 백엔드 T-map API 예외:', error);
-      return false;
+      mapRef.panTo(position);
+      mapRef.setLevel(3);
     }
   };
 
-  // T-map 경로 그리기 (카카오맵에 표시)
-  const drawTmapRoute = (tmapResult, hospital) => {
-    try {
-      console.log('🎨 T-map 경로를 카카오맵에 그리기 시작');
-      
-      if (!tmapResult || !tmapResult.features) {
-        console.warn('T-map 결과에 features가 없습니다');
-        return false;
-      }
-
-      const path = [];
-      let totalDistance = 0;
-      let totalTime = 0;
-
-      // T-map features에서 경로 좌표 추출
-      tmapResult.features.forEach(feature => {
-        if (feature.geometry && feature.geometry.type === 'LineString') {
-          feature.geometry.coordinates.forEach(coord => {
-            const lng = coord[0];
-            const lat = coord[1];
-            if (lat && lng) {
-              path.push(new window.kakao.maps.LatLng(lat, lng));
-            }
-          });
-        }
-
-        // 거리와 시간 정보 수집
-        if (feature.properties) {
-          if (feature.properties.totalDistance) {
-            totalDistance = feature.properties.totalDistance;
-          }
-          if (feature.properties.totalTime) {
-            totalTime = feature.properties.totalTime;
-          }
-          if (feature.properties.distance) {
-            totalDistance += feature.properties.distance;
-          }
-          if (feature.properties.time) {
-            totalTime += feature.properties.time;
-          }
-        }
-      });
-
-      if (path.length > 1) {
-        // 기존 경로 제거
-        if (window.currentPolyline) {
-          window.currentPolyline.setMap(null);
-        }
-
-        // 카카오맵에 T-map 경로 표시
-        const polyline = new window.kakao.maps.Polyline({
-          path: path,
-          strokeWeight: 6,
-          strokeColor: '#FF4081', // 핑크색 - T-map 경로
-          strokeOpacity: 0.9,
-          strokeStyle: 'solid'
-        });
-
-        polyline.setMap(mapRef);
-        window.currentPolyline = polyline;
-
-        // 지도 범위 조정
-        const bounds = new window.kakao.maps.LatLngBounds();
-        path.forEach(point => bounds.extend(point));
-        mapRef.setBounds(bounds, 50);
-
-        // 경로 정보 설정
-        setRouteInfo({
-          distance: totalDistance >= 1000 ? 
-            `${(totalDistance / 1000).toFixed(1)}km` : 
-            `${Math.round(totalDistance)}m`,
-          duration: totalTime > 0 ? `${Math.ceil(totalTime / 60)}분` : '정보 없음',
-          isTmapRoute: true,
-          apiSource: 'T-map'
-        });
-
-        setShowRoute(true);
-        console.log('✅ T-map 경로 표시 성공!');
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('T-map 경로 그리기 오류:', error);
-      return false;
-    }
-  };
-
-  // 경로 검색 메인 함수
-  const handleDirections = useCallback(async (hospital) => {
+  const handleDirections = async (hospital) => {
     if (!currentPosition || !mapRef) {
-      setRouteError('현재 위치 정보가 없습니다.');
+      alert('현재 위치 정보가 없습니다.');
       return;
     }
 
-    setIsLoadingRoute(true);
-    setRouteError(null);
-    clearRoute();
-
     try {
-      console.log('🚀 T-map 도보 경로 검색 시작... (강제 시도)');
+      // 백엔드 T-map API 프록시를 통한 도보 경로 검색
+      console.log('🚿 백엔드 T-map API로 도보 경로 검색 시작...');
       
-      // 백엔드 T-map API 시도
-      const tmapSuccess = await tryBackendTmapRoute(hospital);
-      
-      if (!tmapSuccess) {
-        // T-map 실패 시 직선 경로로 폴백
-        console.log('T-map 실패, 직선 경로로 폴백...');
-        setRouteError('T-map API 401 오류로 직선 거리로 표시합니다.');
-        await showDirectLineRoute(hospital);
+      try {
+        const tmapResponse = await fetch(
+          `http://localhost:8080/api/hospital/route/tmap?startLat=${currentPosition.latitude}&startLon=${currentPosition.longitude}&endLat=${hospital.latitude}&endLon=${hospital.longitude}&startName=현재위치&endName=${encodeURIComponent(hospital.yadmNm)}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        console.log('T-map API 응답 상태:', tmapResponse.status);
+        
+        if (tmapResponse.ok) {
+          const tmapData = await tmapResponse.json();
+          console.log('T-map API 응답:', tmapData);
+          
+          if (tmapData.features && tmapData.features.length > 0) {
+            // 기존 폴리라인 제거
+            if (window.currentPolyline) {
+              window.currentPolyline.setMap(null);
+            }
+            
+            // T-map에서 경로 좌표 추출
+            const path = [];
+            let totalDistance = 0;
+            let totalTime = 0;
+            
+            tmapData.features.forEach(feature => {
+              if (feature.geometry.type === 'LineString') {
+                // LineString의 좌표들을 경로에 추가
+                feature.geometry.coordinates.forEach(coord => {
+                  const lng = coord[0]; // 경도
+                  const lat = coord[1]; // 위도
+                  path.push(new window.kakao.maps.LatLng(lat, lng));
+                });
+              }
+              
+              // 거리와 시간 정보 수집
+              if (feature.properties) {
+                if (feature.properties.distance) {
+                  totalDistance += feature.properties.distance;
+                }
+                if (feature.properties.time) {
+                  totalTime += feature.properties.time;
+                }
+              }
+            });
+            
+            console.log(`T-map 경로 지점 수: ${path.length}`);
+            console.log(`총 거리: ${totalDistance}m, 총 시간: ${totalTime}초`);
+            
+            if (path.length > 0) {
+              const polyline = new window.kakao.maps.Polyline({
+                path: path,
+                strokeWeight: 6,
+                strokeColor: '#FF4081', // 파크색 - T-map 경로
+                strokeOpacity: 0.9,
+                strokeStyle: 'solid'
+              });
+              
+              polyline.setMap(mapRef);
+              window.currentPolyline = polyline;
+              
+              // 지도 범위 조정
+              const bounds = new window.kakao.maps.LatLngBounds();
+              path.forEach(point => bounds.extend(point));
+              mapRef.setBounds(bounds, 50);
+              
+              // T-map에서 제공하는 실제 경로 정보 사용
+              setRouteInfo({
+                distance: totalDistance >= 1000 ? 
+                  `${(totalDistance / 1000).toFixed(1)}km` : 
+                  `${Math.round(totalDistance)}m`,
+                duration: `${Math.ceil(totalTime / 60)}분`,
+                isTmapRoute: true // T-map 경로임을 표시
+              });
+              
+              setShowRoute(true);
+              console.log('✅ T-map 도보 경로 표시 완료!');
+              console.log(`거리: ${totalDistance}m, 시간: ${Math.ceil(totalTime / 60)}분`);
+              return;
+            }
+          }
+        } else {
+          const errorText = await tmapResponse.text();
+          console.warn('T-map API 오류:', tmapResponse.status, errorText);
+        }
+      } catch (tmapError) {
+        console.error('T-map API 호출 오류:', tmapError);
       }
-
     } catch (error) {
-      console.error('경로 검색 중 오류:', error);
-      setRouteError('경로 검색에 실패했습니다. 직선 거리로 표시합니다.');
-      await showDirectLineRoute(hospital);
-    } finally {
-      setIsLoadingRoute(false);
+      console.error('T-map 처리 중 오류:', error);
     }
-  }, [currentPosition, mapRef]);
-
-  // 직선 경로 표시 (폴백)
-  const showDirectLineRoute = async (hospital) => {
+    
+    // T-map 실패 시 백엔드 카카오 API로 시도
+    try {
+      console.log('🗺️ 백엔드 카카오 Directions API로 시도...');
+      
+      const response = await fetch(
+        `http://localhost:8080/api/hospital/route/kakao?startLat=${currentPosition.latitude}&startLon=${currentPosition.longitude}&endLat=${hospital.latitude}&endLon=${hospital.longitude}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log('카카오 API 응답 상태:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('카카오 Directions API 응답:', data);
+        
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
+          
+          // 기존 폴리라인 제거
+          if (window.currentPolyline) {
+            window.currentPolyline.setMap(null);
+          }
+          
+          // 카카오 경로 좌표 추출
+          const path = [];
+          
+          route.sections.forEach(section => {
+            section.roads.forEach(road => {
+              for (let i = 0; i < road.vertexes.length; i += 2) {
+                const lng = road.vertexes[i];
+                const lat = road.vertexes[i + 1];
+                if (lng && lat) {
+                  path.push(new window.kakao.maps.LatLng(lat, lng));
+                }
+              }
+            });
+          });
+          
+          console.log(`카카오 경로 지점 수: ${path.length}`);
+          
+          if (path.length > 0) {
+            const polyline = new window.kakao.maps.Polyline({
+              path: path,
+              strokeWeight: 6,
+              strokeColor: '#4CAF50', // 녹색 - 카카오 경로
+              strokeOpacity: 0.9,
+              strokeStyle: 'solid'
+            });
+            
+            polyline.setMap(mapRef);
+            window.currentPolyline = polyline;
+            
+            // 지도 범위 조정
+            const bounds = new window.kakao.maps.LatLngBounds();
+            path.forEach(point => bounds.extend(point));
+            mapRef.setBounds(bounds, 50);
+            
+            // 카카오 API에서 제공하는 경로 정보
+            const summary = route.summary;
+            setRouteInfo({
+              distance: summary.distance >= 1000 ? 
+                `${(summary.distance / 1000).toFixed(1)}km` : 
+                `${Math.round(summary.distance)}m`,
+              duration: `${Math.ceil(summary.duration / 60)}분`,
+              isRealRoute: true // 카카오 실제 경로
+            });
+            
+            setShowRoute(true);
+            console.log('✅ 카카오 도보 경로 표시 완료!');
+            return;
+          }
+        }
+      } else {
+        const errorText = await response.text();
+        console.warn('카카오 Directions API 오류:', response.status, errorText);
+      }
+    } catch (error) {
+      console.error('카카오 Directions API 호출 오류:', error);
+    }
+    
+    // 모든 API 실패 시 직선 경로로 폴백
+    console.log('폴백: 직선 경로로 표시');
+    
     try {
       const startPos = new window.kakao.maps.LatLng(currentPosition.latitude, currentPosition.longitude);
       const endPos = new window.kakao.maps.LatLng(parseFloat(hospital.latitude), parseFloat(hospital.longitude));
-
+      
+      // 기존 폴리라인 제거
+      if (window.currentPolyline) {
+        window.currentPolyline.setMap(null);
+      }
+      
+      // 직선 경로
       const linePath = [startPos, endPos];
-
+      
       const polyline = new window.kakao.maps.Polyline({
         path: linePath,
         strokeWeight: 5,
@@ -256,43 +302,44 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
         strokeOpacity: 0.8,
         strokeStyle: 'dashed'
       });
-
+      
       polyline.setMap(mapRef);
       window.currentPolyline = polyline;
-
+      
+      // 지도 범위 조정
       const bounds = new window.kakao.maps.LatLngBounds();
       bounds.extend(startPos);
       bounds.extend(endPos);
       mapRef.setBounds(bounds, 50);
-
+      
       // 직선 거리 계산
       const directDistance = getDistanceBetweenPoints(
         currentPosition.latitude, currentPosition.longitude,
         parseFloat(hospital.latitude), parseFloat(hospital.longitude)
       );
-
+      
       const estimatedRoadDistance = directDistance * 1.3;
-
+      
       setRouteInfo({
         distance: estimatedRoadDistance < 1000 ? 
           `${Math.round(estimatedRoadDistance)}m` : 
           `${(estimatedRoadDistance/1000).toFixed(1)}km`,
         duration: `약 ${Math.ceil(estimatedRoadDistance / 83)}분`,
-        isDirectLine: true,
-        apiSource: 'Direct'
+        isDirectLine: true
       });
-
+      
       setShowRoute(true);
       console.log('✅ 직선 경로 표시 완료 (폴백)');
+      
     } catch (error) {
-      console.error('직선 경로 표시 오류:', error);
-      setRouteError('경로를 표시할 수 없습니다.');
+      console.error('경로 표시 오류:', error);
+      alert('경로를 표시할 수 없습니다.');
     }
   };
-
-  // 거리 계산 함수
+  
+  // 두 지점 간 거리 계산 함수 (단위: 미터)
   const getDistanceBetweenPoints = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3;
+    const R = 6371e3; // 지구 반지름 (미터)
     const φ1 = lat1 * Math.PI/180;
     const φ2 = lat2 * Math.PI/180;
     const Δφ = (lat2-lat1) * Math.PI/180;
@@ -305,8 +352,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
     
     return R * c;
   };
-
-  // 경로 지우기
+  
   const clearRoute = () => {
     if (window.currentPolyline) {
       window.currentPolyline.setMap(null);
@@ -316,12 +362,27 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
     setRouteInfo(null);
   };
 
-  // 지도 로드 핸들러
   const handleMapLoad = (map) => {
     setMapRef(map);
+    
+    // 지도 로드 후 커스텀 마커 스타일 적용
+    if (window.kakao && window.kakao.maps && currentPosition) {
+      // 현재 위치에 특별한 마커 추가
+      const markerImage = new window.kakao.maps.MarkerImage(
+        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
+        new window.kakao.maps.Size(24, 35)
+      );
+      
+      const currentMarker = new window.kakao.maps.Marker({
+        position: new window.kakao.maps.LatLng(currentPosition.latitude, currentPosition.longitude),
+        map: map,
+        image: markerImage,
+        title: '현재 위치'
+      });
+    }
   };
 
-  // 현재 위치로 이동
+  // 현재 위치 버튼
   const handleCenterToCurrentLocation = () => {
     if (mapRef && currentPosition) {
       const position = new window.kakao.maps.LatLng(
@@ -331,20 +392,6 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
       mapRef.panTo(position);
       mapRef.setLevel(3);
     }
-  };
-
-  // 경로 상태에 따른 색상 반환
-  const getRouteStatusColor = () => {
-    if (routeInfo?.isTmapRoute) return '#ff4081';
-    if (routeInfo?.isDirectLine) return '#ff9800';
-    return '#1976d2';
-  };
-
-  // 경로 상태에 따른 배경색 반환
-  const getRouteStatusBgColor = () => {
-    if (routeInfo?.isTmapRoute) return '#fce4ec';
-    if (routeInfo?.isDirectLine) return '#fff3e0';
-    return '#e3f2fd';
   };
 
   return (
@@ -370,7 +417,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <LocalHospital sx={{ color: '#1976d2' }} />
           <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            주변 병원 지도 (T-map 경로 강제 시도)
+            주변 병원 지도
           </Typography>
           {currentPosition && (
             <Chip
@@ -432,67 +479,73 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
                     </Typography>
                   </Box>
                 )}
+                
+                {hospitals[0].categoryName && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <LocalHospital sx={{ fontSize: 20, color: '#666' }} />
+                    <Typography variant="body2" color="text.secondary">
+                      {hospitals[0].categoryName}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
-
-              {/* 경로 로딩 상태 */}
-              {isLoadingRoute && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    T-map 경로 검색 중... (강제 시도)
-                  </Typography>
-                  <LinearProgress />
-                </Box>
-              )}
-
-              {/* 경로 에러 표시 */}
-              {routeError && !isLoadingRoute && (
-                <Alert severity="warning" sx={{ mt: 2, fontSize: '0.875rem' }}>
-                  {routeError}
-                </Alert>
-              )}
               
-              {/* 경로 정보 표시 */}
-              {showRoute && routeInfo && !isLoadingRoute && (
+              {showRoute && routeInfo && (
                 <Box sx={{ 
                   mt: 2, 
                   p: 1.5, 
-                  backgroundColor: getRouteStatusBgColor(),
+                  backgroundColor: routeInfo.isTmapRoute ? '#fce4ec' : routeInfo.isRealRoute ? '#e8f5e8' : '#fff3e0', 
                   borderRadius: 1,
-                  border: `1px solid ${getRouteStatusColor()}`
+                  border: routeInfo.isTmapRoute ? '1px solid #ff4081' : routeInfo.isRealRoute ? '1px solid #4caf50' : '1px solid #ff9800'
                 }}>
                   <Typography variant="subtitle2" sx={{ 
                     fontWeight: 'bold', 
-                    color: getRouteStatusColor(),
-                    mb: 0.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5
+                    color: routeInfo.isTmapRoute ? '#ad1457' : routeInfo.isRealRoute ? '#2e7d32' : '#e65100', 
+                    mb: 0.5 
                   }}>
-                    <Route fontSize="small" />
-                    {routeInfo.isTmapRoute && '🚀 T-map 정밀 경로'}
-                    {routeInfo.isDirectLine && '📏 직선 거리 (참고용)'}
+                    {routeInfo.isTmapRoute ? '🚿 T-map 도보 경로' : routeInfo.isRealRoute ? '🗺️ 카카오 도보 경로' : '📏 직선 거리 (참고용)'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     거리: {routeInfo.distance}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {routeInfo.isTmapRoute ? '도보 시간' : '도보 시간 (추정)'}: {routeInfo.duration}
+                    {(routeInfo.isTmapRoute || routeInfo.isRealRoute) ? '도보 시간' : '도보 시간 (추정)'}: {routeInfo.duration}
                   </Typography>
-                  <Typography variant="caption" sx={{ 
-                    color: getRouteStatusColor(),
-                    fontStyle: 'italic',
-                    display: 'block',
-                    mt: 0.5
-                  }}>
-                    {routeInfo.isTmapRoute && '* T-map에서 제공하는 정밀 도보 경로'}
-                    {routeInfo.isDirectLine && '* T-map API 401 오류로 직선 거리 표시'}
-                  </Typography>
+                  {routeInfo.isDirectLine && (
+                    <Typography variant="caption" sx={{ 
+                      color: '#e65100', 
+                      fontStyle: 'italic',
+                      display: 'block',
+                      mt: 0.5
+                    }}>
+                      * 실제 도로는 더 길고 시간이 더 걸릴 수 있습니다
+                    </Typography>
+                  )}
+                  {routeInfo.isTmapRoute && (
+                    <Typography variant="caption" sx={{ 
+                      color: '#ad1457', 
+                      fontStyle: 'italic',
+                      display: 'block',
+                      mt: 0.5
+                    }}>
+                      * T-map에서 제공하는 정밀한 도보 경로입니다
+                    </Typography>
+                  )}
+                  {routeInfo.isRealRoute && !routeInfo.isTmapRoute && (
+                    <Typography variant="caption" sx={{ 
+                      color: '#2e7d32', 
+                      fontStyle: 'italic',
+                      display: 'block',
+                      mt: 0.5
+                    }}>
+                      * 카카오맵에서 제공하는 실제 도보 경로입니다
+                    </Typography>
+                  )}
                 </Box>
               )}
               
-              {/* 버튼 그룹 */}
               <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                {!showRoute && !isLoadingRoute ? (
+                {!showRoute ? (
                   <Button
                     variant="contained"
                     startIcon={<Navigation />}
@@ -507,7 +560,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
                   >
                     경로 표시
                   </Button>
-                ) : !isLoadingRoute && (
+                ) : (
                   <>
                     <Button
                       variant="outlined"
@@ -555,6 +608,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
 
         {/* 오른쪽: 지도 */}
         <Box sx={{ flex: 1, position: 'relative' }}>
+          {/* KakaoMap 컴포넌트 사용 */}
           <KakaoMap
             width="100%"
             height="100%"

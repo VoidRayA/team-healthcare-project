@@ -808,8 +808,8 @@ const Home = () => {
         flex: 1,
         display: 'flex',
         overflow: 'auto',
-        margin: '1vw 1vw 1vw 80px',   // ← 좌측 margin만 줄여서 배경 넓힘
-        paddingLeft: '160px',         // ← 내용은 여전히 240px 위치에 있게 됨
+        margin: '1vw 1vw 1vw 80px',
+        paddingLeft: '160px',
         minHeight: 'calc(100vh - 2vw)',
         boxSizing: 'border-box',
       }}>

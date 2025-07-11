@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -17,7 +19,26 @@ public class UserSettingService {
     private UserSettingRepository userSettingRepository;
 
     /**
-     * 드롭다운 항목 조회 (일정관리 카테고리)
+     * 드롭다운 항목 조회 (ID 포함)
+     * 프론트엔드에서 삭제를 위해 ID 정보가 필요할 때 사용
+     */
+    public List<Map<String, Object>> getDropdownItemsWithId(Integer guardianId) {
+        List<UserSetting> settings = userSettingRepository.findByCategoryAndSubCategoryAndGuardianId(
+            "일정관리", "dropdown", guardianId.longValue()
+        );
+        
+        return settings.stream()
+            .map(setting -> {
+                Map<String, Object> item = new HashMap<>();
+                item.put("id", setting.getId());
+                item.put("value", setting.getValues());
+                return item;
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * 드롭다운 항목 조회 (일정관리 카테고리))
      * DB 구조: 각 드롭다운 항목이 별도 레코드로 저장됨
      * - category = "일정관리"
      * - sub_category = "dropdown"

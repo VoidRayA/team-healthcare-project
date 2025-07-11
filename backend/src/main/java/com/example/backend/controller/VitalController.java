@@ -122,7 +122,7 @@ public class VitalController {
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @PathVariable Integer id,
             @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
-            @PathVariable Integer vitalId
+            @PathVariable Long vitalId
     ) {
         try {
             Guardians guardian = currentUser.getGuardians();
@@ -168,7 +168,7 @@ public class VitalController {
     public ResponseEntity<?> deleteVital(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @PathVariable Integer id,
-            @PathVariable Integer vitalId
+            @PathVariable Long vitalId
     ){
         try {
             Guardians guardian = currentUser.getGuardians();
@@ -192,7 +192,7 @@ public class VitalController {
     public ResponseEntity<?> updateVital(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @PathVariable Integer id,
-            @PathVariable Integer vitalId,
+            @PathVariable Long vitalId,
             @RequestBody VitalSignsDto.VitalUpdateDto updateDto
     ) {
         try {

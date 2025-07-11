@@ -1,6 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, CircularProgress, Alert, Button } from '@mui/material';
+import { Box, CircularProgress, Alert, Button, GlobalStyles, useTheme } from '@mui/material';
 import { loadKakaoMapScript, isKakaoMapLoaded } from '../utils/kakaoMapLoader';
+
+/**
+ * 카카오맵 컴포넌트
+ * 
+ * 주요 기능:
+ * - 카카오맵 API를 사용한 지도 표시
+ * - 줌 컨트롤: 우측 중앙에 [+][-] 버튼 (확대/축소)
+ * - 지도타입 컨트롤: 우측 하단에 [지도][위성][하이브리드] 버튼
+ * - MUI 테마 기반 스타일링 (다크모드 지원)
+ * - 마커 추가 및 관리 기능
+ * - 반응형 디자인 (모바일 지원)
+ * 
+ * 개선사항:
+ * - 기존 TOPRIGHT에 있던 지도타입 컨트롤을 BOTTOMRIGHT로 이동
+ * - 현재위치 마커와 컨트롤 버튼이 겹치는 문제 해결
+ * - CSS 파일 없이 순수 MUI GlobalStyles로 스타일링
+ */
 
 const KakaoMap = ({ 
   width = '100%', 
@@ -11,6 +28,7 @@ const KakaoMap = ({
   onMapLoad = null,
   showControls = true
 }) => {
+  const theme = useTheme();
   const mapContainer = useRef(null);
   const mapInstance = useRef(null);
   const markersRef = useRef([]);
@@ -51,11 +69,14 @@ const KakaoMap = ({
 
       // 컨트롤 추가
       if (showControls) {
+        // 줌 컨트롤 (확대/축소 버튼) - 지도 우측 중앙에 위치
         const zoomControl = new window.kakao.maps.ZoomControl();
         map.addControl(zoomControl, window.kakao.maps.ControlPosition.RIGHT);
 
+        // 지도타입 컨트롤 (일반지도/위성지도/하이브리드 전환 버튼)
+        // 기존 TOPRIGHT에서 BOTTOMRIGHT로 변경하여 현재위치 아이콘과 겹치지 않도록 함
         const mapTypeControl = new window.kakao.maps.MapTypeControl();
-        map.addControl(mapTypeControl, window.kakao.maps.ControlPosition.TOPRIGHT);
+        map.addControl(mapTypeControl, window.kakao.maps.ControlPosition.BOTTOMRIGHT);
       }
 
       // 마커 추가
@@ -207,7 +228,90 @@ const KakaoMap = ({
   }
 
   return (
-    <Box sx={{ position: 'relative', width, height }}>
+    <>
+      <GlobalStyles
+        styles={{
+          // =================================================================
+          // 카카오맵 UI 컨트롤 스타일링 (MUI 테마 기반)
+          // =================================================================
+          
+          // 지도타입 컨트롤 (일반/위성/하이브리드 전환 버튼)
+          // 우측 하단에 위치하여 현재위치 마커와 겹치지 않도록 설정
+          '.kakao-map-container .MapTypeControl': {
+            bottom: `${theme.spacing(2.5)} !important`,
+            right: `${theme.spacing(1.25)} !important`,
+            zIndex: 1000, // 다른 요소보다 위에 표시
+          },
+          
+          // 줌 컨트롤 (확대/축소 버튼)
+          // 우측 중앙에 수직으로 정렬
+          '.kakao-map-container .ZoomControl': {
+            right: `${theme.spacing(1.25)} !important`,
+            top: '50% !important',
+            transform: 'translateY(-50%) !important', // 수직 중앙 정렬
+            zIndex: 1000,
+          },
+          
+          // 지도타입 컨트롤 버튼 스타일링
+          // [지도] [위성] [하이브리드] 버튼들의 디자인
+          '.kakao-map-container .MapTypeControl .map_type button': {
+            backgroundColor: `${theme.palette.background.paper} !important`,
+            border: `1px solid ${theme.palette.divider} !important`,
+            borderRadius: `${theme.shape.borderRadius}px !important`,
+            boxShadow: theme.shadows[2], // MUI elevation 2 그림자
+            transition: theme.transitions.create(['background-color', 'box-shadow'], {
+              duration: theme.transitions.duration.short,
+            }),
+            '&:hover': {
+              backgroundColor: `${theme.palette.background.default} !important`,
+              boxShadow: theme.shadows[4], // 호버 시 더 깊은 그림자
+            },
+          },
+          
+          // 줌 컨트롤 버튼 스타일링  
+          // [+] [−] 버튼들의 디자인
+          '.kakao-map-container .ZoomControl .zoom_control': {
+            backgroundColor: `${theme.palette.background.paper} !important`,
+            border: `1px solid ${theme.palette.divider} !important`,
+            borderRadius: `${theme.shape.borderRadius}px !important`,
+            boxShadow: theme.shadows[2],
+            transition: theme.transitions.create(['background-color', 'box-shadow'], {
+              duration: theme.transitions.duration.short,
+            }),
+          },
+          
+          // 모든 컨트롤 버튼의 호버 효과
+          '.kakao-map-container .MapTypeControl .map_type button:hover, .kakao-map-container .ZoomControl .zoom_control:hover': {
+            backgroundColor: `${theme.palette.background.default} !important`,
+            boxShadow: theme.shadows[4],
+          },
+          
+          // =================================================================
+          // 모바일 반응형 디자인 (md 브레이크포인트 이하)
+          // =================================================================
+          [theme.breakpoints.down('md')]: {
+            // 모바일에서 지도타입 컨트롤 위치 조정
+            '.kakao-map-container .MapTypeControl': {
+              bottom: `${theme.spacing(2)} !important`, // 조금 더 위로
+              right: `${theme.spacing(1)} !important`,   // 왼쪽으로 조금 이동
+            },
+            // 모바일에서 줌 컨트롤 위치 조정
+            '.kakao-map-container .ZoomControl': {
+              right: `${theme.spacing(1)} !important`,
+            },
+          },
+        }}
+      />
+      <Box 
+        sx={{ 
+          position: 'relative', 
+          width, 
+          height,
+          borderRadius: theme.shape.borderRadius,
+          overflow: 'hidden',
+          backgroundColor: theme.palette.grey[100],
+        }}
+      >
       {loading && (
         <Box
           sx={{
@@ -216,11 +320,19 @@ const KakaoMap = ({
             left: '50%',
             transform: 'translate(-50%, -50%)',
             zIndex: 10,
-            textAlign: 'center'
+            textAlign: 'center',
+            backgroundColor: theme.palette.background.paper,
+            padding: theme.spacing(3),
+            borderRadius: theme.shape.borderRadius,
+            boxShadow: theme.shadows[3],
           }}
         >
-          <CircularProgress />
-          <Box sx={{ mt: 2, color: 'text.secondary' }}>
+          <CircularProgress color="primary" />
+          <Box sx={{ 
+            mt: 2, 
+            color: theme.palette.text.secondary,
+            typography: 'body2'
+          }}>
             카카오맵 로딩 중...
           </Box>
         </Box>
@@ -231,11 +343,15 @@ const KakaoMap = ({
           width: '100%',
           height: '100%',
           opacity: loading ? 0.3 : 1,
-          transition: 'opacity 0.3s',
-          backgroundColor: '#f0f0f0'
+          transition: theme.transitions.create('opacity', {
+            duration: theme.transitions.duration.standard,
+          }),
+          backgroundColor: theme.palette.grey[200],
         }}
+        className="kakao-map-container"
       />
-    </Box>
+      </Box>
+    </>
   );
 };
 

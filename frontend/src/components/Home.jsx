@@ -35,11 +35,20 @@ import Calendar from 'react-calendar';
 // API 클라이언트 import로 axios 대체 (2025.07.08)
 import { getSeniorsForDate, getAllSeniors, getSeniorDailyActivities, getScheduleDropdownItems } from '../api/apiClient';
 // 카카오 API 유틸리티 import (2025.07.08)
-import { searchAddressToCoord } from '../utils/kakaoAPI';
+import { searchAddressToCoord, searchPlacesByKeyword } from '../utils/kakaoAPI';
+// 향상된 주소 검색 import
+import { enhancedAddressSearch, validateSearchResult } from '../utils/enhancedAddressSearch';
 import { getUserInfo, clearAuthData, getAuthToken } from '../utils/auth';
+// 개선된 위치 서비스 import
+import { getCurrentPosition, checkGeolocationSupport } from '../utils/geolocation';
+// Chart.js import
+import { Chart, registerables } from 'chart.js/auto';
 
 const Home = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate();  
+  const today = new Date();
+  const formattedDate = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+
   const [activeMenu, setActiveMenu] = useState('홈');
   const [guardianInfo, setGuardianInfo] = useState({
     name: '관리자',
@@ -80,8 +89,7 @@ const Home = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [currentPosition, setCurrentPosition] = useState(null);
   const [seniors, setSeniors] = useState([]); // 보호 대상자 목록
-  const [selectedSenior, setSelectedSenior] = useState(null); // 선택된 보호 대상자
-  const [todaySchedule, setTodaySchedule] = useState([]); // 오늘의 할 일 목록
+  const [selectedSenior, setSelectedSenior] = useState(null); // 선택된 보호 대상자  
   const [scheduleLoading, setScheduleLoading] = useState(false);
   
   // 오늘의 할 일 로드
@@ -91,47 +99,14 @@ const Home = () => {
       console.log('오늘의 할 일 로드 시작');
       
       const scheduleItems = await getScheduleDropdownItems();
-      console.log('로드된 일정 항목들:', scheduleItems);
-      
-      // 기본 내용이 비어있으면 샘플 데이터 사용
-      if (!scheduleItems || scheduleItems.length === 0) {
-        setTodaySchedule([
-          { id: 1, text: '정기 건강 체크', completed: false },
-          { id: 2, text: '약물 복용 확인', completed: false },
-          { id: 3, text: '안전 확인 전화', completed: true },
-          { id: 4, text: '식사 메뉴 준비', completed: false }
-        ]);
-      } else {
-        // API에서 가져온 데이터를 할 일 형식으로 변환
-        const formattedSchedule = scheduleItems.map((item, index) => ({
-          id: index + 1,
-          text: item,
-          completed: Math.random() > 0.8 // 가끔 완료된 항목
-        }));
-        setTodaySchedule(formattedSchedule);
-      }
+      console.log('로드된 일정 항목들:', scheduleItems);      
       
     } catch (error) {
       console.error('오늘의 할 일 로드 오류:', error);
-      // 오류 시 기본 데이터 사용
-      setTodaySchedule([
-        { id: 1, text: '정기 건강 체크', completed: false },
-        { id: 2, text: '약물 복용 확인', completed: false },
-        { id: 3, text: '안전 확인 전화', completed: true }
-      ]);
     } finally {
       setScheduleLoading(false);
     }
-  };
-  
-  // 할 일 완료 상태 토글
-  const toggleScheduleItem = (id) => {
-    setTodaySchedule(prev => 
-      prev.map(item => 
-        item.id === id ? { ...item, completed: !item.completed } : item
-      )
-    );
-  };
+  };  
   
   // 보호 대상자 목록 로드
   const loadSeniors = async () => {
@@ -160,71 +135,260 @@ const Home = () => {
     console.log('병원 선택 완료:', hospital.yadmNm);
   };
   
-  // 주소 기반 병원 검색
+  // 향상된 주소 검색 함수 - 주소검색 + 키워드검색 조합
+  const findLocationByAddress = async (address) => {
+    console.log('향상된 주소 검색 시작:', address);
+    
+    let bestResult = null;
+    let bestScore = 0;
+    
+    try {
+      // 1. 주소 검색 API 시도 (여러 단계)
+      const addressSearches = [
+        address, // 원본 주소
+        address.replace(/\s+\d+호.*$/, ''), // 호수 제거
+        address.replace(/\s+[가-힣]+[스카이뷰|아파트|빌라|타운|맨션].*$/, ''), // 아파트명 제거
+        address.split(' ').slice(0, 4).join(' '), // 시 구 동 + 첫번째 상세주소
+        address.split(' ').slice(0, 3).join(' ')  // 시 구 동만
+      ];
+      
+      for (const searchAddr of addressSearches) {
+        if (!searchAddr.trim()) continue;
+        
+        console.log('주소 검색 시도:', searchAddr);
+        const result = await searchAddressToCoord(searchAddr);
+        
+        if (result.success) {
+          const score = calculateAddressScore(searchAddr, address);
+          console.log(`주소 검색 성공: ${searchAddr} (점수: ${score})`);
+          
+          if (score > bestScore) {
+            bestResult = {
+              ...result,
+              method: 'address',
+              searchTerm: searchAddr,
+              score: score
+            };
+            bestScore = score;
+          }
+        }
+      }
+      
+      // 2. 키워드 검색 API 시도 (아파트명이 있는 경우)
+      const apartmentMatch = address.match(/([가-힣]+[스카이뷰|아파트|빌라|타운|맨션])/);
+      if (apartmentMatch) {
+        const apartmentName = apartmentMatch[1];
+        const locationContext = address.split(' ').slice(0, 3).join(' '); // 시 구 동
+        
+        const keywordSearches = [
+          `${locationContext} ${apartmentName}`, // 전체 조합
+          apartmentName, // 아파트명만
+          `부산 ${apartmentName}`, // 부산 + 아파트명
+        ];
+        
+        for (const keyword of keywordSearches) {
+          console.log('키워드 검색 시도:', keyword);
+          
+          try {
+            const keywordResult = await searchPlacesByKeyword(keyword, { size: 5 });
+            
+            if (keywordResult.success && keywordResult.places.length > 0) {
+              // 가장 관련성 높은 결과 선택
+              const relevantPlace = findMostRelevantPlace(keywordResult.places, address);
+              
+              if (relevantPlace) {
+                const score = calculateKeywordScore(relevantPlace, address);
+                console.log(`키워드 검색 성공: ${relevantPlace.name} (점수: ${score})`);
+                
+                if (score > bestScore) {
+                  bestResult = {
+                    success: true,
+                    x: relevantPlace.x,
+                    y: relevantPlace.y,
+                    address: relevantPlace.address,
+                    roadAddress: relevantPlace.roadAddress,
+                    method: 'keyword',
+                    searchTerm: keyword,
+                    placeName: relevantPlace.name,
+                    score: score
+                  };
+                  bestScore = score;
+                }
+              }
+            }
+          } catch (error) {
+            console.warn(`키워드 검색 오류 (${keyword}):`, error.message);
+          }
+        }
+      }
+      
+      console.log('최종 최적 결과:', bestResult);
+      return bestResult;
+      
+    } catch (error) {
+      console.error('주소 검색 전체 오류:', error);
+      return null;
+    }
+  };
+  
+  // 주소 검색 결과 점수 계산
+  const calculateAddressScore = (searchAddr, originalAddr) => {
+    const searchWords = searchAddr.split(' ');
+    const originalWords = originalAddr.split(' ');
+    
+    let score = searchWords.length * 10; // 기본 점수
+    
+    // 아파트명이 포함되어 있으면 가점
+    if (searchAddr.match(/([가-힣]+[스카이뷰|아파트|빌라|타운|맨션])/)) {
+      score += 50;
+    }
+    
+    // 도로명이 포함되어 있으면 가점
+    if (searchAddr.match(/로|\d+번길|길/)) {
+      score += 30;
+    }
+    
+    return score;
+  };
+  
+  // 키워드 검색 결과 점수 계산
+  const calculateKeywordScore = (place, originalAddr) => {
+    let score = 80; // 키워드 검색 기본 점수
+    
+    // 주소 매칭 확인
+    const addressWords = originalAddr.toLowerCase().split(' ');
+    const placeAddress = (place.address || '').toLowerCase();
+    
+    for (const word of addressWords) {
+      if (word && placeAddress.includes(word)) {
+        score += 20;
+      }
+    }
+    
+    // 카테고리가 아파트/주거와 관련이 있으면 가점
+    if (place.category && place.category.includes('아파트')) {
+      score += 40;
+    }
+    
+    return score;
+  };
+  
+  // 가장 관련성 높은 장소 찾기
+  const findMostRelevantPlace = (places, originalAddr) => {
+    const addressWords = originalAddr.toLowerCase().split(' ');
+    
+    return places.reduce((best, current) => {
+      const currentAddress = (current.address || '').toLowerCase();
+      const currentScore = addressWords.reduce((score, word) => {
+        return currentAddress.includes(word) ? score + 1 : score;
+      }, 0);
+      
+      const bestAddress = (best?.address || '').toLowerCase();
+      const bestScore = addressWords.reduce((score, word) => {
+        return bestAddress.includes(word) ? score + 1 : score;
+      }, 0);
+      
+      return currentScore > bestScore ? current : best;
+    }, places[0]);
+  };
+  
+  // 향상된 주소 기반 병원 검색
   const loadHospitalsByAddress = async (address) => {
     try {
-      console.log('loadHospitalsByAddress 호출, 주소:', address);
+      console.log('🏥 향상된 주소 기반 병원 검색 시작:', address);
       setHospitalLoading(true);
       
-      // 주소를 좌표로 변환
-      console.log('좌표 변환 시도할 주소:', address);
+      // 향상된 주소 검색 사용
+      console.log('🔍 향상된 주소 검색 실행...');
+      const searchResult = await enhancedAddressSearch(address);
       
-      // 아파트명이 포함된 경우 제거하고 시도
-      let searchAddress = address;
-      const apartmentMatch = address.match(/(.+구\s+.+동)\s+.*/);  // 구와 동까지만 추출
-      if (apartmentMatch) {
-        searchAddress = apartmentMatch[1];
-        console.log('간략화된 주소로 재시도:', searchAddress);
-      }
-      
-      let result = await searchAddressToCoord(searchAddress);
-      
-      // 첫 번째 시도 실패 시 더 간략한 주소로 재시도
-      if (!result.success && searchAddress !== address) {
-        const simpleAddress = address.split(' ').slice(0, 3).join(' ');  // 시 구 동까지만
-        console.log('더 간략한 주소로 재시도:', simpleAddress);
-        result = await searchAddressToCoord(simpleAddress);
-      }
-      
-      console.log('좌표 변환 결과:', result);
-      
-      if (result.success) {
-        console.log(`${address} 좌표:`, result.y, result.x);
-        
-        // 해당 좌표로 병원 검색
-        const hospitalResult = await searchNearbyHospitals(result.y, result.x);
-        
-        if (hospitalResult.success && hospitalResult.places) {
-          const kakaoHospitals = hospitalResult.places.map(place => ({
-            yadmNm: place.name,
-            telno: place.phone || '전화번호 정보 없음',
-            addr: place.roadAddress || place.address,
-            distance: place.distance ? (place.distance >= 1000 ? `${(place.distance / 1000).toFixed(1)}km` : `${Math.round(place.distance)}m`) : '',
-            categoryName: place.category,
-            latitude: place.y,
-            longitude: place.x
-          }));
-          
-          setBusanHospitals(kakaoHospitals);
-          setRecommendedHospital(kakaoHospitals[0]);
-          
-          // Senior의 위치를 currentPosition으로 설정
-          setCurrentPosition({
-            latitude: result.y,
-            longitude: result.x,
-            address: address,
-            isSeniorLocation: true
-          });
-        }
-      } else {
-        console.warn('주소를 좌표로 변환할 수 없습니다.');
+      if (!searchResult.success) {
+        console.error('❌ 주소 검색 실패:', searchResult.message);
         // 기본값으로 현재 위치 사용
-        loadRecommendedHospital();
+        console.log('🔄 현재 위치로 대체 검색');
+        await loadRecommendedHospital();
+        return;
+      }
+      
+      console.log('✅ 주소 검색 성공!');
+      console.log(`📍 좌표: 위도 ${searchResult.latitude}, 경도 ${searchResult.longitude}`);
+      console.log(`🎯 검색 방법: ${searchResult.method} (점수: ${searchResult.score})`);
+      console.log(`📝 출처: ${searchResult.source}`);
+      
+      // 검증 정보 출력
+      const verification = await validateSearchResult(searchResult, address);
+      console.log('🔍 검증 정보:', verification.verification);
+      
+      // 다른 검색 결과들도 출력
+      if (searchResult.allResults && searchResult.allResults.length > 1) {
+        console.log('📊 모든 검색 결과:');
+        searchResult.allResults.forEach((result, index) => {
+          console.log(`  ${index + 1}. ${result.method}: ${result.latitude}, ${result.longitude} (${result.score}점)`);
+        });
+      }
+      
+      // 해당 좌표로 병원 검색
+      const hospitalResult = await searchNearbyHospitals(searchResult.latitude, searchResult.longitude);
+      
+      if (hospitalResult.success && hospitalResult.places) {
+        // 인간 의료시설만 필터링
+        const filteredPlaces = hospitalResult.places.filter(place => {
+          const categoryName = place.category || '';
+          const placeName = place.name || '';
+          
+          // 동물병원 제외
+          if (categoryName.includes('동물병원') || 
+              placeName.includes('동물병원') ||
+              placeName.includes('수의사') ||
+              placeName.includes('수의') ||
+              placeName.includes('동물의료') ||
+              placeName.includes('펫') ||
+              placeName.includes('애니멀')) {
+            console.log(`❌ 동물병원 제외: ${placeName}`);
+            return false;
+          }
+          
+          console.log(`✅ 인간 의료시설 포함: ${placeName}`);
+          return true;
+        });
+        
+        const kakaoHospitals = filteredPlaces.map(place => ({
+          yadmNm: place.name,
+          telno: place.phone || '전화번호 정보 없음',
+          addr: place.roadAddress || place.address,
+          distance: place.distance ? 
+            (parseInt(place.distance) >= 1000 ? 
+              `${(parseInt(place.distance) / 1000).toFixed(1)}km` : 
+              `${Math.round(parseInt(place.distance))}m`) : '',
+          categoryName: place.category,
+          latitude: place.y,
+          longitude: place.x
+        }));
+        
+        setBusanHospitals(kakaoHospitals);
+        setRecommendedHospital(kakaoHospitals[0]);
+        
+        console.log(`✅ ${kakaoHospitals.length}개 병원 검색 완료`);
+        
+        // Senior의 위치를 currentPosition으로 설정
+        setCurrentPosition({
+          latitude: searchResult.latitude,
+          longitude: searchResult.longitude,
+          address: address,
+          resolvedAddress: searchResult.address,
+          isSeniorLocation: true,
+          searchMethod: searchResult.method,
+          searchScore: searchResult.score
+        });
+      } else {
+        console.warn('❌ 병원 검색 결과 없음');
+        // 기본값으로 현재 위치 사용
+        await loadRecommendedHospital();
       }
     } catch (error) {
-      console.error('주소 기반 병원 검색 오류:', error);
+      console.error('❌ 향상된 주소 기반 병원 검색 오류:', error);
       // 기본값으로 현재 위치 사용
-      loadRecommendedHospital();
+      await loadRecommendedHospital();
     } finally {
       setHospitalLoading(false);
     }
@@ -235,15 +399,40 @@ const Home = () => {
       console.log('추천 병원 조회 시작');
       setHospitalLoading(true);
       
-      const position = await getCurrentPosition();
+      console.log('🗺️ 현재위치 획득 시도 중...');
+      const position = await getCurrentPosition({ 
+        showAlert: false,
+        timeout: 15000,
+        enableHighAccuracy: true,
+        maximumAge: 60000 // 1분간 캐시 허용
+      });
       const { latitude, longitude } = position;
       setCurrentPosition(position);
       
-      console.log('현재 위치:', position);
-      console.log('위도:', latitude, '경도:', longitude);
+      console.log('📍 현재 위치 결과:', position);
+      console.log(`📍 좌표: 위도 ${latitude}, 경도 ${longitude}`);
       
       if (position.isDefault) {
-        console.log('기본 위치 사용 중 (부산시청)');
+        console.log('🏢 기본 위치 사용 중 (부산시청)');
+        console.log(`🔍 사유: ${position.message || position.source}`);
+        
+        // 사용자에게 알림 (한 번만)
+        if (!sessionStorage.getItem('locationNotified')) {
+          setTimeout(() => {
+            if (position.error && position.error.code === 1) {
+              alert('위치 권한이 필요합니다.\n브라우저 주소창의 🔒 아이콘을 클릭하고 위치를 허용해주세요.\n\n현재는 부산 시청 위치로 병원을 검색합니다.');
+            }
+            sessionStorage.setItem('locationNotified', 'true');
+          }, 1000);
+        }
+      } else {
+        console.log('✅ 실제 GPS 위치 사용 중');
+        console.log(`🎯 정확도: ${position.accuracy}m`);
+        
+        // 정확도가 너무 낮으면 경고
+        if (position.accuracy > 1000) {
+          console.warn('⚠️ 위치 정확도가 낮습니다:', position.accuracy + 'm');
+        }
       }
       
       const result = await searchNearbyHospitals(latitude, longitude);
@@ -251,11 +440,35 @@ const Home = () => {
       console.log('카카오 병원 검색 결과:', result);
       
       if (result.success && result.places && result.places.length > 0) {
-        const kakaoHospitals = result.places.map(place => ({
+        // 인간 의료시설만 필터링
+        const filteredPlaces = result.places.filter(place => {
+          const categoryName = place.category || '';
+          const placeName = place.name || '';
+          
+          // 동물병원 제외
+          if (categoryName.includes('동물병원') || 
+              placeName.includes('동물병원') ||
+              placeName.includes('수의사') ||
+              placeName.includes('수의') ||
+              placeName.includes('동물의료') ||
+              placeName.includes('펫') ||
+              placeName.includes('애니멀')) {
+            console.log(`❌ 동물병원 제외: ${placeName}`);
+            return false;
+          }
+          
+          console.log(`✅ 인간 의료시설 포함: ${placeName}`);
+          return true;
+        });
+        
+        const kakaoHospitals = filteredPlaces.map(place => ({
         yadmNm: place.name,
         telno: place.phone || '전화번호 정보 없음',
         addr: place.roadAddress || place.address,
-        distance: place.distance ? (place.distance >= 1000 ? `${(place.distance / 1000).toFixed(1)}km` : `${Math.round(place.distance)}m`) : '',
+        distance: place.distance ? 
+            (parseInt(place.distance) >= 1000 ? 
+              `${(parseInt(place.distance) / 1000).toFixed(1)}km` : 
+              `${Math.round(parseInt(place.distance))}m`) : '',
         categoryName: place.category,
         latitude: place.y,
         longitude: place.x
@@ -280,120 +493,226 @@ const Home = () => {
     return '🏥';
   };
   
-  const getCurrentPosition = () => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        console.error('이 브라우저는 위치 서비스를 지원하지 않습니다.');
-        // 부산 시청 기본 좌표
-        resolve({
-          latitude: 35.1796,
-          longitude: 129.0756,
-          isDefault: true
-        });
-        return;
-      }
-      
-      console.log('위치 정보 요청 중...');
-      
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log('위치 정보 획득 성공:', position.coords);
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            isDefault: false
-          });
-        },
-        (error) => {
-          console.error('위치 권한 오류:', error);
-          console.error('에러 코드:', error.code);
-          console.error('에러 메시지:', error.message);
-          
-          let errorMessage = '';
-          switch(error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage = '위치 권한이 거부되었습니다.';
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage = '위치 정보를 사용할 수 없습니다.';
-              break;
-            case error.TIMEOUT:
-              errorMessage = '위치 정보 요청 시간이 초과되었습니다.';
-              break;
-            default:
-              errorMessage = '알 수 없는 오류가 발생했습니다.';
-          }
-          
-          alert(`위치 정보 오류: ${errorMessage}\n부산 시청 위치로 대체합니다.`);
-          
-          // 부산 시청 기본 좌표
-          resolve({
-            latitude: 35.1796,
-            longitude: 129.0756,
-            isDefault: true
-          });
-        },
-        {
-          enableHighAccuracy: true,  // 높은 정확도
-          timeout: 10000,             // 10초 타임아웃
-          maximumAge: 0               // 캐시 사용 안함 (항상 새로운 위치)
-        }
-      );
-    });
-  };
+  // getCurrentPosition은 이제 utils/geolocation.js에서 import됨
   
   const searchNearbyHospitals = async (latitude, longitude) => {
     try {
+      console.log('🏥 향상된 병원 검색 시작 - 더 많은 병원 찾기');
+      
       const REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
       
       if (!REST_API_KEY) {
         throw new Error('카카오 API 키가 설정되지 않았습니다.');
       }
       
-      const response = await fetch(
-        `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=HP8&x=${longitude}&y=${latitude}&radius=5000&sort=distance`,
-        {
-          headers: {
-            'Authorization': `KakaoAK ${REST_API_KEY}`
-          }
+      // 인간 의료시설만 필터링하는 함수
+      const isHumanMedicalFacility = (place) => {
+        const categoryName = place.category_name || '';
+        const placeName = place.place_name || place.name || '';
+        
+        // 동물병원 제외
+        if (categoryName.includes('동물병원') || 
+            placeName.includes('동물병원') ||
+            placeName.includes('수의사') ||
+            placeName.includes('수의') ||
+            placeName.includes('동물의료') ||
+            placeName.includes('펫삵') ||
+            placeName.includes('애니멀')) {
+          return false;
         }
-      );
+        
+        // 기타 비의료 시설 제외
+        if (placeName.includes('미용실') ||
+            placeName.includes('마사지') ||
+            placeName.includes('사우나') ||
+            placeName.includes('에스테틱') ||
+            placeName.includes('영업점') ||
+            placeName.includes('업체')) {
+          return false;
+        }
+        
+        // 인간 의료시설 포함 여부 확인
+        const validCategories = [
+          '병원',
+          '의원', 
+          '클리닉',
+          '의료',
+          '진료소',
+          '보건소',
+          '공중보건',
+          '가정의학과',
+          '내과',
+          '외과',
+          '산부인과',
+          '소아과',
+          '정신과',
+          '신경과',
+          '안과',
+          '이비인후과',
+          '치과',
+          '피부과',
+          '비뇨과',
+          '정형외과',
+          '성형외과',
+          '재활의학과',
+          '마취통증의학과',
+          '엑스레이',
+          '검사의학',
+          '응급실',
+          '수술실'
+        ];
+        
+        return validCategories.some(category => 
+          categoryName.includes(category) || placeName.includes(category)
+        );
+      };
       
-      if (!response.ok) {
-        throw new Error(`카카오 API 요청 실패: ${response.status}`);
+      const allHospitals = new Map(); // 중복 제거를 위한 Map
+      
+      // 1. 카테고리 검색 (HP8: 병원) - 2페이지로 축소
+      console.log('📚 1단계: 카테고리 검색 (병원)');
+      for (let page = 1; page <= 2; page++) {
+        try {
+          const response = await fetch(
+            `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=HP8&x=${longitude}&y=${latitude}&radius=10000&sort=distance&page=${page}&size=15`,
+            {
+              headers: {
+                'Authorization': `KakaoAK ${REST_API_KEY}`
+              }
+            }
+          );
+          
+          const data = await response.json();
+          
+          if (data.documents) {
+            console.log(`✅ 카테고4리 검색 페이지 ${page}: ${data.documents.length}개 결과`);
+            data.documents.forEach(place => {
+              allHospitals.set(place.id, {
+                name: place.place_name,
+                phone: place.phone,
+                address: place.address_name,
+                roadAddress: place.road_address_name,
+                distance: place.distance,
+                category: place.category_name,
+                x: place.x,
+                y: place.y,
+                source: '카테고4리 검색'
+              });
+            });
+          }
+          
+          // 더 이상 결과가 없으면 중단
+          if (data.meta && data.meta.is_end) {
+            console.log(`🛑 카테고4리 검색 종료 (페이지 ${page})`);
+            break;
+          }
+        } catch (error) {
+          console.warn(`⚠️ 카테고4리 검색 페이지 ${page} 실패:`, error.message);
+        }
       }
       
-      const data = await response.json();
+      // 2. 키워드 검색 - 인간 의료시설 키워드만
+      const keywords = ['병원', '의원', '클리닉', '진료소'];
+      
+      console.log('📚 2단계: 키워드 검색');
+      for (const keyword of keywords) {
+        try {
+          const response = await fetch(
+            `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(keyword)}&x=${longitude}&y=${latitude}&radius=10000&sort=distance&size=10`,
+            {
+              headers: {
+                'Authorization': `KakaoAK ${REST_API_KEY}`
+              }
+            }
+          );
+          
+          const data = await response.json();
+          
+          if (data.documents) {
+            console.log(`✅ 키워드 "${keyword}" 검색: ${data.documents.length}개 결과`);
+            data.documents.forEach(place => {
+              // 인간 의료시설만 필터링
+              if (isHumanMedicalFacility(place)) {
+                allHospitals.set(place.id, {
+                  name: place.place_name,
+                  phone: place.phone,
+                  address: place.address_name,
+                  roadAddress: place.road_address_name,
+                  distance: place.distance,
+                  category: place.category_name,
+                  x: place.x,
+                  y: place.y,
+                  source: `키워드 "${keyword}"`
+                });
+                console.log(`✅ 포함: ${place.place_name} - ${place.category_name}`);
+              } else {
+                console.log(`❌ 제외: ${place.place_name} - ${place.category_name}`);
+              }
+            });
+          }
+        } catch (error) {
+          console.warn(`⚠️ 키워드 "${keyword}" 검색 실패:`, error.message);
+        }
+      }
+      
+      // 3. 결과 정리 및 정렬 (상위 10개만 선택)
+      const hospitalList = Array.from(allHospitals.values()).slice(0, 10);
+      
+      // 거리순 정렬
+      hospitalList.sort((a, b) => {
+        const distanceA = parseInt(a.distance) || 999999;
+        const distanceB = parseInt(b.distance) || 999999;
+        return distanceA - distanceB;
+      });
+      
+      console.log(`🏥 총 ${hospitalList.length}개 인간 의료시설 선택! (상위 10개)`);
+      
+      // 상세 로그
+      console.log('📊 병원 검색 결과 상세:');
+      hospitalList.forEach((hospital, index) => {
+        const distance = hospital.distance ? 
+          (parseInt(hospital.distance) >= 1000 ? 
+            `${(parseInt(hospital.distance) / 1000).toFixed(1)}km` : 
+            `${parseInt(hospital.distance)}m`) : 'N/A';
+        console.log(`  ${index + 1}. ${hospital.name} (${distance}) - ${hospital.source} - ${hospital.category}`);
+      });
       
       return {
         success: true,
-        places: data.documents.map(place => ({
-          name: place.place_name,
-          phone: place.phone,
-          address: place.address_name,
-          roadAddress: place.road_address_name,
-          distance: place.distance,
-          category: place.category_name,
+        places: hospitalList.map(place => ({
+          name: place.name,
+          phone: place.phone || '전화번호 정보 없음',
+          address: place.address,
+          roadAddress: place.roadAddress,
+          distance: place.distance ? 
+            (parseInt(place.distance) >= 1000 ? 
+              `${(parseInt(place.distance) / 1000).toFixed(1)}km` : 
+              `${Math.round(parseInt(place.distance))}m`) : '',
+          category: place.category,
           x: place.x,
           y: place.y
         }))
       };
     } catch (error) {
-      console.error('카카오 병원 검색 API 오류:', error);
+      console.error('❌ 카카오 병원 검색 API 오류:', error);
       return { success: false, places: [] };
     }
   };
   
-  // Senior 선택 핸들러
-  const handleSeniorSelect = (senior) => {
+  // Senior 선택 핸들러 - 옵션 추가
+  const handleSeniorSelect = (senior, useCurrentLocation = false) => {
     console.log('선택된 Senior:', senior);
-    console.log('Senior 주소:', senior.address);
+    console.log('현재위치 사용 여부:', useCurrentLocation);
     setSelectedSenior(senior);
-    if (senior.address) {
+    
+    if (useCurrentLocation) {
+      console.log('🗺️ 현재위치 기준으로 병원 검색');
+      loadRecommendedHospital();
+    } else if (senior.address) {
+      console.log('🏠 Senior 주소 기준으로 병원 검색:', senior.address);
       loadHospitalsByAddress(senior.address);
     } else {
-      // 주소가 없는 경우 현재 위치 사용
+      console.log('🗺️ 주소 없음 - 현재위치 사용');
       loadRecommendedHospital();
     }
   };
@@ -406,19 +725,7 @@ const Home = () => {
           : action
       ).sort((a, b) => new Date(b.lastUsed) - new Date(a.lastUsed))
     );
-  };
-  
-  const handleQuickActionClick = (action) => {
-    updateRecentAction(action.text);
-    
-    if (action.path) {
-      if (action.path.startsWith('/')) {
-        navigate(action.path);
-      } else {
-        console.log(`${action.text} 클릭됨 - 기능 준비 중`);
-      }
-    }
-  };
+  };  
 
   useEffect(() => {
     const userInfo = getUserInfo();
@@ -431,6 +738,20 @@ const Home = () => {
         role: userInfo.role || 'GUARDIAN'
       });
     }
+    
+    // 위치 서비스 지원 상태 확인
+    checkGeolocationSupport().then(support => {
+      console.log('🗺️ 위치 서비스 지원 상태:', support);
+      if (!support.supported) {
+        console.warn('⚠️ 브라우저가 위치 서비스를 지원하지 않습니다.');
+      }
+      if (!support.secure) {
+        console.warn('⚠️ HTTP 환경에서는 위치 서비스가 제한됩니다.');
+      }
+      if (support.permission === 'denied') {
+        console.warn('⚠️ 위치 권한이 거부되어 있습니다.');
+      }
+    });
     
     loadDataForDate(new Date());
     loadWeatherData();
@@ -621,7 +942,7 @@ const Home = () => {
     { text: '보호 대상자', icon: PeopleOutlined },
     { text: '안전 모니터링', icon: SecurityOutlined },
     { text: '알림 센터', icon: NotificationsOutlined },
-    { text: '일정 관리', icon: EventOutlined },
+    { text: '조회 날짜', icon: EventOutlined },
     { text: '메시지', icon: MessageOutlined }
   ];
 
@@ -760,7 +1081,7 @@ const Home = () => {
                   } else if (item.text === '보호 대상자') {
                     updateRecentAction(item.text);
                     navigate('/seniors');
-                  } else if (item.text === '일정 관리') {
+                  } else if (item.text === '조회 날짜') {
                     updateRecentAction(item.text);
                     navigate('/daily');
                   } else {
@@ -993,14 +1314,14 @@ const Home = () => {
                 boxShadow: 2
               }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  📊 오늘의 요약
+                  📊 관리 대상자 항목
                 </Typography>
                 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   
                   {/* 관리 대상자 */}
                   <Paper sx={{ p: 2, backgroundColor: '#f8f9fa', borderRadius: 1.25 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#1976d2', fontSize: '1.2rem' }}>
                       👥 관리 대상자
                     </Typography>
                     
@@ -1028,8 +1349,7 @@ const Home = () => {
                         )}
                         
                         {/* 좌우 버튼 */}
-                        <Box sx={{ 
-                            mt: 1, 
+                        <Box sx={{                             
                             pt: 1, 
                             borderTop: theme => `1px solid ${theme.palette.divider}`,
                             display: 'flex',
@@ -1093,11 +1413,19 @@ const Home = () => {
                     )}
                   </Paper>                  
 
-                  {/* 추천 주변 병원 정보 */}
-                  <Paper sx={{ p: 2, backgroundColor: '#e3f2fd', borderRadius: 1.25 }}>
+                  {/* 근처 병원 정보 - 고정 크기 */}
+                  <Paper sx={{ 
+                    p: 2, 
+                    backgroundColor: '#e3f2fd', 
+                    borderRadius: 1.25,
+                    height: '220px', // 완전 고정 높이
+                    overflow: 'hidden', // 넘치는 내용 숨김
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                       <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#1976d2',fontSize: '1.2rem' }}>
-                        🏥 추천 주변 병원
+                        🏥 근처 병원 정보
                       </Typography>
                       <Button
                         variant="contained"
@@ -1119,11 +1447,24 @@ const Home = () => {
                     </Box>
                     
                     {hospitalLoading ? (
-                      <Typography variant="body2" sx={{ color: '#666', textAlign: 'center', py: 1 }}>
-                        병원 정보를 불러오는 중...
-                      </Typography>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        flex: 1
+                      }}>
+                        <Typography variant="body2" sx={{ color: '#666', textAlign: 'center' }}>
+                          병원 정보를 불러오는 중...
+                        </Typography>
+                      </Box>
                     ) : recommendedHospital ? (
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      <Box sx={{ 
+                        flex: 1,
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: 0.5,
+                        overflow: 'hidden'
+                      }}>
                         <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#333' }}>
                           {getIcon()} {recommendedHospital.yadmNm}
                         </Typography>
@@ -1148,8 +1489,8 @@ const Home = () => {
 
                         
                         {busanHospitals.length > 1 && (
-                          <Box sx={{ 
-                            mt: 1, 
+                          <Box sx={{
+                            mt: 'auto', // 자동으로 하단에 배치
                             pt: 1, 
                             borderTop: theme => `1px solid ${theme.palette.divider}`,
                             display: 'flex',
@@ -1208,9 +1549,16 @@ const Home = () => {
                         )}
                       </Box>
                     ) : (
-                      <Typography variant="body2" sx={{ color: '#999', textAlign: 'center', py: 1, fontStyle: 'italic' }}>
-                        근처 병원 정보를 찾을 수 없습니다
-                      </Typography>
+                      <Box sx={{ 
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Typography variant="body2" sx={{ color: '#999', textAlign: 'center', fontStyle: 'italic' }}>
+                          근처 병원 정보를 찾을 수 없습니다
+                        </Typography>
+                      </Box>
                     )}
                   </Paper>
                 </Box>
@@ -1232,7 +1580,7 @@ const Home = () => {
             boxShadow: 2
           }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
-              📅 일정 관리
+              📅 조회 날짜
             </Typography>
             
             {/* 달력 컴포넌트 */}
@@ -1358,8 +1706,8 @@ const Home = () => {
               />
             </Box>
 
-            <Typography variant="body1" fontWeight="bold" gutterBottom>
-              🌦️ 오늘 날씨
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              🌦️ 오늘 날씨 ({formattedDate})
             </Typography>
             <Box sx={{ 
               flex: 1,
@@ -1376,7 +1724,7 @@ const Home = () => {
               {/* 위치 정보 */}
               <Box sx={{ 
                 textAlign: 'center',
-                mb: 1
+                mb: 0.2
               }}>
                 <Typography variant="body1" sx={{ 
                   color: '#666', 
@@ -1588,7 +1936,7 @@ const Home = () => {
       <HospitalMapModal
         open={showMapModal}
         onClose={() => setShowMapModal(false)}
-        hospitals={busanHospitals}
+        hospitals={recommendedHospital ? [recommendedHospital] : []} // 현재 선택된 병원만 전달
         currentPosition={currentPosition}
       />
     </Box>

@@ -1,54 +1,3 @@
-/**
- * 일정관리 관련 API 함수들 (2025.07.10 추가)
- */
-
-/**
- * 드롭다운 항목 조회 (일정관리 카테고리)
- * @returns {Promise} 드롭다운 항목 목록
- */
-export const getScheduleDropdownItems = async () => {
-  try {
-    const response = await apiClient.get('/api/user-settings/dropdown-items');
-    return response.data;
-  } catch (error) {
-    console.error('일정 드롭다운 항목 조회 실패:', error);
-    throw error;
-  }
-};
-
-/**
- * 새로운 일정 항목 추가
- * @param {string} itemValue - 추가할 일정 항목
- * @returns {Promise} 추가 결과
- */
-export const addScheduleItem = async (itemValue) => {
-  try {
-    const response = await apiClient.post('/api/user-settings/dropdown-item', {
-      itemValue: itemValue,
-      category: '일정관리'
-    });
-    return response.data;
-  } catch (error) {
-    console.error('일정 항목 추가 실패:', error);
-    throw error;
-  }
-};
-
-/**
- * 일일 활동 저장 (오늘의 할 일)
- * @param {Object} data - 저장할 일정 데이터
- * @returns {Promise} 저장 결과
- */
-export const saveTodaySchedule = async (data) => {
-  try {
-    const response = await apiClient.post('/api/daily-activities/save', data);
-    return response.data;
-  } catch (error) {
-    console.error('오늘의 할 일 저장 실패:', error);
-    throw error;
-  }
-};
-
 // =================================================================
 // API 클라이언트 통합 설정 (2025.07.08 통합 버전)
 // 목적: axios 대신 중앙화된 API 클라이언트 사용
@@ -120,6 +69,86 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// =================================================================
+// 일정관리 관련 API 함수들 (2025.07.10 추가)
+// =================================================================
+
+/**
+ * 드롭다운 항목 ID 포함 조회 (일정관리 카테고리)
+ * @returns {Promise} ID와 value를 포함한 항목 목록
+ */
+export const getScheduleDropdownItemsWithId = async () => {
+  try {
+    const response = await apiClient.get('/api/user-settings/dropdown-items-with-id');
+    return response.data;
+  } catch (error) {
+    console.error('일정 드롭다운 ID 포함 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 일정 항목 삭제
+ * @param {number} itemId - 삭제할 일정 항목 ID
+ * @returns {Promise} 삭제 결과
+ */
+export const deleteScheduleItem = async (itemId) => {
+  try {
+    const response = await apiClient.delete(`/api/user-settings/dropdown-item/${itemId}`);
+    return response.data;
+  } catch (error) {
+    console.error('일정 항목 삭제 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 드롭다운 항목 조회 (일정관리 카테고리)
+ * @returns {Promise} 드롭다운 항목 목록
+ */
+export const getScheduleDropdownItems = async () => {
+  try {
+    const response = await apiClient.get('/api/user-settings/dropdown-items');
+    return response.data;
+  } catch (error) {
+    console.error('일정 드롭다운 항목 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 새로운 일정 항목 추가
+ * @param {string} itemValue - 추가할 일정 항목
+ * @returns {Promise} 추가 결과
+ */
+export const addScheduleItem = async (itemValue) => {
+  try {
+    const response = await apiClient.post('/api/user-settings/dropdown-item', {
+      itemValue: itemValue,
+      category: '일정관리'
+    });
+    return response.data;
+  } catch (error) {
+    console.error('일정 항목 추가 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 일일 활동 저장 (오늘의 할 일)
+ * @param {Object} data - 저장할 일정 데이터
+ * @returns {Promise} 저장 결과
+ */
+export const saveTodaySchedule = async (data) => {
+  try {
+    const response = await apiClient.post('/api/daily-activities/save', data);
+    return response.data;
+  } catch (error) {
+    console.error('오늘의 할 일 저장 실패:', error);
+    throw error;
+  }
+};
 
 // =================================================================
 // Guardian (보호자) 관련 API 함수들 (2025.07.08 신규 추가)
@@ -309,11 +338,6 @@ export const register = async (registerData) => {
 };
 
 // =================================================================
-// 기본 API 클라이언트 export (고급 사용자용)
-// =================================================================
-export default apiClient;
-
-// =================================================================
 // 카카오 API 연동 함수들 (2025.07.08 신규 추가)
 // =================================================================
 
@@ -419,3 +443,8 @@ export const getEmergencyRooms = async (location) => {
     throw error;
   }
 };
+
+// =================================================================
+// 기본 API 클라이언트 export (고급 사용자용)
+// =================================================================
+export default apiClient;

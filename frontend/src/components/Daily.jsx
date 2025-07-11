@@ -35,6 +35,7 @@ import {
 import userImage from '../images/user.png';
 // import PasswordConfirmModal from './PasswordConfirmModal'; // ProfileManagement에서만 사용
 import SeniorSelectModal from './modals/SeniorSelectModal';
+import CategoryManageModal from './modals/CategoryManageModal';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { getUserInfo, clearAuthData, getAuthToken } from '../utils/auth';
@@ -57,6 +58,7 @@ const Daily = () => {
   const [success, setSuccess] = useState('');
   // const [showPasswordModal, setShowPasswordModal] = useState(false); // ProfileManagement에서만 처리
   const [showSeniorSelectModal, setShowSeniorSelectModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   
   // 드롭다운 관련 상태
   const [dropdownItems, setDropdownItems] = useState([]);
@@ -308,6 +310,12 @@ const Daily = () => {
     setSelectedSenior(senior);
     setShowSeniorSelectModal(false);
     console.log('선택된 대상자:', senior);
+  };
+  
+  // 카테고리 업데이트 핸들러
+  const handleCategoryUpdate = () => {
+    console.log('카테고리 업데이트됨 - 드롭다운 새로고침');
+    fetchDropdownData(); // 드롭다운 데이터 새로고침
   };
 
   const handleLogout = () => {
@@ -654,8 +662,10 @@ const Daily = () => {
                   '&:hover': {
                     textDecoration: 'underline'
                   }
-                }}>
-                  + 항목 추가
+                }}
+                onClick={() => setShowCategoryModal(true)}
+                >
+                  + 항목 관리
                 </Typography>
 
                 <Button
@@ -911,6 +921,13 @@ const Daily = () => {
         onClose={() => setShowSeniorSelectModal(false)}
         onSelect={handleSeniorSelect}
         selectedSenior={selectedSenior}
+      />
+      
+      {/* 카테고리 관리 모달 */}
+      <CategoryManageModal
+        open={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+        onUpdate={handleCategoryUpdate}
       />
 
       {/* 메시지 표시 */}

@@ -105,9 +105,31 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
         const data = await response.json();
         console.log('✅ 백엔드 T-map API 응답:', data);
         
-        // T-map 응답 처리 (GeoJSON 형식)
-        if (data && data.features && data.features.length > 0) {
-          return drawTmapRoute(data, hospital);
+        // T-map 응답 처리 - response 래핑 확인
+        let tmapData = data;
+        if (data.response) {
+          tmapData = data.response; // response 래핑이 있다면 언래핑
+        }
+        
+        console.log('🔍 T-map 데이터 구조 분석:', tmapData);
+        
+        // T-map 에러 응답 처리 (header/body 구조)
+        if (tmapData && tmapData.header && tmapData.header.resultCode !== '00') {
+          console.error('❌ T-map API 공공데이터 형식 에러:', tmapData.header.resultMsg);
+          return false;
+        }
+        
+        // T-map 에러 응답 처리 (error 필드)
+        if (tmapData && tmapData.error) {
+          console.error('❌ T-map API 에러:', tmapData.error);
+          return false;
+        }
+        
+        if (tmapData && tmapData.features && tmapData.features.length > 0) {
+          console.log('✅ T-map features 발견:', tmapData.features.length, '개');
+          return drawTmapRoute(tmapData, hospital);
+        } else {
+          console.warn('⚠️ T-map 데이터에 features가 없음:', Object.keys(tmapData));
         }
       } else {
         console.error('❌ 백엔드 T-map API 오류:', response.status, await response.text());

@@ -317,6 +317,25 @@ export const getSeniorsForDate = async (date) => {
 };
 
 /**
+ * 페이지네이션을 지원하는 Senior 목록 조회
+ * @param {number} page - 페이지 번호 (0부터 시작)
+ * @param {number} size - 페이지 크기
+ * @param {string} sort - 정렬 기준 (예: 'seniorName,asc')
+ * @returns {Promise} Senior 목록 데이터
+ */
+export const getSeniorsWithPagination = async (page = 0, size = 10, sort = 'createdAt,desc') => {
+  try {
+    const response = await apiClient.get('/api/seniors', {
+      params: { page, size, sort }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Senior 목록 페이지 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
  * 모든 Senior 목록 조회
  * @returns {Promise} Senior 목록 데이터
  */
@@ -326,6 +345,67 @@ export const getAllSeniors = async () => {
     return response.data;
   } catch (error) {
     console.error('전체 Senior 목록 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * Senior 정보 상세 조회
+ * @param {number} seniorId - Senior ID
+ * @returns {Promise} Senior 상세 정보
+ */
+export const getSeniorById = async (seniorId) => {
+  try {
+    const response = await apiClient.get(`/api/seniors/${seniorId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Senior 상세 정보 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * Senior 정보 등록
+ * @param {Object} seniorData - 등록할 Senior 정보
+ * @returns {Promise} 등록된 Senior 정보
+ */
+export const createSenior = async (seniorData) => {
+  try {
+    const response = await apiClient.post('/api/seniors', seniorData);
+    return response.data;
+  } catch (error) {
+    console.error('Senior 등록 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * Senior 정보 수정
+ * @param {number} seniorId - 수정할 Senior ID
+ * @param {Object} updateData - 수정할 정보
+ * @returns {Promise} 수정된 Senior 정보
+ */
+export const updateSenior = async (seniorId, updateData) => {
+  try {
+    const response = await apiClient.put(`/api/seniors/${seniorId}`, updateData);
+    return response.data;
+  } catch (error) {
+    console.error('Senior 정보 수정 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * Senior 삭제
+ * @param {number} seniorId - 삭제할 Senior ID
+ * @returns {Promise} 삭제 결과
+ */
+export const deleteSenior = async (seniorId) => {
+  try {
+    const response = await apiClient.delete(`/api/seniors/${seniorId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Senior 삭제 실패:', error);
     throw error;
   }
 };
@@ -388,26 +468,12 @@ export const login = async (loginData) => {
  */
 export const logout = async () => {
   try {
-    // JWT에서 tokenId 추출
-    const token = getAuthToken();
-    let tokenId = null;
+    // 로그아웃 요청 (Authorization 헤더는 인터셉터가 자동 추가)
+    const response = await apiClient.post('/api/auth/logout');
     
-    if (token) {
-      try {
-        // JWT 디코딩하여 tokenId 추출
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        tokenId = payload.jti; // JWT ID (tokenId)
-      } catch (e) {
-        console.error('JWT 파싱 오류:', e);
-      }
-    }
-    
-    // tokenId를 body에 포함하여 로그아웃 요청
-    const response = await apiClient.post('/api/auth/logout', {
-      tokenId: tokenId
-    });
-    
+    // 로컬 인증 데이터 삭제
     clearAuthData();
+    
     return response.data;
   } catch (error) {
     console.error('로그아웃 실패:', error);

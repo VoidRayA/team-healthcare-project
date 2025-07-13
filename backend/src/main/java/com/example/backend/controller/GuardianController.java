@@ -4,6 +4,7 @@ import com.example.backend.DB.Guardians;
 import com.example.backend.config.CustomUserDetails;
 import com.example.backend.dto.login.GuardianDto;
 import com.example.backend.repository.GuardianRepository;
+import com.example.backend.service.auth.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,6 +34,7 @@ public class GuardianController {
 
     private final GuardianRepository guardianRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * 현재 인증된 사용자의 정보 조회
@@ -246,9 +248,15 @@ public class GuardianController {
             guardian.setLoginPw(passwordEncoder.encode(newPassword));
             guardian.setUpdatedAt(LocalDateTime.now());
             guardianRepository.save(guardian);
+            
+            // 비밀번호 변경 시 모든 리프레시 토큰 무효화 (보안)
+            refreshTokenService.revokeAllTokensForUser(guardian.getId());
 
             log.info("비밀번호 변경 완료: {}", guardian.getLoginId());
-            return ResponseEntity.ok(Map.of("message", "비밀번호가 성공적으로 변경되었습니다."));
+            return ResponseEntity.ok(Map.of(
+                "message", "비밀번호가 성공적으로 변경되었습니다. 보안을 위해 다시 로그인해주세요.",
+                "requiresLogin", true
+            ));
 
         } catch (Exception e) {
             log.error("비밀번호 변경 중 오류 발생", e);
@@ -269,6 +277,9 @@ public class GuardianController {
             guardian.setIsActive(false);
             guardian.setUpdatedAt(LocalDateTime.now());
             guardianRepository.save(guardian);
+            
+            // 계정 비활성화 시 모든 토큰 무효화
+            refreshTokenService.revokeAllTokensForUser(guardian.getId());
 
             log.info("계정 비활성화 완료: {}", guardian.getLoginId());
             return ResponseEntity.ok(Map.of("message", "계정이 비활성화되었습니다."));

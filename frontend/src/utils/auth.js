@@ -14,7 +14,19 @@ export const saveAuthData = (accessToken, refreshToken, userData) => {
     userData = { loginId: '', guardianName: '', role: 'GUARDIAN' };
   }
   
-  const expirationTime = new Date().getTime() + (60 * 60 * 1000); // Access Token 1시간
+  // JWT 토큰에서 실제 만료 시간 추출
+  const payload = parseJwt(accessToken);
+  let expirationTime;
+  
+  if (payload && payload.exp) {
+    // JWT의 exp 값 사용 (초 단위를 밀리초로 변환)
+    expirationTime = payload.exp * 1000;
+    console.log('JWT exp 사용:', new Date(expirationTime).toISOString());
+  } else {
+    // 기본값: 현재 시간 + 1시간
+    expirationTime = new Date().getTime() + (60 * 60 * 1000);
+    console.log('기본 만료 시간 사용:', new Date(expirationTime).toISOString());
+  }
   
   // Access Token과 만료 시간은 sessionStorage에 저장
   sessionStorage.setItem('jwt', accessToken);
@@ -78,9 +90,22 @@ export const clearAuthData = () => {
 
 // Access Token 업데이트 (토큰 갱신 후 사용)
 export const updateAccessToken = (newAccessToken, expiresIn = 3600) => {
-  const expirationTime = new Date().getTime() + (expiresIn * 1000);
+  // JWT 토큰에서 실제 만료 시간 추출
+  const payload = parseJwt(newAccessToken);
+  let expirationTime;
+  
+  if (payload && payload.exp) {
+    // JWT의 exp 값 사용 (초 단위를 밀리초로 변환)
+    expirationTime = payload.exp * 1000;
+    console.log('updateAccessToken - JWT exp 사용:', new Date(expirationTime).toISOString());
+  } else {
+    // expiresIn 파라미터 사용 (기본: 1시간)
+    expirationTime = new Date().getTime() + (expiresIn * 1000);
+    console.log('updateAccessToken - expiresIn 사용:', new Date(expirationTime).toISOString());
+  }
+  
   sessionStorage.setItem('jwt', newAccessToken);
-  sessionStorage.setItem('tokenExpiration', expirationTime);
+  sessionStorage.setItem('tokenExpiration', expirationTime.toString());
 };
 
 // 사용자 정보 가져오기

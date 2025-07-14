@@ -16,7 +16,14 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  CircularProgress,
+  InputAdornment,
+  IconButton,
+  Chip,
+  Tooltip,
+  Alert,
+  TableSortLabel
 } from '@mui/material';
 import {
   DashboardOutlined,
@@ -26,11 +33,17 @@ import {
   EventOutlined,
   MessageOutlined,
   LogoutOutlined,
-  EditOutlined
+  EditOutlined,
+  SearchOutlined,
+  PersonAddOutlined,
+  ClearOutlined,
+  PhoneOutlined,
+  HomeOutlined,
+  MedicalServicesOutlined
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
-// import PasswordConfirmModal from './PasswordConfirmModal'; // ProfileManagement에서만 사용
 import { getUserInfo, clearAuthData } from '../utils/auth';
+import { getSeniorsWithPagination } from '../api/apiClient';
 
 const SeniorList = () => {
   const navigate = useNavigate();
@@ -46,8 +59,12 @@ const SeniorList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [seniors, setSeniors] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [totalPages, setTotalPages] = useState(1); // 실제 데이터에 따라 동적으로 설정
-  // const [showPasswordModal, setShowPasswordModal] = useState(false); // ProfileManagement에서만 처리
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const [pageSize] = useState(10);
+  const [error, setError] = useState(null);
+  const [orderBy, setOrderBy] = useState('id');
+  const [order, setOrder] = useState('desc');
 
   useEffect(() => {
     const userInfo = getUserInfo();
@@ -60,46 +77,121 @@ const SeniorList = () => {
       });
     }
     
-    // 보호 대상자 목록 로드
     loadSeniors();
-  }, []);
+  }, [currentPage, orderBy, order]);
 
   const loadSeniors = async () => {
     setLoading(true);
+    setError(null);
     try {
-      // TODO: 실제 API 호출
-      // const response = await getSeniors();
+      const response = await getSeniorsWithPagination(currentPage - 1, pageSize, `${orderBy},${order}`);
+      console.log('Senior 목록 응답:', response);
       
-      // API가 준비되면 여기에 실제 데이터 로드 로직 추가
-      console.log('데이터 로드 기다리는 중...');
-      
+      if (response.content) {
+        const formattedSeniors = response.content.map(senior => ({
+          id: senior.id,
+          name: senior.seniorName,
+          birthDate: formatDate(senior.birthDate),
+          gender: senior.gender === 'MALE' ? '남' : '여',
+          address: senior.address || '-',
+          phone: formatPhoneNumber(senior.phone),
+          emergencyContact: formatPhoneNumber(senior.emergencyContact),
+          medicalConditions: senior.chronicDiseases || '-',
+          medications: senior.medications || '-',
+          specialNotes: senior.notes || '-'
+        }));
+        setSeniors(formattedSeniors);
+        setTotalPages(response.totalPages || 1);
+        setTotalElements(response.totalElements || 0);
+      }
     } catch (error) {
       console.error('보호 대상자 목록 로드 오류:', error);
+      setError('보호 대상자 목록을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = () => {
-    console.log('검색:', searchFilter, searchQuery);
-    // TODO: 검색 로직 구현
+  // 날짜 포맷팅
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+  };
+
+  // 전화번호 포맷팅
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return '-';
+    const numbers = phone.replace(/[^0-9]/g, '');
+    if (numbers.length === 11) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`;
+    } else if (numbers.length === 10) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3, 6)}-${numbers.slice(6)}`;
+    }
+    return phone;
+  };
+
+  const handleSearch = async () => {
+    setCurrentPage(1);
+    if (searchQuery.trim()) {
+      setLoading(true);
+      setError(null);
+      try {
+        // 임시로 프론트엔드 필터링 사용
+        const response = await getSeniorsWithPagination(0, 100, `${orderBy},${order}`);
+        if (response.content) {
+          const allSeniors = response.content.map(senior => ({
+            id: senior.id,
+            name: senior.seniorName,
+            birthDate: formatDate(senior.birthDate),
+            gender: senior.gender === 'MALE' ? '남' : '여',
+            address: senior.address || '-',
+            phone: formatPhoneNumber(senior.phone),
+            emergencyContact: formatPhoneNumber(senior.emergencyContact),
+            medicalConditions: senior.chronicDiseases || '-',
+            medications: senior.medications || '-',
+            specialNotes: senior.notes || '-'
+          }));
+          
+          const filtered = allSeniors.filter(senior => 
+            senior.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            senior.address.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            senior.phone.includes(searchQuery)
+          );
+          
+          setSeniors(filtered.slice(0, pageSize));
+          setTotalElements(filtered.length);
+          setTotalPages(Math.ceil(filtered.length / pageSize));
+        }
+      } catch (error) {
+        console.error('검색 중 오류:', error);
+        setError('검색 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      loadSeniors();
+    }
   };
 
   const handleAddSenior = () => {
     navigate('/sjoin');
   };
 
-  // 보호 대상자 수정 페이지로 이동
   const handleRowClick = (seniorId) => {
     navigate(`/senior/edit/${seniorId}`);
   };
 
+  const handleRequestSort = (property) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+    setCurrentPage(1);
+  };
+
   const handleLogout = () => {
     clearAuthData();
-    
     alert('로그아웃 되었습니다.');
-    
-    // 커스텀 이벤트 발생
     window.dispatchEvent(new Event('authStateChange'));
     window.location.reload();
   };
@@ -337,6 +429,7 @@ const SeniorList = () => {
               placeholder="검색"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               variant="outlined"
               sx={{
                 flex: 1,
@@ -364,6 +457,15 @@ const SeniorList = () => {
                     opacity: 1
                   }
                 }
+              }}
+              InputProps={{
+                endAdornment: searchQuery && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setSearchQuery('')}>
+                      <ClearOutlined />
+                    </IconButton>
+                  </InputAdornment>
+                )
               }}
             />
             <Button 
@@ -406,111 +508,151 @@ const SeniorList = () => {
             </Button>
           </Box>
 
+          {/* 에러 메시지 */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
+
           {/* 테이블 */}
-          <TableContainer 
-            component={Paper}
-            sx={{
-              backgroundColor: '#ffffff',
-              borderRadius: 0,
-              border: '2px solid #1976d2',
-              boxShadow: 'none'
-            }}
-          >
-            <Table>
-              <TableHead sx={{
-                '& .MuiTableCell-root': {
-                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
-                  borderBottom: '2px solid #1976d2',
-                  fontFamily: 'Pretendard',
-                  fontWeight: 700,
-                  fontSize: '14px',
-                  color: '#000',
-                  textAlign: 'center',
-                  padding: '12px 6px',
-                  height: '45px'
-                }
-              }}>
-                <TableRow>
-                  <TableCell>이름</TableCell>
-                  <TableCell>생년월일</TableCell>
-                  <TableCell>성별</TableCell>
-                  <TableCell>주소</TableCell>
-                  <TableCell>보호 대상자 연락처</TableCell>
-                  <TableCell>비상연락처</TableCell>
-                  <TableCell>지병</TableCell>
-                  <TableCell>복용 약물</TableCell>
-                  <TableCell>특이사항</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody sx={{
-                '& .MuiTableRow-root': {
-                  '&:nth-of-type(even)': {
-                    backgroundColor: '#f8f9fa'
-                  },
-                  // 데이터가 있는 행만 호버 효과 적용
-                  '&.data-row:hover': {
-                    backgroundColor: '#e3f2fd',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s ease'
-                  },
-                  // 5행마다 굵은 구분선 (마지막 행 제외)
-                  '&:nth-of-type(5):not(:last-child)': {
-                    '& .MuiTableCell-root': {
-                      borderBottom: '3px solid #1976d2'
-                    }
+          {loading ? (
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              height: '400px' 
+            }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <TableContainer 
+              component={Paper}
+              sx={{
+                backgroundColor: '#ffffff',
+                borderRadius: 0,
+                border: '2px solid #1976d2',
+                boxShadow: 'none'
+              }}
+            >
+              <Table>
+                <TableHead sx={{
+                  '& .MuiTableCell-root': {
+                    backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                    borderBottom: '2px solid #1976d2',
+                    fontFamily: 'Pretendard',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    color: '#000',
+                    textAlign: 'center',
+                    padding: '12px 6px',
+                    height: '45px'
                   }
-                },
-                '& .MuiTableCell-root': {
-                  borderBottom: '1px solid #1976d2',
-                  fontFamily: 'Pretendard',
-                  fontSize: '12px',
-                  color: '#333',
-                  textAlign: 'center',
-                  padding: '8px 6px',
-                  height: '35px'
-                }
-              }}>
-                {seniors.map((senior) => (
-                  <TableRow 
-                    key={senior.id}
-                    className="data-row"
-                    onClick={() => handleRowClick(senior.id)}
-                  >
-                    <TableCell>{senior.name}</TableCell>
-                    <TableCell>{senior.birthDate}</TableCell>
-                    <TableCell>{senior.gender}</TableCell>
-                    <TableCell>{senior.address}</TableCell>
-                    <TableCell>{senior.phone}</TableCell>
-                    <TableCell>{senior.emergencyContact}</TableCell>
-                    <TableCell>{senior.medicalConditions}</TableCell>
-                    <TableCell>{senior.medications}</TableCell>
-                    <TableCell>{senior.specialNotes}</TableCell>
+                }}>
+                  <TableRow>
+                    <TableCell>
+                      <TableSortLabel
+                        active={orderBy === 'seniorName'}
+                        direction={orderBy === 'seniorName' ? order : 'asc'}
+                        onClick={() => handleRequestSort('seniorName')}
+                      >
+                        이름
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell>
+                      <TableSortLabel
+                        active={orderBy === 'birthDate'}
+                        direction={orderBy === 'birthDate' ? order : 'asc'}
+                        onClick={() => handleRequestSort('birthDate')}
+                      >
+                        생년월일
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell>성별</TableCell>
+                    <TableCell>
+                      <TableSortLabel
+                        active={orderBy === 'address'}
+                        direction={orderBy === 'address' ? order : 'asc'}
+                        onClick={() => handleRequestSort('address')}
+                      >
+                        주소
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell>보호 대상자 연락처</TableCell>
+                    <TableCell>비상연락처</TableCell>
+                    <TableCell>지병</TableCell>
+                    <TableCell>복용 약물</TableCell>
+                    <TableCell>특이사항</TableCell>
                   </TableRow>
-                ))}
-                {Array.from({ length: Math.max(0, 10 - seniors.length) }).map((_, index) => (
-                  <TableRow 
-                    key={`empty-${index}`}
-                    sx={{
+                </TableHead>
+                <TableBody sx={{
+                  '& .MuiTableRow-root': {
+                    '&:nth-of-type(even)': {
+                      backgroundColor: '#f8f9fa'
+                    },
+                    '&.data-row:hover': {
+                      backgroundColor: '#e3f2fd',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s ease'
+                    },
+                    '&:nth-of-type(5):not(:last-child)': {
                       '& .MuiTableCell-root': {
-                        userSelect: 'none',
-                        pointerEvents: 'none'
+                        borderBottom: '3px solid #1976d2'
                       }
-                    }}
-                  >
-                    <TableCell>&nbsp;</TableCell>
-                    <TableCell>&nbsp;</TableCell>
-                    <TableCell>&nbsp;</TableCell>
-                    <TableCell>&nbsp;</TableCell>
-                    <TableCell>&nbsp;</TableCell>
-                    <TableCell>&nbsp;</TableCell>
-                    <TableCell>&nbsp;</TableCell>
-                    <TableCell>&nbsp;</TableCell>
-                    <TableCell>&nbsp;</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                    }
+                  },
+                  '& .MuiTableCell-root': {
+                    borderBottom: '1px solid #1976d2',
+                    fontFamily: 'Pretendard',
+                    fontSize: '12px',
+                    color: '#333',
+                    textAlign: 'center',
+                    padding: '8px 6px',
+                    height: '35px'
+                  }
+                }}>
+                  {seniors.map((senior) => (
+                    <TableRow 
+                      key={senior.id}
+                      className="data-row"
+                      onClick={() => handleRowClick(senior.id)}
+                    >
+                      <TableCell>{senior.name}</TableCell>
+                      <TableCell>{senior.birthDate}</TableCell>
+                      <TableCell>{senior.gender}</TableCell>
+                      <TableCell>{senior.address}</TableCell>
+                      <TableCell>{senior.phone}</TableCell>
+                      <TableCell>{senior.emergencyContact}</TableCell>
+                      <TableCell>{senior.medicalConditions}</TableCell>
+                      <TableCell>{senior.medications}</TableCell>
+                      <TableCell>{senior.specialNotes}</TableCell>
+                    </TableRow>
+                  ))}
+                  {Array.from({ length: Math.max(0, 10 - seniors.length) }).map((_, index) => (
+                    <TableRow 
+                      key={`empty-${index}`}
+                      sx={{
+                        '& .MuiTableCell-root': {
+                          userSelect: 'none',
+                          pointerEvents: 'none'
+                        }
+                      }}
+                    >
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
 
           {/* 페이지네이션 */}
           <Box sx={{

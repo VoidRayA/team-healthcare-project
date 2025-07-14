@@ -387,15 +387,14 @@ const Sjoinpage = () => {
       </Paper>
 
       <Paper sx={{
-        backgroundColor: '#ffffff',  
+        backgroundColor: '#ffffff',
         flex: 1,
         display: 'flex',
         overflow: 'auto',
-        margin: '1vw 1vw 1vw 240px',
-        height: 'calc(100vh - 2vw)',
+        margin: '1vw 1vw 1vw 80px',
+        paddingLeft: '160px',
         minHeight: 'calc(100vh - 2vw)',
-        borderRadius: 1,
-        boxShadow: 3
+        boxSizing: 'border-box',
       }}>
         <Box sx={{
           flex: 1,

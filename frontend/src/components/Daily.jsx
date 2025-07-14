@@ -4,10 +4,7 @@ import {
   Box,
   Typography,
   Paper,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
+  Button,  
   TextField,
   List,
   ListItem,
@@ -16,16 +13,15 @@ import {
   Alert,
   MenuItem,
   Select,
-  FormControl,
-  InputLabel,
+  FormControl,  
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  Pagination
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import {
   DashboardOutlined,
   PeopleOutlined,
@@ -37,487 +33,12 @@ import {
   EditOutlined
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
-import PasswordConfirmModal from './PasswordConfirmModal';
+// import PasswordConfirmModal from './PasswordConfirmModal'; // ProfileManagement에서만 사용
+import SeniorSelectModal from './modals/SeniorSelectModal';
+import CategoryManageModal from './modals/CategoryManageModal';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-
-// Home.jsx와 동일한 스타일 구조
-const MainContainer = styled(Box)({
-  width: '100vw',
-  height: '100vh',
-  backgroundColor: '#CCE5FF',
-  display: 'flex',  
-  gap: '0px',
-  overflow: 'hidden'
-});
-
-const ContentContainer = styled(Paper)({
-  backgroundColor: '#ffffff',  
-  flex: 1,
-  display: 'flex',
-  overflow: 'hidden',           // auto → hidden으로 되돌림
-  margin: '1vw 20px 1vw 240px',  // 오른쪽 여백 증가
-  height: 'calc(100vh - 2vw)',
-  minHeight: 'calc(100vh - 2vw)'
-});
-
-const Sidebar = styled(Paper)({
-  width: '240px',
-  height: '100vh',
-  backgroundColor: '#1976d2',
-  borderRadius: '0 20px 20px 0',
-  display: 'flex',
-  flexDirection: 'column',
-  padding: '20px 0',
-  color: 'white',
-  boxSizing: 'border-box',
-  flexShrink: 0,
-  position: 'fixed',
-  left: 0,
-  top: 0,
-  zIndex: 1000
-});
-
-const SidebarMenu = styled(List)({
-  padding: '0 20px',
-  flex: 1,
-  '& .MuiListItem-root': {
-    borderRadius: '12px',
-    marginBottom: '8px',
-    color: 'white',
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    '&.active': {
-      backgroundColor: 'rgba(255,255,255,0.2)',
-    },
-  },
-  '& .MuiListItemIcon-root': {
-    color: 'white',
-    minWidth: '40px',
-  }
-});
-
-// 중앙 메인 영역 - 홈 화면 구조 참조
-const MainContent = styled(Box)({
-  flex: 1,
-  display: 'flex',
-  padding: '30px 30px 30px 30px',
-  gap: '20px'
-});
-
-// 왼쪽 콘텐츠 영역 - 홈 화면과 동일
-const LeftContent = styled(Box)({
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column'
-});
-
-// 오른쪽 영역 - 높이 축소
-const RightContent = styled(Paper)({
-  width: '500px',               // 홈 화면보다 약간 더 넓게
-  height: '375px',              // 더 작은 고정 높이
-  maxHeight: '500px',           // 최대 높이 제한
-  backgroundColor: '#ffffff',
-  border: '1px solid #e0e0e0',
-  borderRadius: '15px',
-  padding: '20px 20px 15px 20px', // 하단 패딩 줄임 (20px → 15px)
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '15px',                  // 요소들 사이 간격 추가
-  overflow: 'auto'              // 내용이 넘치면 스크롤
-});
-
-// 상단 헤더
-const HeaderSection = styled(Box)({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  height: '100px',
-  marginBottom: '30px',
-  paddingTop: '20px'
-});
-
-// 페이지 제목
-const PageTitle = styled(Typography)({
-  position: 'absolute',
-  left: '280px',
-  top: '40px',
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '64px',
-  color: '#0869CC'
-});
-
-// 캘린더 영역
-const CalendarArea = styled(Box)({
-  position: 'absolute',
-  width: '650px',
-  height: '380px',
-  left: '280px',
-  top: '140px',
-  background: '#D9D9D9',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center'
-});
-
-const CalendarText = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '36px',
-  color: '#000000'
-});
-
-// 보호 대상자 목록 헤더
-const SeniorListHeader = styled(Box)({
-  position: 'absolute',
-  width: '650px',
-  height: '60px',
-  left: '280px',
-  top: '540px',
-  background: '#0869CC',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center'
-});
-
-const SeniorListHeaderText = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '28px',
-  letterSpacing: '1.2em',
-  color: '#FFFFFF'
-});
-
-// 목록 구분선들
-const ListLine = styled(Box)({
-  position: 'absolute',
-  width: '650px',
-  height: '1px',
-  left: '280px',
-  background: '#0869CC'
-});
-
-const ThickLine = styled(Box)({
-  position: 'absolute',
-  width: '650px',
-  height: '4px',
-  left: '280px',
-  top: '780px',
-  background: '#0869CC'
-});
-
-// 활동 기록 박스 - 반응형으로 변경
-const ActivityBox = styled(Paper)({
-  width: '100%',
-  height: 'auto',               // fit-content → auto로 변경
-  maxHeight: '100%',            // 최대 높이 제한
-  background: '#FDFDFD',
-  border: '1px solid #D9D9D9',
-  borderRadius: '15px',
-  padding: '20px',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '8px',                   // 15px → 8px로 감소
-  overflow: 'visible'           // 스크롤 제거
-});
-
-// 대상자 이름 영역 - 반응형으로 변경
-const SeniorNameArea = styled(Box)({
-  display: 'flex',
-  alignItems: 'baseline',
-  gap: '8px',
-  marginBottom: '5px'          // 10px → 5px로 감소
-});
-
-const SeniorName = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '32px',  // 48px에서 조금 줄임
-  color: '#00458B'
-});
-
-const SeniorNameSuffix = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '24px',  // 32px에서 조금 줄임
-  color: '#000000'
-});
-
-const DateText = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 500,
-  fontSize: '16px',
-  color: '#666',
-  marginBottom: '10px'         // 20px → 10px로 감소
-});
-
-// 저장 버튼 - 반응형으로 변경
-const SaveButton = styled(Button)({
-  alignSelf: 'flex-end',        // 오른쪽 정렬
-  width: '100px',
-  height: '40px',
-  background: '#00458B',
-  borderRadius: '10px',
-  color: '#FFFFFF',
-  fontFamily: 'Pretendard',
-  fontWeight: 500,
-  fontSize: '16px',
-  textTransform: 'none',
-  marginBottom: '5px',          // 10px → 5px로 감소
-  '&:hover': {
-    background: '#003366'
-  }
-});
-
-// 항목 추가 링크 - 반응형으로 변경
-const AddItemLink = styled(Typography)({
-  alignSelf: 'flex-end',        // 오른쪽 정렬
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '16px',
-  color: '#0869CC',
-  cursor: 'pointer',
-  marginBottom: '10px',         // 15px → 10px로 감소
-  '&:hover': {
-    textDecoration: 'underline'
-  }
-});
-
-// 항목 체크란
-const ItemCheckArea = styled(Box)({
-  position: 'absolute',
-  left: '50px',
-  top: '150px'
-});
-
-const ItemHeader = styled(Box)({
-  width: '380px',
-  height: '55px',
-  background: '#FFFFFF',
-  border: '1px solid #989898',
-  display: 'flex',
-  alignItems: 'center',
-  paddingLeft: '20px'
-});
-
-const ItemHeaderText = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '20px',
-  color: '#000000'
-});
-
-const ItemCheckBox = styled(Box)({
-  width: '380px',
-  height: '110px',
-  background: '#FFFFFF',
-  border: '1px solid #989898',
-  borderTop: 'none',
-  padding: '20px'
-});
-
-// 구분선들
-const DividerLine = styled(Box)({
-  position: 'absolute',
-  width: '380px',
-  height: '1px',
-  left: '50px',
-  background: '#CDCDCD'
-});
-
-// 수면 상태 영역
-const SleepStateArea = styled(Box)({
-  position: 'absolute',
-  left: '50px',
-  top: '340px'
-});
-
-const SleepStateTitle = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '20px',
-  color: '#000000',
-  marginBottom: '15px'
-});
-
-// 캘린더 전용 컨테이너 - 원래 높이로 복원
-const CalendarContainer = styled(Box)({
-  width: '320px',               // 홈 화면과 동일한 고정 너비
-  height: '280px',              // 원래 높이로 복원
-  marginBottom: '20px',
-  border: '1px solid #e0e0e0',
-  borderRadius: '12px',
-  padding: '15px',
-  backgroundColor: '#fafafa',
-  overflow: 'hidden',           // 컴테이너를 벗어나는 내용 숨김
-  '& .react-calendar': {
-    width: '100%',
-    border: 'none',
-    fontFamily: 'Pretendard',
-    backgroundColor: 'transparent'
-  },
-  '& .react-calendar__navigation': {
-    height: '40px',               // 높이 축소
-    display: 'flex',
-    alignItems: 'center',
-    marginBottom: '10px'          // 간격 축소
-  },
-  '& .react-calendar__navigation button': {
-    minWidth: '36px',             // 버튼 크기 축소
-    height: '36px',
-    fontSize: '16px',             // 폰트 크기 축소
-    fontWeight: 'bold',
-    borderRadius: '6px'
-  },
-  '& .react-calendar__navigation__label': {
-    fontSize: '16px',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    flex: 1
-  },
-  '& .react-calendar__month-view__weekdays': {
-    borderBottom: '1px solid #e0e0e0',
-    paddingBottom: '5px',
-    marginBottom: '5px',
-    display: 'flex',
-    justifyContent: 'space-between'
-  },
-  '& .react-calendar__month-view__weekdays__weekday': {
-    padding: '4px 4px',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#666',
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: '35px',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden'
-  },
-  '& .react-calendar__month-view__days': {
-    display: 'grid !important',
-    gridTemplateColumns: 'repeat(7, 1fr) !important',
-    gap: '2px !important'
-  },
-  '& .react-calendar__tile': {
-    padding: '8px',
-    fontSize: '0.85rem',
-    border: '1px solid #f0f0f0',
-    backgroundColor: 'white',
-    minHeight: '35px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    '&:hover': {
-      backgroundColor: '#e3f2fd'
-    }
-  },
-  '& .react-calendar__tile--active': {
-    backgroundColor: '#1976d2 !important',
-    color: 'white',
-    border: '1px solid #1976d2'
-  },
-  '& .react-calendar__tile--now': {
-    backgroundColor: '#e3f2fd',
-    color: '#white',
-    border: '1px solid #1976d2'
-  }
-});
-// 테이블 컨테이너 - 파란색 테두리 추가
-const StyledTableContainer = styled(TableContainer)({
-  backgroundColor: '#ffffff',
-  borderRadius: '0',
-  border: '2px solid #1976d2',
-  boxShadow: 'none'
-});
-
-// 테이블 헤더 - 높이 줄임
-const StyledTableHead = styled(TableHead)({
-  '& .MuiTableCell-root': {
-    backgroundColor: 'rgba(51, 153, 255, 0.3)',
-    borderBottom: '2px solid #1976d2',
-    fontFamily: 'Pretendard',
-    fontWeight: 700,
-    fontSize: '14px',
-    color: '#000',
-    textAlign: 'center',
-    padding: '12px 6px',
-    height: '45px'
-  }
-});
-
-// 테이블 바디 - 높이 줄임 + 클릭 가능
-const StyledTableBody = styled(TableBody)({
-  '& .MuiTableRow-root': {
-    '&:nth-of-type(even)': {
-      backgroundColor: '#f8f9fa'
-    },
-    '&:hover': {
-      backgroundColor: '#e3f2fd',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s ease'
-    },
-    '&.selected': {
-      backgroundColor: '#bbdefb !important',
-      '&:hover': {
-        backgroundColor: '#90caf9 !important'
-      }
-    }
-  },
-  '& .MuiTableCell-root': {
-    borderBottom: '1px solid #1976d2',
-    fontFamily: 'Pretendard',
-    fontSize: '12px',
-    color: '#333',
-    textAlign: 'center',
-    padding: '8px 6px',
-    height: '35px'
-  }
-});
-
-const SpecialNotesArea = styled(Box)({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '10px',
-  marginTop: '10px'             // 20px → 10px로 감소
-});
-
-const SpecialNotesTitle = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '18px',
-  color: '#000000'
-});
-
-const SpecialNotesBox = styled(TextField)({
-  width: '100%',
-  '& .MuiOutlinedInput-root': {
-    background: '#FFFFFF',
-    border: '1px solid #989898',
-    borderRadius: '8px',
-    '& fieldset': {
-      border: 'none'
-    },
-    '& textarea': {
-      resize: 'vertical',
-      minHeight: '120px',
-      maxHeight: '200px',
-      fontFamily: 'Pretendard',
-      fontSize: '14px',
-      lineHeight: '1.5',
-      padding: '12px'
-    }
-  },
-  '& .MuiInputBase-input::placeholder': {
-    color: '#999999',
-    fontFamily: 'Pretendard'
-  }
-});
+import { getUserInfo, clearAuthData, getAuthToken } from '../utils/auth';
 
 const Daily = () => {
   const navigate = useNavigate();
@@ -535,7 +56,9 @@ const Daily = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  // const [showPasswordModal, setShowPasswordModal] = useState(false); // ProfileManagement에서만 처리
+  const [showSeniorSelectModal, setShowSeniorSelectModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   
   // 드롭다운 관련 상태
   const [dropdownItems, setDropdownItems] = useState([]);
@@ -551,15 +74,13 @@ const Daily = () => {
   });
 
   useEffect(() => {
-    const savedName = localStorage.getItem('guardianName');
-    const savedLoginId = localStorage.getItem('loginId');
-    const savedRole = localStorage.getItem('role');
+    const userInfo = getUserInfo();
     
-    if (savedName && savedLoginId) {
+    if (userInfo) {
       setGuardianInfo({
-        name: savedName,
-        loginId: savedLoginId,
-        role: savedRole || 'GUARDIAN'
+        name: userInfo.name,
+        loginId: userInfo.loginId,
+        role: userInfo.role || 'GUARDIAN'
       });
     }
     
@@ -572,7 +93,7 @@ const Daily = () => {
   // 보호 대상자 목록 로드
   const loadSeniors = async () => {
     try {
-      const token = localStorage.getItem('jwt');
+      const token = getAuthToken();
       
       if (!token) {
         console.log('JWT 토큰이 없습니다. 더미 데이터를 사용합니다.');
@@ -641,7 +162,7 @@ const Daily = () => {
     try {
       setLoading(true);
       
-      const token = localStorage.getItem('jwt');
+      const token = getAuthToken();
       if (!token) {
         console.log('JWT 토큰이 없습니다. 더미 데이터를 사용합니다.');
         // 토큰이 없을 때 더미 데이터
@@ -743,7 +264,7 @@ const Daily = () => {
   // 저장 핸들러
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem('jwt');
+      const token = getAuthToken();
       
       const saveData = {
         selectedItems,
@@ -784,23 +305,26 @@ const Daily = () => {
     }
   };
 
-  // 비밀번호 확인 모달 열기
-  const handleProfileManagementClick = () => {
-    setShowPasswordModal(true);
+  // 대상자 선택 핸들러
+  const handleSeniorSelect = (senior) => {
+    setSelectedSenior(senior);
+    setShowSeniorSelectModal(false);
+    console.log('선택된 대상자:', senior);
   };
-
-  // 비밀번호 확인 성공 시 회원정보 관리로 이동
-  const handlePasswordConfirm = () => {
-    navigate('/profile/management');
+  
+  // 카테고리 업데이트 핸들러
+  const handleCategoryUpdate = () => {
+    console.log('카테고리 업데이트됨 - 드롭다운 새로고침');
+    fetchDropdownData(); // 드롭다운 데이터 새로고침
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('jwt');
-    localStorage.removeItem('loginId');
-    localStorage.removeItem('guardianName');
-    localStorage.removeItem('role');
+    clearAuthData();
     
     alert('로그아웃 되었습니다.');
+    
+    // 커스텀 이벤트 발생
+    window.dispatchEvent(new Event('authStateChange'));
     window.location.reload();
   };
 
@@ -815,9 +339,32 @@ const Daily = () => {
   ];
 
   return (
-    <MainContainer>
+    <Box sx={{
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: '#CCE5FF',
+      display: 'flex',
+      gap: '0px',
+      overflow: 'hidden'
+    }}>
       {/* 사이드바 */}
-      <Sidebar elevation={0}>
+      <Paper sx={{
+        width: '240px',
+        height: '100vh',
+        backgroundColor: '#1976d2',
+        borderRadius: '0 20px 20px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '20px 0',
+        color: 'white',
+        boxSizing: 'border-box',
+        flexShrink: 0,
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        zIndex: 1000,
+        boxShadow: 10
+      }} elevation={0}>
         <Box sx={{ 
           px: 2, 
           py: 3, 
@@ -858,7 +405,26 @@ const Daily = () => {
           </Typography>
         </Box>
 
-        <SidebarMenu>
+        <List sx={{
+          padding: '0 20px',
+          flex: 1,
+          '& .MuiListItem-root': {
+            borderRadius: '12px',
+            marginBottom: '8px',
+            color: 'white',
+            cursor: 'pointer',
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,0.1)',
+            },
+            '&.active': {
+              backgroundColor: 'rgba(255,255,255,0.2)',
+            },
+          },
+          '& .MuiListItemIcon-root': {
+            color: 'white',
+            minWidth: '40px',
+          }
+        }}>
           {menuItems.map((item, index) => {
             const IconComponent = item.icon;
             return (
@@ -869,7 +435,8 @@ const Daily = () => {
                   if (item.text === '홈') {
                     navigate('/home');
                   } else if (item.text === '회원정보 관리') {
-                    handleProfileManagementClick();
+                    // 직접 ProfileManagement로 이동 (모달은 ProfileManagement에서 처리)
+                    navigate('/profile/management');
                   } else if (item.text === '보호 대상자') {
                     navigate('/seniors');
                   } else if (item.text === '일정 관리') {
@@ -886,7 +453,7 @@ const Daily = () => {
               </ListItem>
             );
           })}
-        </SidebarMenu>
+        </List>
 
         <Box sx={{ px: 2 }}>
           <ListItem
@@ -906,75 +473,377 @@ const Daily = () => {
             <ListItemText primary="로그아웃" />
           </ListItem>
         </Box>
-      </Sidebar>
+      </Paper>
 
-      <ContentContainer elevation={0}>
-        <MainContent>
-          <LeftContent>
-            {/* 페이지 제목 */}
-            <Typography variant="h2" sx={{
-              fontFamily: 'Pretendard',
-              fontWeight: 700,
-              fontSize: '32px',
-              color: '#0869CC',
-              marginBottom: '30px'
+      <Paper sx={{
+        backgroundColor: '#ffffff',
+        flex: 1,
+        display: 'flex',
+        overflow: 'auto',
+        margin: '1vw 1vw 1vw 240px',
+        height: 'calc(100vh - 2vw)',
+        minHeight: 'calc(100vh - 2vw)',
+        boxShadow: 3
+      }} elevation={0}>
+        <Box sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '30px',
+          gap: '30px'
+        }}>
+          {/* 상단 영역: 달력 + 활동기록 */}
+          <Box sx={{
+            display: 'flex',
+            gap: '30px',
+            height: 'fit-content'
+          }}>
+            {/* 달력 영역 */}
+            <Box sx={{
+              flex: '0 0 350px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
             }}>
-              일정 관리
-            </Typography>
-
-            {/* 캘린더 영역 */}
-            <CalendarContainer>
-              <Calendar
-                onChange={(date) => {
-                  console.log('달력에서 선택된 날짜:', date);
-                  setSelectedDate(date);
-                }}
-                value={selectedDate}
-                locale="ko-KR"
-                formatShortWeekday={(locale, date) => {
-                  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-                  return weekdays[date.getDay()];
-                }}
-                formatDay={(locale, date) => date.getDate().toString()}
-              />
-            </CalendarContainer>
-
-            {/* 보호 대상자 목록 */}
-            <Box sx={{ marginTop: '30px' }}>
-              <Typography variant="h6" sx={{
+              <Typography variant="h2" sx={{
                 fontFamily: 'Pretendard',
                 fontWeight: 700,
-                fontSize: '20px',
+                fontSize: '28px',
                 color: '#0869CC',
-                marginBottom: '15px'
+                marginBottom: '20px'
               }}>
-                보호 대상자 목록
+                일정 관리
               </Typography>
-              
-              {loading ? (
-                <Typography sx={{ p: 2, textAlign: 'center' }}>로딩 중...</Typography>
-              ) : seniors.length > 0 ? (
-                <StyledTableContainer component={Paper}>
+
+              <Box sx={{
+                width: '320px',
+                height: '280px',
+                marginBottom: '20px',
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                padding: '15px',
+                backgroundColor: '#fafafa',
+                overflow: 'hidden',
+                '& .react-calendar': {
+                  width: '100%',
+                  border: 'none',
+                  fontFamily: 'Pretendard',
+                  backgroundColor: 'transparent'
+                },
+                '& .react-calendar__navigation': {
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: '10px'
+                },
+                '& .react-calendar__navigation button': {
+                  minWidth: '36px',
+                  height: '36px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  borderRadius: '6px'
+                },
+                '& .react-calendar__navigation__label': {
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  flex: 1
+                },
+                '& .react-calendar__month-view__weekdays': {
+                  borderBottom: '1px solid #e0e0e0',
+                  paddingBottom: '5px',
+                  marginBottom: '5px',
+                  display: 'flex',
+                  justifyContent: 'space-between'
+                },
+                '& .react-calendar__month-view__weekdays__weekday': {
+                  padding: '4px 4px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  color: '#666',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '35px',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden'
+                },
+                '& .react-calendar__month-view__days': {
+                  display: 'grid !important',
+                  gridTemplateColumns: 'repeat(7, 1fr) !important',
+                  gap: '2px !important'
+                },
+                '& .react-calendar__tile': {
+                  padding: '8px',
+                  fontSize: '0.85rem',
+                  border: '1px solid #f0f0f0',
+                  backgroundColor: 'white',
+                  minHeight: '35px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  '&:hover': {
+                    backgroundColor: '#e3f2fd'
+                  }
+                },
+                '& .react-calendar__tile--active': {
+                  backgroundColor: '#1976d2 !important',
+                  color: 'white',
+                  border: '1px solid #1976d2'
+                },
+                '& .react-calendar__tile--now': {
+                  backgroundColor: '#e3f2fd',
+                  color: '#white',
+                  border: '1px solid #1976d2'
+                }
+              }}>
+                <Calendar
+                  onChange={(date) => {
+                    console.log('달력에서 선택된 날짜:', date);
+                    setSelectedDate(date);
+                  }}
+                  value={selectedDate}
+                  locale="ko-KR"
+                  formatShortWeekday={(locale, date) => {
+                    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                    return weekdays[date.getDay()];
+                  }}
+                  formatDay={(locale, date) => date.getDate().toString()}
+                />
+              </Box>
+            </Box>
+
+            {/* 활동기록 영역 */}
+            <Paper sx={{
+              flex: 1,
+              backgroundColor: '#ffffff',
+              border: '1px solid #e0e0e0',
+              borderRadius: '15px',
+              padding: '25px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}>
+              {/* 활동 기록 헤더 */}
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <Typography variant="h6" sx={{
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '20px',
+                  color: '#0869CC'
+                }}>
+                  {selectedSenior ? selectedSenior.seniorName : '대상자 선택'}님 활동 기록
+                </Typography>
+
+                <Typography sx={{
+                  fontFamily: 'Pretendard',
+                  fontSize: '14px',
+                  color: '#666'
+                }}>
+                  {new Date().toLocaleDateString('ko-KR')}
+                </Typography>
+              </Box>
+
+              {/* 상단 액션 영역 */}
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <Typography sx={{
+                  fontFamily: 'Pretendard',
+                  fontSize: '14px',
+                  color: '#0869CC',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    textDecoration: 'underline'
+                  }
+                }}
+                onClick={() => setShowCategoryModal(true)}
+                >
+                  + 항목 관리
+                </Typography>
+
+                <Button
+                  onClick={handleSave}
+                  sx={{
+                    backgroundColor: '#00458B',
+                    color: 'white',
+                    fontFamily: 'Pretendard',
+                    fontSize: '14px',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    '&:hover': {
+                      backgroundColor: '#003366'
+                    }
+                  }}
+                >
+                  저장
+                </Button>
+              </Box>
+
+              {/* 드롭다운 */}
+              <Box>
+                <FormControl fullWidth>
+                  <Select
+                    value={selectedItems[dropdownItems[0]] || ''}
+                    onChange={(e) => handleItemChange(dropdownItems[0], e.target.value)}
+                    displayEmpty
+                    sx={{
+                      fontFamily: 'Pretendard',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <MenuItem value="">선택하세요</MenuItem>
+                    {dropdownItems.map((itemValue, index) => (
+                      <MenuItem key={index} value={itemValue}>
+                        {itemValue}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {/* 일일 특이사항 */}
+              <Box sx={{ flex: 1 }}>
+                <Typography sx={{
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '16px',
+                  marginBottom: '15px'
+                }}>
+                  일일 특이사항
+                </Typography>
+                <TextField
+                  multiline
+                  rows={5}
+                  value={formData.specialNotes}
+                  onChange={handleInputChange}
+                  name="specialNotes"
+                  placeholder="특이사항을 입력하세요..."
+                  variant="outlined"
+                  fullWidth
+                  sx={{
+                    '& .MuiInputBase-input': {
+                      fontFamily: 'Pretendard',
+                      fontSize: '14px'
+                    }
+                  }}
+                />
+              </Box>
+            </Paper>
+          </Box>
+
+          {/* 하단 영역: 보호 대상자 목록 */}
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '15px'
+          }}>
+            <Typography variant="h6" sx={{
+              fontFamily: 'Pretendard',
+              fontWeight: 700,
+              fontSize: '22px',
+              color: '#0869CC',
+              marginBottom: '15px'
+            }}>
+              보호 대상자 목록
+            </Typography>
+            
+            {loading ? (
+              <Typography sx={{ p: 2, textAlign: 'center' }}>로딩 중...</Typography>
+            ) : seniors.length > 0 ? (
+              <>
+                <TableContainer component={Paper} sx={{
+                  backgroundColor: '#ffffff',
+                  borderRadius: '0',
+                  border: '2px solid #1976d2',
+                  boxShadow: 'none'
+                }}>
                   <Table>
-                    <StyledTableHead>
+                    <TableHead sx={{
+                      '& .MuiTableCell-root': {
+                        backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                        borderBottom: '2px solid #1976d2',
+                        fontFamily: 'Pretendard',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        color: '#000',
+                        textAlign: 'center',
+                        padding: '6px 6px',
+                        height: '25px'
+                      }
+                    }}>
                       <TableRow>
                         <TableCell>이름</TableCell>
                         <TableCell>나이</TableCell>
+                        <TableCell>전화번호</TableCell>
+                        <TableCell>주소</TableCell>
+                        <TableCell>비상연락처</TableCell>
+                        <TableCell>지병</TableCell>
+                        <TableCell>복용 약물</TableCell>
+                        <TableCell>특이사항</TableCell>
                         <TableCell>상태</TableCell>
                       </TableRow>
-                    </StyledTableHead>
-                    <StyledTableBody>
+                    </TableHead>
+                    <TableBody sx={{
+                      '& .MuiTableRow-root': {
+                        '&:nth-of-type(even)': {
+                          backgroundColor: '#f8f9fa'
+                        },
+                        '&.data-row:hover': {
+                          backgroundColor: '#e3f2fd',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s ease'
+                        },
+                        '&.data-row.selected': {
+                          backgroundColor: '#bbdefb !important',
+                          '&:hover': {
+                            backgroundColor: '#90caf9 !important'
+                          }
+                        },
+                        '&:last-child': {
+                          '& .MuiTableCell-root': {
+                            borderBottom: 'none'
+                          }
+                        }
+                      },
+                      '& .MuiTableCell-root': {
+                        borderBottom: '1px solid #1976d2',
+                        fontFamily: 'Pretendard',
+                        fontSize: '12px',
+                        color: '#333',
+                        textAlign: 'center',
+                        padding: '6px 6px',
+                        height: '25px'
+                      }
+                    }}>
                       {seniors.map((senior, index) => (
                         <TableRow 
                           key={senior.id}
+                          className="data-row"
                           onClick={() => {
                             console.log('선택된 Senior:', senior);
                             setSelectedSenior(senior);
                           }}
-                          className={selectedSenior && selectedSenior.id === senior.id ? 'selected' : ''}
+                          sx={{
+                            backgroundColor: selectedSenior && selectedSenior.id === senior.id ? '#bbdefb !important' : 'inherit'
+                          }}
                         >
                           <TableCell>{senior.seniorName}</TableCell>
                           <TableCell>{senior.age ? `${senior.age}세` : '-'}</TableCell>
+                          <TableCell>{senior.phoneNumber || '-'}</TableCell>
+                          <TableCell>{senior.address || '-'}</TableCell>
+                          <TableCell>{senior.emergencyContact || '-'}</TableCell>
+                          <TableCell>{senior.medicalConditions || '-'}</TableCell>
+                          <TableCell>{senior.medications || '-'}</TableCell>
+                          <TableCell>{senior.specialNotes || '-'}</TableCell>
                           <TableCell 
                             sx={{
                               color: selectedSenior && selectedSenior.id === senior.id ? '#1976d2' : '#666',
@@ -986,163 +855,81 @@ const Daily = () => {
                         </TableRow>
                       ))}
                       {/* 빈 행들 (디자인을 위해) */}
-                      {Array.from({ length: Math.max(0, 5 - seniors.length) }).map((_, index) => (
-                        <TableRow key={`empty-${index}`}>
+                      {Array.from({ length: Math.max(0, 6 - seniors.length) }).map((_, index) => (
+                        <TableRow 
+                          key={`empty-${index}`}
+                          sx={{
+                            '& .MuiTableCell-root': {
+                              userSelect: 'none',
+                              pointerEvents: 'none'
+                            }
+                          }}
+                        >
+                          <TableCell>&nbsp;</TableCell>
+                          <TableCell>&nbsp;</TableCell>
+                          <TableCell>&nbsp;</TableCell>
+                          <TableCell>&nbsp;</TableCell>
+                          <TableCell>&nbsp;</TableCell>
+                          <TableCell>&nbsp;</TableCell>
                           <TableCell>&nbsp;</TableCell>
                           <TableCell>&nbsp;</TableCell>
                           <TableCell>&nbsp;</TableCell>
                         </TableRow>
                       ))}
-                    </StyledTableBody>
+                    </TableBody>
                   </Table>
-                </StyledTableContainer>
-              ) : (
+                </TableContainer>
+
+                {/* 페이지네이션 */}
+                <Box sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  marginTop: '15px',
+                  padding: '10px 0',
+                  gap: '8px'
+                }}>
+                  <Pagination 
+                    count={1}
+                    page={1}
+                    onChange={(event, page) => console.log('Page changed to:', page)}
+                    color="primary"
+                    showFirstButton 
+                    showLastButton
+                  />
+                  <Typography variant="body2" sx={{ color: '#666' }}>
+                    1/1
+                  </Typography>
+                </Box>
+              </>
+            ) : (
+              <Paper sx={{ p: 4, textAlign: 'center', border: '2px solid #1976d2' }}>
                 <Typography sx={{
                   fontFamily: 'Pretendard',
                   color: '#666666',
-                  textAlign: 'center',
-                  padding: '20px'
+                  fontSize: '16px'
                 }}>
                   등록된 보호 대상자가 없습니다.
                 </Typography>
-              )}
-            </Box>
-          </LeftContent>
+              </Paper>
+            )}
+          </Box>
+        </Box>
+      </Paper>
 
-          <RightContent>
-            {/* 활동 기록 헤더 */}
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: { xs: 'column', sm: 'row' },
-              justifyContent: 'space-between',
-              alignItems: { xs: 'flex-start', sm: 'center' },
-              gap: { xs: '8px', sm: '0' }
-            }}>
-              <Typography variant="h6" sx={{
-                fontFamily: 'Pretendard',
-                fontWeight: 700,
-                fontSize: { xs: '20px', md: '24px' },
-                color: '#0869CC',
-                lineHeight: 1.2
-              }}>
-                {selectedSenior ? selectedSenior.seniorName : '대상자 선택'}님 활동 기록
-              </Typography>
-
-              {/* 날짜 */}
-              <Typography sx={{
-                fontFamily: 'Pretendard',
-                fontSize: { xs: '14px', md: '16px' },
-                color: '#666',
-                whiteSpace: 'nowrap'
-              }}>
-                {new Date().toLocaleDateString('ko-KR')}
-              </Typography>
-            </Box>
-
-            {/* 상단 액션 영역 */}
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: { xs: 'column', sm: 'row' },
-              justifyContent: 'space-between',
-              alignItems: { xs: 'stretch', sm: 'center' },
-              gap: { xs: '12px', sm: '16px' }
-            }}>
-              {/* 항목 추가 링크 */}
-              <Typography sx={{
-                fontFamily: 'Pretendard',
-                fontSize: { xs: '14px', md: '16px' },
-                color: '#0869CC',
-                cursor: 'pointer',
-                order: { xs: 2, sm: 1 },
-                '&:hover': {
-                  textDecoration: 'underline'
-                }
-              }}>
-                + 항목 추가
-              </Typography>
-
-              {/* 저장 버튼 */}
-              <Button
-                onClick={handleSave}
-                size="small"
-                sx={{
-                  backgroundColor: '#00458B',
-                  color: 'white',
-                  fontFamily: 'Pretendard',
-                  fontSize: { xs: '14px', md: '16px' },
-                  padding: { xs: '8px 16px', md: '10px 20px' },
-                  borderRadius: '8px',
-                  order: { xs: 1, sm: 2 },
-                  minHeight: '40px',
-                  '&:hover': {
-                    backgroundColor: '#003366'
-                  }
-                }}
-              >
-                저장
-              </Button>
-            </Box>
-
-            {/* 드롭다운 */}
-            <Box>
-              <FormControl fullWidth size="small">
-                <Select
-                  value={selectedItems[dropdownItems[0]] || ''}
-                  onChange={(e) => handleItemChange(dropdownItems[0], e.target.value)}
-                  displayEmpty
-                  sx={{
-                    fontFamily: 'Pretendard',
-                    fontSize: { xs: '14px', md: '16px' },
-                    minHeight: '40px'
-                  }}
-                >
-                  <MenuItem value="">선택하세요</MenuItem>
-                  {dropdownItems.map((itemValue, index) => (
-                    <MenuItem key={index} value={itemValue}>
-                      {itemValue}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
-
-            {/* 일일 특이사항 */}
-            <Box sx={{ marginBottom: '0px' }}> {/* 하단 여백 제거 */}
-              <Typography sx={{
-                fontFamily: 'Pretendard',
-                fontWeight: 700,
-                fontSize: '18px',
-                marginBottom: '10px'
-              }}>
-                일일 특이사항
-              </Typography>
-              <TextField
-                multiline
-                rows={6}
-                value={formData.specialNotes}
-                onChange={handleInputChange}
-                name="specialNotes"
-                placeholder="특이사항을 입력하세요..."
-                variant="outlined"
-                fullWidth
-                sx={{
-                  '& .MuiInputBase-input': {
-                    fontFamily: 'Pretendard',
-                    fontSize: '14px'
-                  },
-                  marginBottom: '0px' // TextField 하단 여백 제거
-                }}
-              />
-            </Box>
-          </RightContent>
-        </MainContent>
-      </ContentContainer>
-
-      {/* 비밀번호 확인 모달 */}
-      <PasswordConfirmModal 
-        open={showPasswordModal}
-        onClose={() => setShowPasswordModal(false)}
-        onConfirm={handlePasswordConfirm}
+      {/* 대상자 선택 모달 */}
+      <SeniorSelectModal
+        open={showSeniorSelectModal}
+        onClose={() => setShowSeniorSelectModal(false)}
+        onSelect={handleSeniorSelect}
+        selectedSenior={selectedSenior}
+      />
+      
+      {/* 카테고리 관리 모달 */}
+      <CategoryManageModal
+        open={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+        onUpdate={handleCategoryUpdate}
       />
 
       {/* 메시지 표시 */}
@@ -1174,7 +961,7 @@ const Daily = () => {
           {success}
         </Alert>
       )}
-    </MainContainer>
+    </Box>
   );
 };
 

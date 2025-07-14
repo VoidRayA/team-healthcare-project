@@ -17,7 +17,14 @@ import {
   MenuItem,
   Select,
   FormControl,
-  InputLabel
+  InputLabel,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -28,10 +35,14 @@ import {
   EventOutlined,
   MessageOutlined,
   LogoutOutlined,
-  EditOutlined
+  EditOutlined,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  PersonAdd as PersonAddIcon
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
-import PasswordConfirmModal from './PasswordConfirmModal';
+import PasswordConfirmModal from '../components/PasswordConfirmModal';
+import SeniorSelectModal from '../components/modals/SeniorSelectModal';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
@@ -52,7 +63,8 @@ const ContentContainer = styled(Paper)({
   overflow: 'auto',
   margin: '1vw 1vw 1vw 240px',
   height: 'calc(100vh - 2vw)',
-  minHeight: 'calc(100vh - 2vw)'
+  minHeight: 'calc(100vh - 2vw)',
+  boxShadow: 3
 });
 
 const Sidebar = styled(Paper)({
@@ -69,7 +81,8 @@ const Sidebar = styled(Paper)({
   position: 'fixed',
   left: 0,
   top: 0,
-  zIndex: 1000
+  zIndex: 1000,
+  boxShadow: 10
 });
 
 const SidebarMenu = styled(List)({
@@ -161,14 +174,105 @@ const CalendarBox = styled(Paper)({
   justifyContent: 'center'
 });
 
-// 보호 대상자 목록 박스
-const SeniorListBox = styled(Paper)({
+// 활동기록 목록 박스
+const ActivityListBox = styled(Paper)({
   backgroundColor: '#ffffff',
   border: '1px solid #e0e0e0',
   borderRadius: '15px',
   padding: '20px',
   minHeight: '400px',
   overflow: 'auto'
+});
+
+// 활동기록 테이블 스타일
+const ActivityTableContainer = styled(TableContainer)({
+  backgroundColor: '#ffffff',
+  borderRadius: '8px',
+  border: '1px solid #e0e0e0',
+  maxHeight: '300px'
+});
+
+const ActivityTableHead = styled(TableHead)({
+  '& .MuiTableCell-root': {
+    backgroundColor: '#f5f5f5',
+    borderBottom: '1px solid #e0e0e0',
+    fontFamily: 'Pretendard',
+    fontWeight: 600,
+    fontSize: '14px',
+    color: '#333',
+    textAlign: 'center',
+    padding: '12px 8px'
+  }
+});
+
+const ActivityTableBody = styled(TableBody)({
+  '& .MuiTableRow-root': {
+    '&:nth-of-type(even)': {
+      backgroundColor: '#fafafa'
+    },
+    '&:hover': {
+      backgroundColor: '#f0f0f0'
+    }
+  },
+  '& .MuiTableCell-root': {
+    borderBottom: '1px solid #e0e0e0',
+    fontFamily: 'Pretendard',
+    fontSize: '12px',
+    color: '#333',
+    textAlign: 'center',
+    padding: '8px'
+  }
+});
+
+// 대상자 선택 버튼
+const SelectSeniorButton = styled(Button)({
+  width: '100%',
+  height: '50px',
+  backgroundColor: '#f8f9fa',
+  border: '2px dashed #1976d2',
+  borderRadius: '8px',
+  color: '#1976d2',
+  fontFamily: 'Pretendard',
+  fontWeight: 600,
+  fontSize: '16px',
+  textTransform: 'none',
+  marginBottom: '20px',
+  '&:hover': {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#1565c0'
+  }
+});
+
+// 선택된 대상자 표시 영역
+const SelectedSeniorArea = styled(Box)({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '15px',
+  backgroundColor: '#e3f2fd',
+  borderRadius: '8px',
+  marginBottom: '20px',
+  border: '1px solid #1976d2'
+});
+
+const SelectedSeniorInfo = styled(Box)({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px'
+});
+
+const ChangeButton = styled(Button)({
+  minWidth: '60px',
+  height: '30px',
+  backgroundColor: '#1976d2',
+  color: 'white',
+  fontSize: '12px',
+  fontFamily: 'Pretendard',
+  fontWeight: 600,
+  textTransform: 'none',
+  '&:hover': {
+    backgroundColor: '#1565c0'
+  }
 });
 
 // 박스 제목
@@ -282,12 +386,14 @@ const Daily = () => {
   });
   
   // 상태 관리
-  const [seniors, setSeniors] = useState([]);
+  const [selectedSenior, setSelectedSenior] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showSeniorSelectModal, setShowSeniorSelectModal] = useState(false);
+  const [activityRecords, setActivityRecords] = useState([]);
   
   // 폼 데이터
   const [formData, setFormData] = useState({
@@ -310,26 +416,73 @@ const Daily = () => {
         role: savedRole || 'GUARDIAN'
       });
     }
-    
-    // 보호 대상자 목록 로드
-    loadSeniors();
   }, []);
 
-  // 보호 대상자 목록 로드
-  const loadSeniors = async () => {
+  // 선택된 대상자나 날짜가 변경될 때 활동기록 로드
+  useEffect(() => {
+    if (selectedSenior && selectedDate) {
+      loadActivityRecords();
+    }
+  }, [selectedSenior, selectedDate]);
+
+  // 활동기록 목록 로드
+  const loadActivityRecords = async () => {
+    if (!selectedSenior) return;
+    
     try {
       const token = localStorage.getItem('jwt');
       if (!token) return;
 
-      // TODO: 실제 API 호출
-      setSeniors([
-        { id: 1, seniorName: '김할머니' },
-        { id: 2, seniorName: '이할아버지' }
-      ]);
+      setLoading(true);
+      
+      // 실제 API 호출
+      const response = await fetch(`/api/seniors/${selectedSenior.id}/dailyActivities`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('활동기록 데이터:', data);
+        
+        // 백엔드 응답 구조에 맞게 데이터 변환
+        if (data.activities && Array.isArray(data.activities)) {
+          const formattedRecords = data.activities.map(activity => ({
+            id: activity.id,
+            date: activity.activityDate,
+            breakfast: activity.breakfast || false,
+            lunch: activity.lunch || false,
+            dinner: activity.dinner || false,
+            sleepQuality: activity.sleepQuality || '',
+            specialNotes: activity.specialNotes || '',
+            createdAt: activity.createdAt ? new Date(activity.createdAt).toLocaleString('ko-KR') : ''
+          }));
+          setActivityRecords(formattedRecords);
+        } else {
+          setActivityRecords([]);
+        }
+      } else {
+        console.error('활동기록 로드 실패:', response.status);
+        setError('활동기록을 불러오는데 실패했습니다.');
+        setActivityRecords([]);
+      }
       
     } catch (error) {
-      console.error('보호 대상자 목록 로드 오류:', error);
+      console.error('활동기록 로드 오류:', error);
+      setError('네트워크 오류가 발생했습니다.');
+      setActivityRecords([]);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // 대상자 선택
+  const handleSeniorSelect = (senior) => {
+    setSelectedSenior(senior);
+    setShowSeniorSelectModal(false);
   };
 
   // 폼 체크박스 핸들러
@@ -350,18 +503,129 @@ const Daily = () => {
 
   // 저장 핸들러
   const handleSave = async () => {
+    if (!selectedSenior) {
+      setError('보호 대상자를 먼저 선택해주세요.');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('jwt');
-      if (!token) return;
+      if (!token) {
+        setError('로그인이 필요합니다.');
+        return;
+      }
 
-      // TODO: 실제 API 호출
-      console.log('저장할 데이터:', formData);
-      
-      setSuccess('활동 기록이 저장되었습니다.');
+      setLoading(true);
+      setError('');
+      setSuccess('');
+
+      // 백엔드 API 구조에 맞게 데이터 구성
+      const saveData = {
+        activityDate: selectedDate.toISOString().split('T')[0],
+        breakfast: formData.breakfast,
+        lunch: formData.lunch,
+        dinner: formData.dinner,
+        sleepQuality: formData.sleepQuality,
+        specialNotes: formData.specialNotes
+      };
+
+      console.log('저장할 데이터:', saveData);
+
+      const response = await fetch(`/api/seniors/${selectedSenior.id}/dailyActivities`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(saveData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('저장 성공:', result);
+        setSuccess('활동 기록이 저장되었습니다.');
+        
+        // 폼 초기화
+        setFormData({
+          breakfast: false,
+          lunch: false,
+          dinner: false,
+          sleepQuality: '',
+          specialNotes: ''
+        });
+
+        // 목록 새로고침
+        await loadActivityRecords();
+      } else {
+        const errorText = await response.text();
+        console.error('저장 실패:', response.status, errorText);
+        
+        if (response.status === 409) {
+          setError('해당 날짜의 활동 기록이 이미 존재합니다.');
+        } else {
+          setError('저장에 실패했습니다: ' + errorText);
+        }
+      }
       
     } catch (error) {
       console.error('저장 오류:', error);
-      setError('저장에 실패했습니다.');
+      setError('네트워크 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 활동기록 수정
+  const handleEditRecord = (record) => {
+    setFormData({
+      breakfast: record.breakfast,
+      lunch: record.lunch,
+      dinner: record.dinner,
+      sleepQuality: record.sleepQuality,
+      specialNotes: record.specialNotes
+    });
+    
+    // 해당 날짜로 달력 이동
+    setSelectedDate(new Date(record.date));
+  };
+
+  // 활동기록 삭제
+  const handleDeleteRecord = async (recordId) => {
+    if (!confirm('이 활동기록을 삭제하시겠습니까?')) return;
+
+    try {
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        setError('로그인이 필요합니다.');
+        return;
+      }
+
+      setLoading(true);
+      setError('');
+      setSuccess('');
+
+      const response = await fetch(`/api/seniors/${selectedSenior.id}/dailyActivities/${recordId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        setSuccess('활동기록이 삭제되었습니다.');
+        await loadActivityRecords();
+      } else {
+        const errorText = await response.text();
+        console.error('삭제 실패:', response.status, errorText);
+        setError('삭제에 실패했습니다: ' + errorText);
+      }
+      
+    } catch (error) {
+      console.error('삭제 오류:', error);
+      setError('네트워크 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -531,30 +795,87 @@ const Daily = () => {
                 />
               </CalendarBox>
 
-              {/* 보호 대상자 목록 박스 */}
-              <SeniorListBox>
-                <BoxTitle>보호 대상자 목록</BoxTitle>
-                {seniors.map((senior) => (
-                  <Box key={senior.id} sx={{
-                    padding: '15px',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '8px',
-                    marginBottom: '10px',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      backgroundColor: '#e9ecef'
-                    }
+              {/* 등록된 활동기록 목록 박스 */}
+              <ActivityListBox>
+                <BoxTitle>등록된 활동기록</BoxTitle>
+                {selectedSenior ? (
+                  <ActivityTableContainer component={Paper}>
+                    <Table stickyHeader size="small">
+                      <ActivityTableHead>
+                        <TableRow>
+                          <TableCell>날짜</TableCell>
+                          <TableCell>아침</TableCell>
+                          <TableCell>점심</TableCell>
+                          <TableCell>저녁</TableCell>
+                          <TableCell>수면상태</TableCell>
+                          <TableCell>특이사항</TableCell>
+                          <TableCell>등록시간</TableCell>
+                          <TableCell>작업</TableCell>
+                        </TableRow>
+                      </ActivityTableHead>
+                      <ActivityTableBody>
+                        {loading ? (
+                          <TableRow>
+                            <TableCell colSpan={8} sx={{ textAlign: 'center', padding: '20px' }}>
+                              로딩 중...
+                            </TableCell>
+                          </TableRow>
+                        ) : activityRecords.length > 0 ? (
+                          activityRecords.map((record) => (
+                            <TableRow key={record.id}>
+                              <TableCell>{record.date}</TableCell>
+                              <TableCell>{record.breakfast ? '✓' : '✗'}</TableCell>
+                              <TableCell>{record.lunch ? '✓' : '✗'}</TableCell>
+                              <TableCell>{record.dinner ? '✓' : '✗'}</TableCell>
+                              <TableCell>{record.sleepQuality}</TableCell>
+                              <TableCell style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {record.specialNotes}
+                              </TableCell>
+                              <TableCell>{record.createdAt}</TableCell>
+                              <TableCell>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleEditRecord(record)}
+                                  sx={{ color: '#1976d2', marginRight: '4px' }}
+                                  disabled={loading}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleDeleteRecord(record.id)}
+                                  sx={{ color: '#d32f2f' }}
+                                  disabled={loading}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={8} sx={{ textAlign: 'center', padding: '20px' }}>
+                              등록된 활동기록이 없습니다.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </ActivityTableBody>
+                    </Table>
+                  </ActivityTableContainer>
+                ) : (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    height: '200px',
+                    color: '#666',
+                    fontSize: '16px',
+                    fontFamily: 'Pretendard'
                   }}>
-                    <Typography sx={{
-                      fontFamily: 'Pretendard',
-                      fontWeight: 600,
-                      fontSize: '16px'
-                    }}>
-                      {senior.seniorName}
-                    </Typography>
+                    보호 대상자를 먼저 선택해주세요.
                   </Box>
-                ))}
-              </SeniorListBox>
+                )}
+              </ActivityListBox>
             </BottomBoxContainer>
           </LeftContent>
 
@@ -562,41 +883,131 @@ const Daily = () => {
           <RightActivityArea>
             <BoxTitle>일일 활동 기록</BoxTitle>
             
-            {/* 대상자 이름 */}
-            <SeniorNameArea>
-              <SeniorName>김할머니</SeniorName>
-              <SeniorNameSuffix>님</SeniorNameSuffix>
-            </SeniorNameArea>
+            {/* 대상자 선택 영역 */}
+            {selectedSenior ? (
+              <SelectedSeniorArea>
+                <SelectedSeniorInfo>
+                  <SeniorName>{selectedSenior.seniorName}</SeniorName>
+                  <SeniorNameSuffix>님</SeniorNameSuffix>
+                </SelectedSeniorInfo>
+                <ChangeButton onClick={() => setShowSeniorSelectModal(true)}>
+                  변경
+                </ChangeButton>
+              </SelectedSeniorArea>
+            ) : (
+              <SelectSeniorButton 
+                onClick={() => setShowSeniorSelectModal(true)}
+                startIcon={<PersonAddIcon />}
+              >
+                보호 대상자 선택
+              </SelectSeniorButton>
+            )}
             
-            <DateText>
-              {selectedDate.toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </DateText>
+            {selectedSenior && (
+              <>
+                <DateText>
+                  {selectedDate.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </DateText>
 
-            {/* 저장 버튼 */}
-            <SaveButton onClick={handleSave}>
-              저장하기
-            </SaveButton>                        
+                {/* 저장 버튼 */}
+                <SaveButton onClick={handleSave} disabled={loading}>
+                  {loading ? '저장 중...' : '저장하기'}
+                </SaveButton>
 
-            {/* 특이사항 */}
-            <ActivitySection>
-              <ActivitySectionTitle>특이사항</ActivitySectionTitle>
-              <SpecialNotesBox
-                multiline
-                rows={4}
-                value={formData.specialNotes}
-                onChange={handleInputChange}
-                name="specialNotes"
-                placeholder="오늘의 특이사항이나 메모를 입력하세요..."
-                variant="outlined"
-              />
-            </ActivitySection>
+                {/* 식사 체크박스 */}
+                <ActivitySection>
+                  <ActivitySectionTitle>식사</ActivitySectionTitle>
+                  <CheckboxGroup>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={formData.breakfast}
+                          onChange={handleCheckboxChange}
+                          name="breakfast"
+                          sx={{ color: '#1976d2' }}
+                        />
+                      }
+                      label="아침"
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={formData.lunch}
+                          onChange={handleCheckboxChange}
+                          name="lunch"
+                          sx={{ color: '#1976d2' }}
+                        />
+                      }
+                      label="점심"
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={formData.dinner}
+                          onChange={handleCheckboxChange}
+                          name="dinner"
+                          sx={{ color: '#1976d2' }}
+                        />
+                      }
+                      label="저녁"
+                    />
+                  </CheckboxGroup>
+                </ActivitySection>
+
+                {/* 수면 상태 */}
+                <ActivitySection>
+                  <ActivitySectionTitle>수면 상태</ActivitySectionTitle>
+                  <FormControl fullWidth>
+                    <Select
+                      value={formData.sleepQuality}
+                      onChange={handleInputChange}
+                      name="sleepQuality"
+                      displayEmpty
+                      sx={{
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: '8px'
+                      }}
+                    >
+                      <MenuItem value="">선택하세요</MenuItem>
+                      <MenuItem value="매우 좋음">매우 좋음</MenuItem>
+                      <MenuItem value="좋음">좋음</MenuItem>
+                      <MenuItem value="보통">보통</MenuItem>
+                      <MenuItem value="나쁨">나쁨</MenuItem>
+                      <MenuItem value="매우 나쁨">매우 나쁨</MenuItem>
+                    </Select>
+                  </FormControl>
+                </ActivitySection>
+
+                {/* 특이사항 */}
+                <ActivitySection>
+                  <ActivitySectionTitle>특이사항</ActivitySectionTitle>
+                  <SpecialNotesBox
+                    multiline
+                    rows={4}
+                    value={formData.specialNotes}
+                    onChange={handleInputChange}
+                    name="specialNotes"
+                    placeholder="오늘의 특이사항이나 메모를 입력하세요..."
+                    variant="outlined"
+                  />
+                </ActivitySection>
+              </>
+            )}
           </RightActivityArea>
         </MainContent>
       </ContentContainer>
+
+      {/* 대상자 선택 모달 */}
+      <SeniorSelectModal
+        open={showSeniorSelectModal}
+        onClose={() => setShowSeniorSelectModal(false)}
+        onSelect={handleSeniorSelect}
+        selectedSenior={selectedSenior}
+      />
 
       {/* 비밀번호 확인 모달 */}
       <PasswordConfirmModal 

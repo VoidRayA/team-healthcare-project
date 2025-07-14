@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -11,6 +12,8 @@ import {
 import { styled } from '@mui/material/styles';
 import lockicon from '../images/lock_icon.png';
 import image3 from '../images/image3.png';
+import { login } from '../api/apiClient';
+import { saveAuthData } from '../utils/auth';
 
 // 스타일드 컴포넌트들
 const LoginPage = styled(Box)({
@@ -209,14 +212,15 @@ const ErrorBox = styled(Box)({
   display: 'flex',
   textAlign: 'center',
   justifyContent: 'center',
-  height: '70px', // 고정 높이 설정
+  height: '70px',
   alignItems: 'center',
   flexDirection: 'column',
   margin: '10px 0'
 });
 
 const Login = () => {
-  const [user, setUser] = useState({ userid: '', password: '' });
+  const navigate = useNavigate();
+  const [user, setUser] = useState({ loginId: '', loginPw: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -229,103 +233,72 @@ const Login = () => {
 
   const handleLogin = async () => {
     // 입력값 유효성 검사
-    if (!user.userid.trim()) {
+    if (!user.loginId.trim()) {
       setError('아이디를 입력해주세요.');
       return;
     }
     
-    if (!user.password.trim()) {
+    if (!user.loginPw.trim()) {
       setError('비밀번호를 입력해주세요.');
       return;
     }
-  
+
     setLoading(true);
     setError('');
-  
-    //======================= 테스트 후 삭제 ============================
-    // Mock 로그인 (간단한 테스트용)
-    setTimeout(() => {
-      // 간단한 테스트 계정들
-      const testAccounts = {
-        'admin': { name: '김관리자', role: 'ADMIN' },
-        'test': { name: '김보호', role: 'GUARDIAN' },
-        'demo': { name: '데모사용자', role: 'GUARDIAN' }
-      };
-  
-      if (testAccounts[user.userid] && user.password === '1234') {
-        // 로그인 성공
-        const userInfo = testAccounts[user.userid];
+
+    try {
+      // 실제 백엔드 API 호출
+      const response = await login(user);
+      console.log('로그인 응답:', response);
+      
+      // Stateful JWT 처리
+      const { accessToken, refreshToken, loginId, guardianName, role } = response;
+      
+      if (accessToken && refreshToken) {
+        // 토큰 및 사용자 정보 저장
+        saveAuthData(accessToken, refreshToken, {
+          loginId: loginId,
+          guardianName: guardianName,
+          role: role
+        });
         
-        localStorage.setItem('jwt', 'mock-token');
-        localStorage.setItem('loginId', user.userid);
-        localStorage.setItem('guardianName', userInfo.name);
-        localStorage.setItem('role', userInfo.role);
-  
-        alert(`로그인 성공! ${userInfo.name}님 환영합니다.`);
-        window.location.reload(); // Home으로 이동
-
-        // window.location.reload(); // 이 부분을 주석처리하고
-        window.location.href = '/home'; // 이걸로 직접 이동 테스트 
+        // 저장 확인
+        console.log('로그인 성공, 저장된 데이터:', {
+          jwt: sessionStorage.getItem('jwt'),
+          loginId: sessionStorage.getItem('loginId'),
+          guardianName: sessionStorage.getItem('guardianName'),
+          role: sessionStorage.getItem('role')
+        });
+        
+        alert(`로그인 성공! ${guardianName}님 환영합니다.`);
+        
+        // 페이지 이동
+        setTimeout(() => {
+          navigate('/home');
+        }, 100);
+        
       } else {
-        setError('아이디 또는 비밀번호가 틀렸습니다. (테스트: admin/test/demo, 비밀번호: 1234)');
+        setError('로그인 응답이 올바르지 않습니다.');
       }
+    } catch (err) {
+      console.error('로그인 에러:', err);
       
+      if (err.response?.status === 401) {
+        setError('아이디 또는 비밀번호가 잘못되었습니다.');
+      } else if (err.response?.status === 404) {
+        setError('존재하지 않는 계정입니다.');
+      } else if (err.code === 'ERR_NETWORK') {
+        setError('서버에 연결할 수 없습니다. 백엔드 서버를 확인해주세요.');
+      } else {
+        setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
-  //======================= 테스트 후 삭제 ============================
-
-  //======================== 테스트한다고 주석처리 ==============================
-  // const handleLogin = async () => {
-  //   // 입력값 유효성 검사
-  //   if (!user.userid.trim()) {
-  //     setError('아이디를 입력해주세요.');
-  //     return;
-  //   }
-    
-  //   if (!user.password.trim()) {
-  //     setError('비밀번호를 입력해주세요.');
-  //     return;
-  //   }
-
-  //   setLoading(true);
-  //   setError('');
-
-  //   try {
-  //       // 실제 백엔드 API 호출
-  //       const response = await axios.post(
-  //         `http://192.168.3.8:8080/api/gardians/login`,
-  //         user,
-  //         { headers: { 'Content-Type': 'application/json' } }
-  //       );
-
-  //       const jwtToken = response.headers.authorization;
-  //       if (jwtToken) {
-  //         sessionStorage.setItem('jwt', jwtToken);
-  //         alert('로그인 성공');
-  //         // App.jsx에서 자동으로 Dashboard로 리다이렉트됨
-  //       }      
-  //   } catch (err) {
-  //     console.error('로그인 에러:', err);
-      
-  //     if (err.response?.status === 401) {
-  //       setError('아이디 또는 비밀번호가 잘못되었습니다.');
-  //     } else if (err.response?.status === 404) {
-  //       setError('존재하지 않는 계정입니다.');
-  //     } else if (err.code === 'ERR_NETWORK') {
-  //       setError('서버에 연결할 수 없습니다. 백엔드 서버를 확인해주세요.');
-  //     } else {
-  //       setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
-  //     }
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-  //======================== 테스트한다고 주석처리 ==============================
 
   const handleJoin = () => {
-    // 회원가입 페이지로 이동하는 로직
-    console.log('회원가입 페이지로 이동');
+    navigate('/register');
   };
 
   const handleKeyPress = (event) => {
@@ -353,9 +326,9 @@ const Login = () => {
           <StyledTextField
             variant="outlined"
             placeholder="아이디를 입력하세요"
-            name="userid"
+            name="loginId"
             fullWidth
-            value={user.userid}
+            value={user.loginId}
             onChange={handleChange}
             onKeyPress={handleKeyPress}
           />
@@ -364,10 +337,10 @@ const Login = () => {
           <StyledTextField
             variant="outlined"
             placeholder="비밀번호를 입력하세요"
-            name="password"
+            name="loginPw"
             type="password"
             fullWidth
-            value={user.password}
+            value={user.loginPw}
             onChange={handleChange}
             onKeyPress={handleKeyPress}
           />
@@ -392,7 +365,7 @@ const Login = () => {
             회원가입
           </JoinButton>
 
-          {/* 오류 메시지 - 공간은 항상 확보, 내용은 조건부 표시 */}
+          {/* 오류 메시지 */}
           <ErrorBox>
             {error && (
               <Alert 

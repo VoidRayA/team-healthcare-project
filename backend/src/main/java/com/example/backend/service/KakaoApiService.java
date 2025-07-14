@@ -22,8 +22,218 @@ public class KakaoApiService {
     @Value("${kakao.rest-api-key}")
     private String restApiKey;
     
+    @Value("${tmap.api-key:}")
+    private String tmapApiKey;
+    
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * T-map 도보 경로 검색 API
+     */
+    public String getTmapWalkingRoute(double startLat, double startLon, double endLat, double endLon, String startName, String endName) {
+        try {
+            // T-map API 키 확인
+            if (tmapApiKey == null || tmapApiKey.trim().isEmpty()) {
+                System.out.println("T-map API 키가 설정되지 않음");
+                return createErrorResponse("T-map API 키가 설정되지 않았습니다.");
+            }
+            
+            System.out.println("=== T-map API 호출 상세 정보 ===");
+            System.out.println("API Key: " + tmapApiKey);
+            System.out.println("출발지: " + startLat + ", " + startLon);
+            System.out.println("도착지: " + endLat + ", " + endLon);
+            
+            // T-map 도보경로 API URL - 다양한 버전 시도
+            String[] urls = {
+                "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1",
+                "https://apis.sk.com/tmap/routes/pedestrian?version=1",
+                "https://openapi.sk.com/tmap/routes/pedestrian?version=1",
+                "https://apis.openapi.sk.com/tmap/routes/pedestrian"
+            };
+            
+            HttpResponse<String> response = null;
+            String successUrl = null;
+            
+            for (String url : urls) {
+                System.out.println("시도하는 URL: " + url);
+            
+            // 요청 데이터 생성
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("startX", String.valueOf(startLon));
+            requestBody.put("startY", String.valueOf(startLat));
+            requestBody.put("endX", String.valueOf(endLon));
+            requestBody.put("endY", String.valueOf(endLat));
+            requestBody.put("reqCoordType", "WGS84GEO");
+            requestBody.put("resCoordType", "WGS84GEO");
+            requestBody.put("startName", startName != null ? startName : "현재위치");
+            requestBody.put("endName", endName != null ? endName : "목적지");
+            
+            String jsonBody = objectMapper.writeValueAsString(requestBody);
+            System.out.println("요청 본문: " + jsonBody);
+            
+                // HTTP 요청 생성
+                HttpClient client = HttpClient.newHttpClient();
+                
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Content-Type", "application/json; charset=utf-8")
+                        .header("appKey", tmapApiKey)
+                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                        .header("Referer", "https://openapi.sk.com")
+                        .header("Origin", "https://openapi.sk.com")
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
+                        .build();
+                
+                response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                
+                System.out.println("URL: " + url + " - 상태 코드: " + response.statusCode());
+                
+                if (response.statusCode() == 200) {
+                    successUrl = url;
+                    System.out.println("✅ 성공! URL: " + url);
+                    break;
+                } else if (response.statusCode() != 403 && response.statusCode() != 401) {
+                    // 403, 401이 아닌 다른 오류는 중단
+                    System.err.println("비403/401 오류 발생: " + response.statusCode());
+                    break;
+                }
+            }
+            
+            System.out.println("=== T-map API 응답 상세 ===");
+            System.out.println("상태 코드: " + response.statusCode());
+            System.out.println("응답 헤더: " + response.headers().map());
+            System.out.println("응답 본문 전체: " + response.body());
+            System.out.println("응답 본문 크기: " + response.body().length() + " bytes");
+            
+            if (response.statusCode() == 200) {
+                System.out.println("✅ T-map API 성공! 응답 전달");
+                System.out.println("응답 데이터 크기: " + response.body().length() + " bytes");
+                System.out.println("응답 시작 100자: " + (response.body().length() > 100 ? response.body().substring(0, 100) + "..." : response.body()));
+                
+                // 성공 응답을 그대로 프론트엔드에 전달
+                return response.body();
+            } else {
+                System.err.println("=== T-map API 오류 상세 분석 ===");
+                System.err.println("상태 코드: " + response.statusCode());
+                System.err.println("응답 본문: " + response.body());
+                
+                if (response.statusCode() == 401) {
+                    System.err.println("401 Unauthorized 오류 해결 방법:");
+                    System.err.println("1. SK Open API 콘솔에서 도메인 등록: localhost:8080, 127.0.0.1:8080");
+                    System.err.println("2. T-map API 사용 권한 확인 (프로젝트 상태: 활성화)");
+                    System.err.println("3. API 키 재발급 고려");
+                    
+                    return createErrorResponse("T-map API 인증 오류 (401): SK OpenAPI 콘솔에서 도메인 등록 필요");
+                }
+                if (response.statusCode() == 403) {
+                    System.err.println("403 Forbidden 오류 원인 분석:");
+                    System.err.println("1. API 키 확인: " + tmapApiKey);
+                    System.err.println("2. 도메인 등록 확인 필요 (SK OpenAPI 콘솔)");
+                    System.err.println("3. 사용량 한도 확인 필요");
+                    System.err.println("4. IP 제한 확인 필요");
+                    
+                    // T-map API 필수 사용이므로 에러 반환
+                    return createErrorResponse("T-map API 인증 오류 (403): SK OpenAPI 콘솔에서 도메인 등록 및 API 키 확인 필요");
+                }
+                
+                return createErrorResponse("T-map API 호출 실패: " + response.statusCode() + " - " + response.body());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("T-map API 호출 중 예외 발생: " + e.getMessage());
+            e.printStackTrace();
+            
+            // T-map API 필수 사용이므로 에러 반환
+            return createErrorResponse("T-map API 호출 중 오류 발생: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 카카오 API 대체 경로 검색 (Directions API가 404이므로 대체)
+     */
+    public String getKakaoWalkingRoute(double startLat, double startLon, double endLat, double endLon) {
+        try {
+            // API 키 확인
+            if (restApiKey == null || restApiKey.equals("YOUR_KAKAO_REST_API_KEY")) {
+                System.out.println("카카오 API 키가 설정되지 않음");
+                return createErrorResponse("카카오 API 키가 설정되지 않았습니다.");
+            }
+            
+            System.out.println("=== 카카오 API 대체 경로 검색 ===");
+            System.out.println("출발지: " + startLat + ", " + startLon);
+            System.out.println("도착지: " + endLat + ", " + endLon);
+            
+            // 직선 거리 계산
+            double distance = calculateDistance(startLat, startLon, endLat, endLon);
+            double walkingDistance = distance * 1.3; // 도로 경로 보정
+            int walkingTime = (int) Math.ceil(walkingDistance / 83); // 5km/h 도보 속도 (83m/min)
+            
+            System.out.println("직선 거리: " + distance + "m");
+            System.out.println("예상 도보 거리: " + walkingDistance + "m");
+            System.out.println("예상 도보 시간: " + walkingTime + "분");
+            
+            // 간단한 경로 데이터 생성 (GeoJSON 형식 모방)
+            Map<String, Object> mockRoute = new HashMap<>();
+            List<Map<String, Object>> routes = new ArrayList<>();
+            Map<String, Object> route = new HashMap<>();
+            Map<String, Object> summary = new HashMap<>();
+            
+            summary.put("distance", (int) walkingDistance);
+            summary.put("duration", walkingTime * 60); // 초 단위
+            
+            // 섬 데이터 생성
+            List<Map<String, Object>> sections = new ArrayList<>();
+            Map<String, Object> section = new HashMap<>();
+            List<Map<String, Object>> roads = new ArrayList<>();
+            Map<String, Object> road = new HashMap<>();
+            
+            // 직선 경로 좌표
+            List<Double> vertexes = new ArrayList<>();
+            vertexes.add(startLon);
+            vertexes.add(startLat);
+            vertexes.add(endLon);
+            vertexes.add(endLat);
+            
+            road.put("vertexes", vertexes);
+            roads.add(road);
+            section.put("roads", roads);
+            sections.add(section);
+            
+            route.put("summary", summary);
+            route.put("sections", sections);
+            routes.add(route);
+            mockRoute.put("routes", routes);
+            
+            String result = objectMapper.writeValueAsString(mockRoute);
+            System.out.println("카카오 대체 API 응답: " + result);
+            
+            return result;
+            
+        } catch (Exception e) {
+            System.err.println("카카오 대체 API 호출 중 예외 발생: " + e.getMessage());
+            e.printStackTrace();
+            return createErrorResponse("카카오 대체 API 호출 중 오류 발생: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 두 지점 간 거리 계산 (단위: 미터)
+     */
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final double R = 6371e3; // 지구 반지름 (미터)
+        double φ1 = Math.toRadians(lat1);
+        double φ2 = Math.toRadians(lat2);
+        double Δφ = Math.toRadians(lat2 - lat1);
+        double Δλ = Math.toRadians(lon2 - lon1);
+        
+        double a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        
+        return R * c;
+    }
+    
     /**
      * 부산 지역 병원 검색
      * @param query 검색어 (기본값: "병원")

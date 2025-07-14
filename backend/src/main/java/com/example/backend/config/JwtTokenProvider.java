@@ -46,6 +46,24 @@ public class JwtTokenProvider {
     }
 
     /**
+     * Refresh 토큰 생성
+     * @param loginId 사용자 로그인 ID
+     * @return 생성된 Refresh 토큰
+     */
+    public String generateRefreshToken(String loginId) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7일
+
+        return Jwts.builder()
+                .setSubject(loginId)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .claim("type", "refresh")              // 토큰 타입 구분
+                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .compact();
+    }
+
+    /**
      * JWT 토큰에서 사용자 로그인 ID 추출
      * @param token JWT 토큰
      * @return 사용자 로그인 ID

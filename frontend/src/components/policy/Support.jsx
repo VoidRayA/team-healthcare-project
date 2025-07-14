@@ -1,104 +1,10 @@
 import { Box, Typography, Paper, Button, Divider, Card, CardContent } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-
-const SupportPage = styled(Box)({
-  backgroundColor: '#f5f5f5',
-  padding: '20px 20px 40px 20px',
-  minHeight: '100vh' // 최소 높이 설정
-});
-
-const SupportContainer = styled(Paper)({
-  maxWidth: '800px',
-  margin: '0 auto',
-  padding: '40px',
-  borderRadius: '15px',
-  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
-});
-
-const Header = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  marginBottom: '30px',
-  gap: '15px'
-});
-
-const BackButton = styled(Button)({
-  minWidth: '50px',
-  height: '50px',
-  borderRadius: '50%',
-  backgroundColor: '#f0f0f0',
-  color: '#666',
-  '&:hover': {
-    backgroundColor: '#e0e0e0'
-  }
-});
-
-const Title = styled(Typography)({
-  fontSize: '32px',
-  fontWeight: 'bold',
-  color: '#333',
-  flex: 1
-});
-
-const SectionTitle = styled(Typography)({
-  fontSize: '20px',
-  fontWeight: 'bold',
-  color: '#00458B',
-  marginTop: '30px',
-  marginBottom: '15px'
-});
-
-const ContactCard = styled(Card)({
-  marginBottom: '20px',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-  '&:hover': {
-    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)'
-  }
-});
-
-const ContactHeader = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '10px',
-  marginBottom: '10px'
-});
-
-const ContactIcon = styled(Box)({
-  width: '40px',
-  height: '40px',
-  backgroundColor: '#00458B',
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: 'white'
-});
-
-const FAQCard = styled(Card)({
-  marginBottom: '15px',
-  borderRadius: '12px',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
-});
-
-const FAQQuestion = styled(Typography)({
-  fontSize: '16px',
-  fontWeight: 'bold',
-  color: '#00458B',
-  marginBottom: '8px'
-});
-
-const FAQAnswer = styled(Typography)({
-  fontSize: '14px',
-  color: '#666',
-  lineHeight: 1.5
-});
 
 const Support = () => {
   const navigate = useNavigate();
@@ -135,27 +41,90 @@ const Support = () => {
   ];
 
   return (
-    <SupportPage>
-      <SupportContainer>
-        <Header>
-          <BackButton onClick={handleBack}>
+    <Box sx={{
+      backgroundColor: '#f5f5f5',
+      padding: '20px 20px 40px 20px',
+      minHeight: '100vh'
+    }}>
+      <Paper sx={{
+        maxWidth: '800px',
+        margin: '0 auto',
+        padding: '40px',
+        borderRadius: '15px',
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
+      }}>
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: '30px',
+          gap: '15px'
+        }}>
+          <Button
+            onClick={handleBack}
+            sx={{
+              minWidth: '50px',
+              height: '50px',
+              borderRadius: '50%',
+              backgroundColor: '#f0f0f0',
+              color: '#666',
+              '&:hover': {
+                backgroundColor: '#e0e0e0'
+              }
+            }}
+          >
             <ArrowBackIcon />
-          </BackButton>
-          <Title>고객센터</Title>
-        </Header>
+          </Button>
+          <Typography sx={{
+            fontSize: '32px',
+            fontWeight: 'bold',
+            color: '#333',
+            flex: 1
+          }}>
+            고객센터
+          </Typography>
+        </Box>
 
         <Divider sx={{ marginBottom: '30px' }} />
 
-        <SectionTitle>문의하기</SectionTitle>
+        <Typography sx={{
+          fontSize: '20px',
+          fontWeight: 'bold',
+          color: '#00458B',
+          marginTop: '30px',
+          marginBottom: '15px'
+        }}>
+          문의하기
+        </Typography>
         
-        <ContactCard>
+        <Card sx={{
+          marginBottom: '20px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          '&:hover': {
+            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)'
+          }
+        }}>
           <CardContent>
-            <ContactHeader>
-              <ContactIcon>
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              marginBottom: '10px'
+            }}>
+              <Box sx={{
+                width: '40px',
+                height: '40px',
+                backgroundColor: '#00458B',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white'
+              }}>
                 <EmailIcon />
-              </ContactIcon>
+              </Box>
               <Typography variant="h6" fontWeight="bold">이메일 문의</Typography>
-            </ContactHeader>
+            </Box>
             <Typography color="text.secondary" gutterBottom>
               healthcare@example.com
             </Typography>
@@ -163,16 +132,37 @@ const Support = () => {
               언제든지 문의사항을 보내주세요. 24시간 내에 답변드리겠습니다.
             </Typography>
           </CardContent>
-        </ContactCard>
+        </Card>
 
-        <ContactCard>
+        <Card sx={{
+          marginBottom: '20px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          '&:hover': {
+            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)'
+          }
+        }}>
           <CardContent>
-            <ContactHeader>
-              <ContactIcon>
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              marginBottom: '10px'
+            }}>
+              <Box sx={{
+                width: '40px',
+                height: '40px',
+                backgroundColor: '#00458B',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white'
+              }}>
                 <PhoneIcon />
-              </ContactIcon>
+              </Box>
               <Typography variant="h6" fontWeight="bold">전화 문의</Typography>
-            </ContactHeader>
+            </Box>
             <Typography color="text.secondary" gutterBottom>
               1588-0000
             </Typography>
@@ -180,16 +170,37 @@ const Support = () => {
               평일 09:00 - 18:00 (점심시간 12:00 - 13:00 제외)
             </Typography>
           </CardContent>
-        </ContactCard>
+        </Card>
 
-        <ContactCard>
+        <Card sx={{
+          marginBottom: '20px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          '&:hover': {
+            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)'
+          }
+        }}>
           <CardContent>
-            <ContactHeader>
-              <ContactIcon>
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              marginBottom: '10px'
+            }}>
+              <Box sx={{
+                width: '40px',
+                height: '40px',
+                backgroundColor: '#00458B',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white'
+              }}>
                 <AccessTimeIcon />
-              </ContactIcon>
+              </Box>
               <Typography variant="h6" fontWeight="bold">응급상황</Typography>
-            </ContactHeader>
+            </Box>
             <Typography color="text.secondary" gutterBottom>
               24시간 모니터링
             </Typography>
@@ -197,31 +208,60 @@ const Support = () => {
               시스템이 24시간 건강 상태를 모니터링하며, 응급상황 시 즉시 알림을 보내드립니다.
             </Typography>
           </CardContent>
-        </ContactCard>
+        </Card>
 
-        <SectionTitle>자주 묻는 질문 (FAQ)</SectionTitle>
+        <Typography sx={{
+          fontSize: '20px',
+          fontWeight: 'bold',
+          color: '#00458B',
+          marginTop: '30px',
+          marginBottom: '15px'
+        }}>
+          자주 묻는 질문 (FAQ)
+        </Typography>
         
         {faqData.map((faq, index) => (
-          <FAQCard key={index}>
+          <Card key={index} sx={{
+            marginBottom: '15px',
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+          }}>
             <CardContent>
-              <FAQQuestion>
+              <Typography sx={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: '#00458B',
+                marginBottom: '8px'
+              }}>
                 Q. {faq.question}
-              </FAQQuestion>
-              <FAQAnswer>
+              </Typography>
+              <Typography sx={{
+                fontSize: '14px',
+                color: '#666',
+                lineHeight: 1.5
+              }}>
                 A. {faq.answer}
-              </FAQAnswer>
+              </Typography>
             </CardContent>
-          </FAQCard>
+          </Card>
         ))}
 
-        <SectionTitle>기타 문의</SectionTitle>
+        <Typography sx={{
+          fontSize: '20px',
+          fontWeight: 'bold',
+          color: '#00458B',
+          marginTop: '30px',
+          marginBottom: '15px'
+        }}>
+          기타 문의
+        </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ marginBottom: '20px' }}>
           위 내용으로 해결되지 않는 문제가 있으시면 언제든지 연락 주세요. 
           최선을 다해 도움을 드리겠습니다.
         </Typography>
 
-      </SupportContainer>
-    </SupportPage>
+      </Paper>
+    </Box>
   );
 };
 

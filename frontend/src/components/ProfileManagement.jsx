@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getGuardianProfile, updateGuardianProfile } from '../api/apiClient';
+import { getGuardianProfile, updateGuardianProfile, logout } from '../api/apiClient';
 import PasswordConfirmModal from './PasswordConfirmModal';
+import { clearAuthData } from '../utils/auth';
 
 import {
   Box,
@@ -16,7 +17,6 @@ import {
   ListItemIcon,
   ListItemText
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import {
   DashboardOutlined,
   PeopleOutlined,
@@ -29,241 +29,11 @@ import {
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
 
-// 전체 컨테이너 - 연한 파란 배경 (Home.jsx 스타일)
-const MainContainer = styled(Box)({
-  width: '100vw',
-  height: '100vh',
-  backgroundColor: '#CCE5FF',
-  display: 'flex',
-  gap: '0px',
-  overflow: 'hidden'
-});
-
-// 메인 컨테이너 - 하얀색 (Home.jsx 스타일)
-const ContentContainer = styled(Paper)({
-  backgroundColor: '#ffffff',
-  flex: 1,
-  display: 'flex',
-  overflow: 'auto',
-  margin: '1vw 1vw 1vw 240px',
-  height: 'calc(100vh - 2vw)',
-  minHeight: 'calc(100vh - 2vw)'
-});
-
-// 왼쪽 사이드바 (Home.jsx 스타일)
-const Sidebar = styled(Paper)({
-  width: '240px',
-  height: '100vh',
-  backgroundColor: '#1976d2',
-  borderRadius: '0 20px 20px 0',
-  display: 'flex',
-  flexDirection: 'column',
-  padding: '20px 0',
-  color: 'white',
-  boxSizing: 'border-box',
-  flexShrink: 0,
-  position: 'fixed',
-  left: 0,
-  top: 0,
-  zIndex: 1000
-});
-
-const SidebarMenu = styled(List)({
-  padding: '0 20px',
-  flex: 1,
-  '& .MuiListItem-root': {
-    borderRadius: '12px',
-    marginBottom: '8px',
-    color: 'white',
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    '&.active': {
-      backgroundColor: 'rgba(255,255,255,0.2)',
-    },
-  },
-  '& .MuiListItemIcon-root': {
-    color: 'white',
-    minWidth: '40px',
-  }
-});
-
-// 중앙 메인 영역 (Home.jsx 스타일)
-const MainContent = styled(Box)({
-  flex: 1,
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: '40px'
-});
-
-// 회원정보 영역 컨테이너 (투명한 중앙 정렬)
-const ProfileContent = styled(Box)({
-  width: '100%',
-  maxWidth: '900px',
-  backgroundColor: 'transparent',
-  padding: '40px',
-  position: 'relative'
-});
-
-// 페이지 제목
-const PageTitle = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '32px',
-  color: '#000000',
-  textAlign: 'center',
-  marginBottom: '40px'
-});
-
-// 입력 테이블
-const InputTable = styled(Box)({
-  width: '100%',
-  backgroundColor: '#ffffff',
-  border: 'none',
-  marginBottom: '40px'
-});
-
-// 입력 행
-const InputRow = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  height: '60px',
-  borderBottom: '1px solid #0869CC',
-  '&:first-of-type': {
-    borderTop: '4px solid #00458B'
-  }
-});
-
-// 라벨 섹션
-const LabelSection = styled(Box)({
-  width: '200px',
-  height: '100%',
-  backgroundColor: 'rgba(51, 153, 255, 0.3)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '18px',
-  color: '#000000'
-});
-
-// 입력 섹션
-const InputSection = styled(Box)({
-  flex: 1,
-  height: '100%',
-  backgroundColor: '#FFFFFF',
-  display: 'flex',
-  alignItems: 'center',
-  paddingLeft: '24px',
-  paddingRight: '24px'
-});
-
-// 텍스트 필드
-const StyledTextField = styled(TextField)({
-  width: '100%',
-  '& .MuiOutlinedInput-root': {
-    backgroundColor: 'transparent',
-    border: 'none',
-    '& fieldset': {
-      border: 'none'
-    },
-    '&:hover fieldset': {
-      border: 'none'
-    },
-    '&.Mui-focused fieldset': {
-      border: 'none'
-    },
-    '&.Mui-disabled': {
-      backgroundColor: '#f8f9fa',
-      '& fieldset': {
-        border: 'none'
-      }
-    }
-  },
-  '& .MuiInputBase-input': {
-    fontFamily: 'Pretendard',
-    fontWeight: 700,
-    fontSize: '16px',
-    color: '#333',
-    padding: '0',
-    '&::placeholder': {
-      color: '#B4B4B4',
-      opacity: 1
-    },
-    '&.Mui-disabled': {
-      color: '#666',
-      WebkitTextFillColor: '#666'
-    }
-  }
-});
-
-// 비밀번호 섹션 제목
-const PasswordSectionTitle = styled(Typography)({
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '24px',
-  color: '#00458B',
-  textAlign: 'center',
-  marginBottom: '30px',
-  marginTop: '50px'
-});
-
-// 업데이트 버튼
-const UpdateButton = styled(Button)({
-  width: '200px',
-  height: '60px',
-  backgroundColor: '#0869CC',
-  borderRadius: '30px',
-  fontFamily: 'Pretendard',
-  fontWeight: 700,
-  fontSize: '20px',
-  color: '#FFFFFF',
-  textTransform: 'none',
-  margin: '40px auto 0 auto',
-  display: 'block',
-  '&:hover': {
-    backgroundColor: '#0653A3'
-  },
-  '&:disabled': {
-    backgroundColor: '#ccc'
-  }
-});
-
-// 고정 에러/성공 메시지 컨테이너
-const MessageContainer = styled(Box)({
-  position: 'fixed',
-  top: '20px',
-  right: '20px',
-  width: '400px',
-  maxWidth: '90vw',
-  zIndex: 2000,
-  '& .MuiAlert-root': {
-    borderRadius: '8px',
-    fontSize: '16px'
-  }
-});
-
-const LoadingOverlay = styled(Box)({
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  background: 'rgba(255, 255, 255, 0.8)',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  gap: '20px',
-  zIndex: 1000,
-  borderRadius: '10px'
-});
-
 const ProfileManagement = () => {
   const navigate = useNavigate();
+  
+  // 렌더링 횟수 추적
+  console.log('ProfileManagement 컴포넌트 렌더링 시작');
   
   const [profile, setProfile] = useState({});
   const [formData, setFormData] = useState({
@@ -278,8 +48,38 @@ const ProfileManagement = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [showPasswordModal, setShowPasswordModal] = useState(true);
+  const [showPasswordModal, setShowPasswordModal] = useState(false); // 초기값 false로 변경
   const [isPasswordConfirmed, setIsPasswordConfirmed] = useState(false);
+
+  // 컴포넌트 마운트 시 비밀번호 확인 상태 처리
+  useEffect(() => {
+    console.log('ProfileManagement useEffect 실행');
+    
+    // sessionStorage에서 비밀번호 확인 상태 확인
+    const isPasswordVerified = sessionStorage.getItem('passwordVerified') === 'true';
+    console.log('sessionStorage passwordVerified:', isPasswordVerified);
+    
+    if (isPasswordVerified) {
+      console.log('이미 비밀번호 확인 완료됨 - 모달 건너뛰기');
+      setIsPasswordConfirmed(true);
+      console.log('showPasswordModal 상태 변경: false');
+      setShowPasswordModal(false);
+    } else {
+      console.log('비밀번호 확인 필요 - 모달 표시');
+      console.log('showPasswordModal 상태 변경: true');
+      setShowPasswordModal(true);
+      setIsPasswordConfirmed(false);
+    }
+    
+    setError('');
+    setSuccess('');
+    
+    // 컴포넌트 언마운트 시 비밀번호 확인 상태 초기화
+    return () => {
+      console.log('ProfileManagement 언마운트 - passwordVerified 초기화');
+      sessionStorage.removeItem('passwordVerified');
+    };
+  }, []); // 빈 의존성 배열로 마운트 시에만 실행
 
   // 프로필 정보 가져오기
   const fetchProfile = useCallback(async () => {
@@ -392,9 +192,30 @@ const ProfileManagement = () => {
   };
 
   // 로그아웃
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      // 백엔드 로그아웃 API 호출 (토큰 비활성화)
+      await logout();
+      
+      // 비밀번호 확인 상태 클리어
+      sessionStorage.removeItem('passwordVerified');
+      
+      // 모든 인증 데이터 클리어
+      clearAuthData();
+      
+      alert('로그아웃 되었습니다.');
+      
+      // 커스텀 이벤트 발생
+      window.dispatchEvent(new Event('authStateChange'));
+      navigate('/');
+    } catch (error) {
+      console.error('로그아웃 실패:', error);
+      // 에러가 발생해도 로컬 데이터는 삭제
+      sessionStorage.removeItem('passwordVerified');
+      clearAuthData();
+      window.dispatchEvent(new Event('authStateChange'));
+      navigate('/');
+    }
   };
 
   // 비밀번호 확인 모달 핸들러
@@ -404,13 +225,80 @@ const ProfileManagement = () => {
   };
 
   const handlePasswordConfirm = () => {
+    console.log('비밀번호 확인 성공 - sessionStorage에 상태 저장');
+    
+    // sessionStorage에 비밀번호 확인 상태 저장
+    sessionStorage.setItem('passwordVerified', 'true');
+    
     setIsPasswordConfirmed(true);
     setShowPasswordModal(false);
   };
 
+  // 공통 TextField 스타일
+  const textFieldSx = {
+    width: '100%',
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: 'transparent',
+      border: 'none',
+      '& fieldset': {
+        border: 'none'
+      },
+      '&:hover fieldset': {
+        border: 'none'
+      },
+      '&.Mui-focused fieldset': {
+        border: 'none'
+      },
+      '&.Mui-disabled': {
+        backgroundColor: '#f8f9fa',
+        '& fieldset': {
+          border: 'none'
+        }
+      }
+    },
+    '& .MuiInputBase-input': {
+      fontFamily: 'Pretendard',
+      fontWeight: 700,
+      fontSize: '16px',
+      color: '#333',
+      padding: '0',
+      '&::placeholder': {
+        color: '#B4B4B4',
+        opacity: 1
+      },
+      '&.Mui-disabled': {
+        color: '#666',
+        WebkitTextFillColor: '#666'
+      }
+    }
+  };
+
   return (
-    <MainContainer>
-      <Sidebar elevation={0}>
+    <Box sx={{
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: '#CCE5FF',
+      display: 'flex',
+      gap: '0px',
+      overflow: 'hidden'
+    }}>
+      <Paper sx={{
+        width: '240px',
+        height: '100vh',
+        backgroundColor: '#1976d2',
+        borderRadius: '0 20px 20px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '20px 0',
+        color: 'white',
+        boxSizing: 'border-box',
+        flexShrink: 0,
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        zIndex: 1000,
+        elevation: 0
+      }}>
         {/* 사용자 정보 영역 - Home.jsx와 동일하게 */}
         <Box sx={{ 
           px: 2, 
@@ -454,7 +342,26 @@ const ProfileManagement = () => {
           </Typography>
         </Box>
 
-        <SidebarMenu>
+        <List sx={{
+          padding: '0 20px',
+          flex: 1,
+          '& .MuiListItem-root': {
+            borderRadius: '12px',
+            marginBottom: '8px',
+            color: 'white',
+            cursor: 'pointer',
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,0.1)',
+            },
+            '&.active': {
+              backgroundColor: 'rgba(255,255,255,0.2)',
+            },
+          },
+          '& .MuiListItemIcon-root': {
+            color: 'white',
+            minWidth: '40px',
+          }
+        }}>
           <ListItem onClick={() => navigate('/home')}>
             <ListItemIcon>
               <DashboardOutlined />
@@ -503,7 +410,7 @@ const ProfileManagement = () => {
             </ListItemIcon>
             <ListItemText primary="메시지" />
           </ListItem>
-        </SidebarMenu>
+        </List>
 
         {/* 로그아웃 버튼 */}
         <Box sx={{ px: 2 }}>
@@ -524,13 +431,47 @@ const ProfileManagement = () => {
             <ListItemText primary="로그아웃" />
           </ListItem>
         </Box>
-      </Sidebar>
+      </Paper>
 
-      <ContentContainer>
-        <MainContent>
-          <ProfileContent>
+      <Paper sx={{
+        backgroundColor: '#ffffff',
+        flex: 1,
+        display: 'flex',
+        overflow: 'auto',
+        margin: '1vw 1vw 1vw 240px',
+        height: 'calc(100vh - 2vw)',
+        minHeight: 'calc(100vh - 2vw)'
+      }}>
+        <Box sx={{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '40px'
+        }}>
+          <Box sx={{
+            width: '100%',
+            maxWidth: '900px',
+            backgroundColor: 'transparent',
+            padding: '40px',
+            position: 'relative'
+          }}>
             {loading && (
-              <LoadingOverlay>
+              <Box sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(255, 255, 255, 0.8)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '20px',
+                zIndex: 1000,
+                borderRadius: '10px'
+              }}>
                 <CircularProgress size={50} sx={{ color: '#0869CC' }} />
                 <Typography sx={{ 
                   color: '#0869CC', 
@@ -540,126 +481,374 @@ const ProfileManagement = () => {
                 }}>
                   로딩 중...
                 </Typography>
-              </LoadingOverlay>
+              </Box>
             )}
 
             {/* 비밀번호 확인이 완료된 경우에만 내용 표시 */}
             {isPasswordConfirmed && (
               <>
-                <PageTitle>회원정보 관리</PageTitle>
+                <Typography sx={{
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '32px',
+                  color: '#000000',
+                  textAlign: 'center',
+                  marginBottom: '40px'
+                }}>
+                  회원정보 관리
+                </Typography>
 
-            {/* 기본 정보 */}
-            <InputTable>
-              <InputRow>
-                <LabelSection>아이디</LabelSection>
-                <InputSection>
-                  <StyledTextField
-                    value={profile.loginId || ''}
-                    disabled
-                    variant="outlined"
-                  />
-                </InputSection>
-              </InputRow>
+                {/* 기본 정보 */}
+                <Box sx={{
+                  width: '100%',
+                  backgroundColor: '#ffffff',
+                  border: 'none',
+                  marginBottom: '40px'
+                }}>
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '60px',
+                    borderBottom: '1px solid #0869CC',
+                    borderTop: '4px solid #00458B'
+                  }}>
+                    <Box sx={{
+                      width: '200px',
+                      height: '100%',
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'Pretendard',
+                      fontWeight: 700,
+                      fontSize: '18px',
+                      color: '#000000'
+                    }}>
+                      아이디
+                    </Box>
+                    <Box sx={{
+                      flex: 1,
+                      height: '100%',
+                      backgroundColor: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      paddingLeft: '24px',
+                      paddingRight: '24px'
+                    }}>
+                      <TextField
+                        value={profile.loginId || ''}
+                        disabled
+                        variant="outlined"
+                        sx={textFieldSx}
+                      />
+                    </Box>
+                  </Box>
 
-              <InputRow>
-                <LabelSection>이름</LabelSection>
-                <InputSection>
-                  <StyledTextField
-                    value={formData.guardianName}
-                    onChange={handleInputChange('guardianName')}
-                    placeholder="이름을 입력하세요"
-                    variant="outlined"
-                  />
-                </InputSection>
-              </InputRow>
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '60px',
+                    borderBottom: '1px solid #0869CC'
+                  }}>
+                    <Box sx={{
+                      width: '200px',
+                      height: '100%',
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'Pretendard',
+                      fontWeight: 700,
+                      fontSize: '18px',
+                      color: '#000000'
+                    }}>
+                      이름
+                    </Box>
+                    <Box sx={{
+                      flex: 1,
+                      height: '100%',
+                      backgroundColor: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      paddingLeft: '24px',
+                      paddingRight: '24px'
+                    }}>
+                      <TextField
+                        value={formData.guardianName}
+                        onChange={handleInputChange('guardianName')}
+                        placeholder="이름을 입력하세요"
+                        variant="outlined"
+                        sx={textFieldSx}
+                      />
+                    </Box>
+                  </Box>
 
-              <InputRow>
-                <LabelSection>연락처</LabelSection>
-                <InputSection>
-                  <StyledTextField
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange('phoneNumber')}
-                    placeholder="ex) 010-1234-5678"
-                    variant="outlined"
-                  />
-                </InputSection>
-              </InputRow>
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '60px',
+                    borderBottom: '1px solid #0869CC'
+                  }}>
+                    <Box sx={{
+                      width: '200px',
+                      height: '100%',
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'Pretendard',
+                      fontWeight: 700,
+                      fontSize: '18px',
+                      color: '#000000'
+                    }}>
+                      연락처
+                    </Box>
+                    <Box sx={{
+                      flex: 1,
+                      height: '100%',
+                      backgroundColor: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      paddingLeft: '24px',
+                      paddingRight: '24px'
+                    }}>
+                      <TextField
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange('phoneNumber')}
+                        placeholder="ex) 010-1234-5678"
+                        variant="outlined"
+                        sx={textFieldSx}
+                      />
+                    </Box>
+                  </Box>
 
-              <InputRow>
-                <LabelSection>이메일</LabelSection>
-                <InputSection>
-                  <StyledTextField
-                    value={formData.email}
-                    onChange={handleInputChange('email')}
-                    placeholder="이메일을 입력하세요"
-                    variant="outlined"
-                  />
-                </InputSection>
-              </InputRow>
-            </InputTable>
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '60px',
+                    borderBottom: '1px solid #0869CC'
+                  }}>
+                    <Box sx={{
+                      width: '200px',
+                      height: '100%',
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'Pretendard',
+                      fontWeight: 700,
+                      fontSize: '18px',
+                      color: '#000000'
+                    }}>
+                      이메일
+                    </Box>
+                    <Box sx={{
+                      flex: 1,
+                      height: '100%',
+                      backgroundColor: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      paddingLeft: '24px',
+                      paddingRight: '24px'
+                    }}>
+                      <TextField
+                        value={formData.email}
+                        onChange={handleInputChange('email')}
+                        placeholder="이메일을 입력하세요"
+                        variant="outlined"
+                        sx={textFieldSx}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
 
-            {/* 비밀번호 변경 섹션 */}
-            <PasswordSectionTitle>
-              🔒 비밀번호 변경 (선택사항)
-            </PasswordSectionTitle>
+                {/* 비밀번호 변경 섹션 */}
+                <Typography sx={{
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '24px',
+                  color: '#00458B',
+                  textAlign: 'center',
+                  marginBottom: '30px',
+                  marginTop: '50px'
+                }}>
+                  🔒 비밀번호 변경 (선택사항)
+                </Typography>
 
-            <InputTable>
-              <InputRow>
-                <LabelSection>현재 비밀번호</LabelSection>
-                <InputSection>
-                  <StyledTextField
-                    type="password"
-                    value={formData.currentPassword}
-                    onChange={handleInputChange('currentPassword')}
-                    placeholder="변경시에만 입력"
-                    variant="outlined"
-                  />
-                </InputSection>
-              </InputRow>
+                <Box sx={{
+                  width: '100%',
+                  backgroundColor: '#ffffff',
+                  border: 'none',
+                  marginBottom: '40px'
+                }}>
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '60px',
+                    borderBottom: '1px solid #0869CC',
+                    borderTop: '4px solid #00458B'
+                  }}>
+                    <Box sx={{
+                      width: '200px',
+                      height: '100%',
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'Pretendard',
+                      fontWeight: 700,
+                      fontSize: '18px',
+                      color: '#000000'
+                    }}>
+                      현재 비밀번호
+                    </Box>
+                    <Box sx={{
+                      flex: 1,
+                      height: '100%',
+                      backgroundColor: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      paddingLeft: '24px',
+                      paddingRight: '24px'
+                    }}>
+                      <TextField
+                        type="password"
+                        value={formData.currentPassword}
+                        onChange={handleInputChange('currentPassword')}
+                        placeholder="변경시에만 입력"
+                        variant="outlined"
+                        sx={textFieldSx}
+                      />
+                    </Box>
+                  </Box>
 
-              <InputRow>
-                <LabelSection>새 비밀번호</LabelSection>
-                <InputSection>
-                  <StyledTextField
-                    type="password"
-                    value={formData.newPassword}
-                    onChange={handleInputChange('newPassword')}
-                    placeholder="6자 이상 입력"
-                    variant="outlined"
-                  />
-                </InputSection>
-              </InputRow>
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '60px',
+                    borderBottom: '1px solid #0869CC'
+                  }}>
+                    <Box sx={{
+                      width: '200px',
+                      height: '100%',
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'Pretendard',
+                      fontWeight: 700,
+                      fontSize: '18px',
+                      color: '#000000'
+                    }}>
+                      새 비밀번호
+                    </Box>
+                    <Box sx={{
+                      flex: 1,
+                      height: '100%',
+                      backgroundColor: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      paddingLeft: '24px',
+                      paddingRight: '24px'
+                    }}>
+                      <TextField
+                        type="password"
+                        value={formData.newPassword}
+                        onChange={handleInputChange('newPassword')}
+                        placeholder="6자 이상 입력"
+                        variant="outlined"
+                        sx={textFieldSx}
+                      />
+                    </Box>
+                  </Box>
 
-              <InputRow>
-                <LabelSection>비밀번호 확인</LabelSection>
-                <InputSection>
-                  <StyledTextField
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange('confirmPassword')}
-                    placeholder="새 비밀번호를 다시 입력"
-                    variant="outlined"
-                  />
-                </InputSection>
-              </InputRow>
-            </InputTable>
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '60px',
+                    borderBottom: '1px solid #0869CC'
+                  }}>
+                    <Box sx={{
+                      width: '200px',
+                      height: '100%',
+                      backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'Pretendard',
+                      fontWeight: 700,
+                      fontSize: '18px',
+                      color: '#000000'
+                    }}>
+                      비밀번호 확인
+                    </Box>
+                    <Box sx={{
+                      flex: 1,
+                      height: '100%',
+                      backgroundColor: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      paddingLeft: '24px',
+                      paddingRight: '24px'
+                    }}>
+                      <TextField
+                        type="password"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange('confirmPassword')}
+                        placeholder="새 비밀번호를 다시 입력"
+                        variant="outlined"
+                        sx={textFieldSx}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
 
-            <UpdateButton
-              variant="contained"
-              onClick={handleUpdate}
-              disabled={loading}
-              startIcon={loading && <CircularProgress size={20} color="inherit" />}
-            >
-              {loading ? '수정 중...' : '정보 수정'}
-            </UpdateButton>
+                <Button
+                  variant="contained"
+                  onClick={handleUpdate}
+                  disabled={loading}
+                  startIcon={loading && <CircularProgress size={20} color="inherit" />}
+                  sx={{
+                    width: '200px',
+                    height: '60px',
+                    backgroundColor: '#0869CC',
+                    borderRadius: '30px',
+                    fontFamily: 'Pretendard',
+                    fontWeight: 700,
+                    fontSize: '20px',
+                    color: '#FFFFFF',
+                    textTransform: 'none',
+                    margin: '40px auto 0 auto',
+                    display: 'block',
+                    '&:hover': {
+                      backgroundColor: '#0653A3'
+                    },
+                    '&:disabled': {
+                      backgroundColor: '#ccc'
+                    }
+                  }}
+                >
+                  {loading ? '수정 중...' : '정보 수정'}
+                </Button>
               </>
             )}
-          </ProfileContent>
-        </MainContent>
-      </ContentContainer>
+          </Box>
+        </Box>
+      </Paper>
       
       {/* 고정 에러/성공 메시지 */}
-      <MessageContainer>
+      <Box sx={{
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        width: '400px',
+        maxWidth: '90vw',
+        zIndex: 2000,
+        '& .MuiAlert-root': {
+          borderRadius: '8px',
+          fontSize: '16px'
+        }
+      }}>
         {error && (
           <Alert 
             severity="error" 
@@ -678,7 +867,7 @@ const ProfileManagement = () => {
             {success}
           </Alert>
         )}
-      </MessageContainer>
+      </Box>
       
       {/* 비밀번호 확인 모달 */}
       <PasswordConfirmModal
@@ -686,7 +875,7 @@ const ProfileManagement = () => {
         onClose={handlePasswordModalClose}
         onConfirm={handlePasswordConfirm}
       />
-    </MainContainer>
+    </Box>
   );
 };
 

@@ -65,42 +65,7 @@ public class DailyController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
-    /**
-     * 일일 활동 저장
-     */
-    @PostMapping("/api/daily-activities/save")
-    public ResponseEntity<Map<String, Object>> saveDailyActivities(
-            @AuthenticationPrincipal CustomUserDetails currentUser,
-            @RequestBody Map<String, Object> requestData) {
-        try {
-            @SuppressWarnings("unchecked")
-            Map<String, String> selectedItems = (Map<String, String>) requestData.get("selectedItems");
-            String date = (String) requestData.get("date");
-            
-            System.out.println("=== 일일 활동 저장 API 디버깅 ===");
-            System.out.println("선택된 항목들: " + selectedItems);
-            System.out.println("날짜: " + date);
-            
-            // TODO: 실제 저장 로직 구현
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "저장되었습니다.");
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            System.err.println("저장 오류: " + e.getMessage());
-            e.printStackTrace();
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "서버 오류가 발생했습니다.");
-            
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
+    
     /**
      * 드롭다운 항목 추가 API
      * 사용자가 새로운 항목을 추가할 때 사용
@@ -142,6 +107,7 @@ public class DailyController {
             response.put("success", true);
             response.put("message", "항목이 추가되었습니다.");
             response.put("item", newItem.getValues());
+            response.put("id", newItem.getId());
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -153,6 +119,117 @@ public class DailyController {
             response.put("message", "서버 오류가 발생했습니다.");
             
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 일일 활동 저장
+     */
+    @PostMapping("/api/daily-activities/save")
+    public ResponseEntity<Map<String, Object>> saveDailyActivities(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestBody Map<String, Object> requestData) {
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, String> selectedItems = (Map<String, String>) requestData.get("selectedItems");
+            String date = (String) requestData.get("date");
+            
+            System.out.println("=== 일일 활동 저장 API 디버깅 ===");
+            System.out.println("선택된 항목들: " + selectedItems);
+            System.out.println("날짜: " + date);
+            
+            // TODO: 실제 저장 로직 구현
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "저장되었습니다.");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("저장 오류: " + e.getMessage());
+            e.printStackTrace();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "서버 오류가 발생했습니다.");
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 드롭다운 항목 삭제 API
+     * 사용자가 기존 항목을 삭제할 때 사용
+     */
+    @DeleteMapping("/api/user-settings/dropdown-item/{id}")
+    public ResponseEntity<Map<String, Object>> deleteDropdownItem(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @PathVariable Long id) {
+        try {
+            Guardians guardian = currentUser.getGuardians();
+            if (guardian == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "Guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+            
+            System.out.println("=== 드롭다운 항목 삭제 API 디버깅 ===");
+            System.out.println("Guardian ID: " + guardian.getId());
+            System.out.println("삭제할 항목 ID: " + id);
+            
+            // 삭제 수행
+            boolean deleted = userSettingService.deleteDropdownItem(id);
+            
+            Map<String, Object> response = new HashMap<>();
+            if (deleted) {
+                response.put("success", true);
+                response.put("message", "항목이 삭제되었습니다.");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "삭제할 항목을 찾을 수 없습니다.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("항목 삭제 오류: " + e.getMessage());
+            e.printStackTrace();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "서버 오류가 발생했습니다.");
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    
+    /**
+     * 드롭다운 항목 상세 조회 API (ID 포함)
+     * 프론트엔드에서 삭제를 위해 ID 정보가 필요할 때 사용
+     */
+    @GetMapping("/api/user-settings/dropdown-items-with-id")
+    public ResponseEntity<List<Map<String, Object>>> getDropdownItemsWithId(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(defaultValue = "1") Long guardianId) {
+        try {
+            Guardians guardian = currentUser.getGuardians();
+            if (guardian == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            
+            // ID와 함께 항목 조회
+            List<Map<String, Object>> dropdownItems = userSettingService.getDropdownItemsWithId(guardian.getId());
+            
+            System.out.println("=== ID 포함 드롭다운 API 디버깅 ===");
+            System.out.println("Guardian ID: " + guardian.getId());
+            System.out.println("드롭다운 항목 개수: " + dropdownItems.size());
+            
+            return ResponseEntity.ok(dropdownItems);
+        } catch (Exception e) {
+            System.err.println("ID 포함 드롭다운 조회 오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
     
@@ -187,7 +264,6 @@ public class DailyController {
                     .body("최근 활동 현황 조회 중 오류가 발생했습니다.");
         }
     }
-    // =================================================================
 
     // 활동 기록 조회
     @GetMapping("/api/seniors/{id}/dailyActivities/{activityId}")
@@ -215,6 +291,7 @@ public class DailyController {
                     .body("활동 기록 조회 중 오류가 발생했습니다.");
         }
     }
+    
     // 전체 활동 기록 조회
     @GetMapping("/api/seniors/{id}/dailyActivities")
     public ResponseEntity<?> getDailyList(
@@ -359,6 +436,7 @@ public class DailyController {
                     .body("활동 기록 삭제 중 오류가 발생했습니다.");
         }
     }
+    
     // 활동기록 수정
     @PutMapping("/api/seniors/{id}/dailyActivities/{activityId}")
     public ResponseEntity<SeniorDto.SeniorUpdateDailyDto> updateDailyActivity(

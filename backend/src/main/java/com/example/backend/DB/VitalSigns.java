@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 public class VitalSigns {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)

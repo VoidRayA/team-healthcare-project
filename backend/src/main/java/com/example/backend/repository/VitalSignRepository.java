@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface VitalSignRepository extends JpaRepository<VitalSigns, Integer> {
+public interface VitalSignRepository extends JpaRepository<VitalSigns, Long> {
     List<VitalSigns> findByMeasurementTime(LocalDateTime measurementTime);
 
     // 특정 날짜 전체 조회
@@ -24,7 +24,7 @@ public interface VitalSignRepository extends JpaRepository<VitalSigns, Integer> 
     Optional<VitalSigns> findBySeniorIdAndDateAndId(
             @Param("seniorId") Integer seniorId,
             @Param("date") LocalDate date,
-            @Param("vitalId") Integer vitalId
+            @Param("vitalId") Long vitalId
     );
 
     // 날짜 범위 조회

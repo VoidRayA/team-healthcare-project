@@ -84,8 +84,17 @@ const Login = () => {
 
       console.log('로그인 응답:', response);
 
-      // 응답에서 데이터 추출
-      const { accessToken, loginId, guardianName, role } = response;
+      // 응답에서 데이터 추출 (AuthResponseDto 구조와 일치)
+      const { 
+        accessToken, 
+        refreshToken, 
+        tokenType, 
+        expiresIn, 
+        loginId, 
+        guardianName, 
+        role,
+        senior 
+      } = response;
       
       if (accessToken) {
         // rememberMe 처리
@@ -99,21 +108,29 @@ const Login = () => {
           localStorage.removeItem('rememberMe');
         }
         
-        // auth 유틸리티를 사용하여 세션 스토리지에 저장
-        saveAuthData(accessToken, {
-          loginId: loginId,
-          name: guardianName,
-          role: role
-        });
+        // auth 유틸리티를 사용하여 저장
+        // saveAuthData는 3개의 매개변수를 받음: accessToken, refreshToken, userData
+        saveAuthData(
+          accessToken, 
+          refreshToken || '', 
+          {
+            loginId: loginId || user.userid,
+            guardianName: guardianName || '',
+            role: role || 'GUARDIAN'
+          }
+        );
 
         console.log('로그인 성공, 저장된 데이터:', {
           jwt: accessToken,
+          refreshToken: refreshToken,
           loginId,
           guardianName,
-          role
+          role,
+          expiresIn,
+          senior: senior
         });
 
-        alert(`로그인 성공! ${guardianName}님 환영합니다.`);
+        alert(`로그인 성공! ${guardianName || '사용자'}님 환영합니다.`);
         
         // App.jsx에서 인증 상태 감지하여 자동으로 Home으로 리다이렉트
         window.location.reload();

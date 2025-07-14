@@ -1,0 +1,101 @@
+지도 핀 위치가 안 맞음
+보호 대상자 - 항목과 종류 눌렀을 때 나오도록
+일정관리 - 체크란
+흰색 바탕이랑 사이드바 사이즈 조절
+알림 센터 - 활동 기록 박스 사이즈 조절
+
+메인에 있는 거 코드삭제
+
+
+
+
+
+--------------------------------------아래쪽으로 정리 코드
+<Box sx={{ position: 'relative', height: '803px' }}>
+  {/* 기준 Paper */}
+  ...
+  {/* 이 수정된 Paper */}
+</Box>
+
+
+
+
+
+
+
+
+
+       <Paper sx={{
+            width: '320px',
+            backgroundColor: '#ffffff',
+            border: theme => `1px solid ${theme.palette.divider}`,
+            borderRadius: 2,
+            padding: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '803px',
+            overflow: 'hidden',
+            boxShadow: 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+loginId": "newuser2025
+loginPw": "password123!
+
+
+
+
+
+
+
+
+
+
+
+
+const ContentContainer = styled(Paper)({
+  backgroundColor: '#ffffff',
+  flex: 1,
+  display: 'flex',
+  overflow: 'auto',
+  margin: '1vw 1vw 1vw 80px', // ← 좌측 마진 줄임 (예: 240 → 80)
+  paddingLeft: '160px',       // ← 내용은 원래대로 유지 (240px 위치)
+  minHeight: 'calc(100vh - 2vw)',
+  boxSizing: 'border-box',
+});
+
+
+
+
+
+
+
+
+
+// 왼쪽 사이드바
+const Sidebar = styled(Paper)({
+  width: '240px',
+  height: 'calc(100vh - 2vw)',  // 높이 맞춤
+  backgroundColor: '#1976d2',
+  borderRadius: '0 20px 20px 0',
+  display: 'flex',
+  flexDirection: 'column',
+  padding: '20px 0',
+  color: 'white',
+  boxSizing: 'border-box',
+  flexShrink: 0,
+  position: 'fixed',     // fixed 유지하되 위치 맞춤
+  left: 0,
+  top: '1vw',            // ContentContainer 위쪽 여백과 맞춤
+  zIndex: 1000
+});

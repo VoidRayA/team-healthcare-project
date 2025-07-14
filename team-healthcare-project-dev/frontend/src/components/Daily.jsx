@@ -332,10 +332,8 @@ const Daily = () => {
     { text: '홈', icon: DashboardOutlined },
     { text: '회원정보 관리', icon: EditOutlined },
     { text: '보호 대상자', icon: PeopleOutlined },
-    { text: '안전 모니터링', icon: SecurityOutlined },
-    { text: '알림 센터', icon: NotificationsOutlined },
     { text: '일정 관리', icon: EventOutlined },
-    { text: '메시지', icon: MessageOutlined }
+    { text: '설정', icon: SettingsOutlined }
   ];
 
   return (

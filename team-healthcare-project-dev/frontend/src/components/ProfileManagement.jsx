@@ -383,20 +383,6 @@ const ProfileManagement = () => {
             <ListItemText primary="보호 대상자" />
           </ListItem>
 
-          <ListItem onClick={() => navigate('/monitoring')}>
-            <ListItemIcon>
-              <SecurityOutlined />
-            </ListItemIcon>
-            <ListItemText primary="안전 모니터링" />
-          </ListItem>
-
-          <ListItem onClick={() => navigate('/alerts')}>
-            <ListItemIcon>
-              <NotificationsOutlined />
-            </ListItemIcon>
-            <ListItemText primary="알림 센터" />
-          </ListItem>
-
           <ListItem onClick={() => navigate('/schedule')}>
             <ListItemIcon>
               <EventOutlined />
@@ -408,7 +394,7 @@ const ProfileManagement = () => {
             <ListItemIcon>
               <MessageOutlined />
             </ListItemIcon>
-            <ListItemText primary="메시지" />
+            <ListItemText primary="설정" />
           </ListItem>
         </List>
 

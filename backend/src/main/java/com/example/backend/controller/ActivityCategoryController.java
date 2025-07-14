@@ -1,6 +1,5 @@
 package com.example.backend.controller;
 
-import com.example.backend.DB.Guardians;
 import com.example.backend.config.CustomUserDetails;
 import com.example.backend.dto.seviceDto.ActivityCategoryDto;
 import com.example.backend.service.daily.ActivityCategoryService;

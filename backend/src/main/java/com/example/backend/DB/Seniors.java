@@ -1,5 +1,6 @@
 package com.example.backend.DB;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -25,6 +26,7 @@ public class Seniors {
     private Integer id;
 
     // Guardian과의 관계 - ManyToOne
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "guardian_id", nullable = false)
     private Guardians guardian;
@@ -75,6 +77,7 @@ public class Seniors {
     @Column(name = "daily_activities")
     private String dailyActivities;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "senior", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<DailyActivities> activities = new ArrayList<>();
 

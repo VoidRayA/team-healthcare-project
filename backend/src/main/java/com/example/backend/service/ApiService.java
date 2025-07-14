@@ -49,7 +49,7 @@ public class ApiService {
             return null;
         }
     }
-    
+
     public String getBusanHospitals(int pageNo, int numOfRows) {
         String url = "https://apis.data.go.kr/B551182/MadmDtlInfoService2.7/getDtlInfo2.7"
                 + "?serviceKey=" + serviceKey
@@ -74,7 +74,7 @@ public class ApiService {
             return "{\"error\": \"API 호출 실패\", \"message\": \"" + e.getMessage() + "\"}";
         }
     }
-    
+
     public String getDtlInfo(String ykiho, int pageNo, int numOfRows) {
         String url = "https://apis.data.go.kr/B551182/MadmDtlInfoService2.7"
                 + "?serviceKey=" + serviceKey

@@ -26,7 +26,7 @@ public class KakaoApiService {
     private String tmapApiKey;
     
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     /**
      * T-map 도보 경로 검색 API
      */

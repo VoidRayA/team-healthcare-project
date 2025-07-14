@@ -1,7 +1,6 @@
 package com.example.backend.dto.seviceDto;
 
-import com.example.backend.DB.ActivityCategory;
-import lombok.AllArgsConstructor;
+import com.example.backend.DB.care.ActivityCategory;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;

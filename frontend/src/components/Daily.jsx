@@ -362,7 +362,8 @@ const Daily = () => {
         position: 'fixed',
         left: 0,
         top: 0,
-        zIndex: 1000
+        zIndex: 1000,
+        boxShadow: 10
       }} elevation={0}>
         <Box sx={{ 
           px: 2, 
@@ -478,10 +479,11 @@ const Daily = () => {
         backgroundColor: '#ffffff',
         flex: 1,
         display: 'flex',
-        overflow: 'hidden',
-        margin: '1vw 20px 1vw 240px',
+        overflow: 'auto',
+        margin: '1vw 1vw 1vw 240px',
         height: 'calc(100vh - 2vw)',
-        minHeight: 'calc(100vh - 2vw)'
+        minHeight: 'calc(100vh - 2vw)',
+        boxShadow: 3
       }} elevation={0}>
         <Box sx={{
           flex: 1,

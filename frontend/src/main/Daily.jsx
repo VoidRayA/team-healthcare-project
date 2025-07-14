@@ -63,7 +63,8 @@ const ContentContainer = styled(Paper)({
   overflow: 'auto',
   margin: '1vw 1vw 1vw 240px',
   height: 'calc(100vh - 2vw)',
-  minHeight: 'calc(100vh - 2vw)'
+  minHeight: 'calc(100vh - 2vw)',
+  boxShadow: 3
 });
 
 const Sidebar = styled(Paper)({
@@ -80,7 +81,8 @@ const Sidebar = styled(Paper)({
   position: 'fixed',
   left: 0,
   top: 0,
-  zIndex: 1000
+  zIndex: 1000,
+  boxShadow: 10
 });
 
 const SidebarMenu = styled(List)({

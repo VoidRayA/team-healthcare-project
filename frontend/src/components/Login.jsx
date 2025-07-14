@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './Login.css'; // CSS 파일 import
 // API 클라이언트 import로 axios 대체 (2025.07.08)
 import { login } from '../api/apiClient';
 import { saveAuthData } from '../utils/auth';

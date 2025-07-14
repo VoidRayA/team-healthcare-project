@@ -14,6 +14,30 @@ import java.util.List;
 
 @Repository
 public interface AlertsRepository extends JpaRepository<Alerts, Integer> {
+    @Query("SELECT a FROM Alerts a " +
+            "JOIN a.seniors s " +
+            "WHERE s.guardian.id = :guardianId " +
+            "ORDER BY a.createdAt DESC")
+    Page<Alerts> findAllByGuardianId(@Param("guardianId") Integer guardianId, Pageable pageable);
+
+    /**
+     * 특정 가디언의 미확인 알림 조회 (모든 시니어 포함)
+     */
+    @Query("SELECT a FROM Alerts a " +
+            "JOIN a.seniors s " +
+            "WHERE s.guardian.id = :guardianId AND a.isConfirmed = false " +
+            "ORDER BY a.createdAt DESC")
+    List<Alerts> findUnconfirmedAlertsByGuardianId(@Param("guardianId") Integer guardianId);
+
+    /**
+     * 특정 가디언의 확인된 알림 조회 (모든 시니어 포함)
+     */
+    @Query("SELECT a FROM Alerts a " +
+            "JOIN a.seniors s " +
+            "WHERE s.guardian.id = :guardianId AND a.isConfirmed = true " +
+            "ORDER BY a.createdAt DESC")
+    List<Alerts> findConfirmedAlertsByGuardianId(@Param("guardianId") Integer guardianId);
+
     // 특정 시니어의 미확인 알림 조회 (생성일 기준 내림차순)
     List<Alerts> findBySeniorsAndIsConfirmedFalseOrderByCreatedAtDesc(Seniors seniors);
 

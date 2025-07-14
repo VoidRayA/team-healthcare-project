@@ -11,16 +11,6 @@ import java.time.LocalDateTime;
 
 /*
 * 알림 관리 테이블
-*
-* seniors 테이블 참조
-* 알림 타입 emergency/warning/info
-* 알림 제목
-* 알림 내용
-* 생체 신호 테이블 참조
-* 확인여부
-* 확인한 보호자
-* 확인 시간
-* 알림 생성 시각
 * */
 @Entity
 @Table(name = "alerts")
@@ -53,7 +43,8 @@ public class Alerts {
     private boolean isConfirmed;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "guardian_id")
+//    @JoinColumn(name = "guardian_id")
+    @JoinColumn(name = "confirmed_by")
     private Guardians confirmedBy;
 
     @Column(name = "confirmed_at")

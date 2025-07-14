@@ -71,7 +71,7 @@ public class AlertsService {
 
     }
     // 보호자 확인용 서비스(미확인) 및 확인 홈화면에서 구현
-    // 모든 알림 조회(페이징)
+    // 특정 senior의 모든 알림 조회(페이징)
     public AlertsDto.AlertsPageDto getAlerts(Integer seniorId, Integer guardianId, int page, int size){
         Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardianId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
@@ -82,7 +82,7 @@ public class AlertsService {
 
         return AlertsDto.AlertsPageDto.from(alertsPage);
     }
-    // 미확인 알림 조회
+    // 특정 senior의 미확인 알림 조회
     public List<AlertsDto.AlertsSearchDto> getFalseAlerts(Integer seniorId, Guardians guardian){
         Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
                 .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
@@ -93,7 +93,7 @@ public class AlertsService {
                 .map(AlertsDto.AlertsSearchDto::from)
                 .collect(Collectors.toList());
     }
-    // 확인 알림 조회
+    // 특정 senior의 확인 알림 조회
     public List<AlertsDto.AlertsSearchDto> getTrueAlerts(Integer seniorId, Guardians guardian){
         Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
                 .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
@@ -104,6 +104,32 @@ public class AlertsService {
                 .map(AlertsDto.AlertsSearchDto::from)
                 .collect(Collectors.toList());
     }
+    // 모든 알림 조회
+    public AlertsDto.AlertsPageDto getAllAlertsByGuardian(Integer guardianId, int page, int size){
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Alerts> alertsPage  = alertsRepository.findAllByGuardianId(guardianId, pageable);
+
+        return AlertsDto.AlertsPageDto.from(alertsPage);
+    }
+    // 모든 미확인 알림 조회
+    public List<AlertsDto.AlertsSearchDto> getAllUnconfirmedAlertsByGuardian(Guardians guardians){
+        List<Alerts> alerts = alertsRepository.findUnconfirmedAlertsByGuardianId(guardians.getId());
+
+        return alerts.stream()
+                .map(AlertsDto.AlertsSearchDto::from)
+                .collect(Collectors.toList());
+    }
+
+    // 모든 확인 알림 조회
+    public List<AlertsDto.AlertsSearchDto> getAllConfirmedAlertsByGuardian(Guardians guardian){
+        List<Alerts> alerts = alertsRepository.findConfirmedAlertsByGuardianId(guardian.getId());
+
+        return alerts.stream()
+                .map(AlertsDto.AlertsSearchDto::from)
+                .collect(Collectors.toList());
+    }
+
 
     // 삭제 서비스
     public void deleteAlert(Integer alertId, Guardians guardian) {

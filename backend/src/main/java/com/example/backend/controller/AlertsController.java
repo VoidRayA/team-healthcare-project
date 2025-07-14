@@ -3,7 +3,6 @@ package com.example.backend.controller;
 import com.example.backend.DB.Guardians;
 import com.example.backend.config.CustomUserDetails;
 import com.example.backend.dto.seviceDto.AlertsDto;
-import com.example.backend.dto.seviceDto.VitalSignsDto;
 import com.example.backend.service.daily.AlertsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,8 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/seniors/{id}/alert")
-//@RequestMapping("/api/seniors/{id}/vitalSign/alert")
+@RequestMapping("/api/guardian/alert")
 @RequiredArgsConstructor
 public class AlertsController {
 
@@ -25,7 +23,6 @@ public class AlertsController {
     @PostMapping
     public ResponseEntity<?> postAlert(
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            @PathVariable("id") Integer seniorId,
             @RequestBody AlertsDto.AlertsCreateDto dto
     ){
         try {
@@ -52,9 +49,67 @@ public class AlertsController {
                     .body("오류가 발생했습니다.");
         }
     }
-
-    // 모든 알림 조회 (페이징)
+    // 가디언의 모든 알림 조회 (페이징)
     @GetMapping
+    public ResponseEntity<?> getAllAlerts(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ){
+        try {
+            Guardians guardian = currentUser.getGuardians();
+            if (guardian == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+            }
+
+            AlertsDto.AlertsPageDto alertsPage = alertsService.getAllAlertsByGuardian(guardian.getId(), page, size);
+            return ResponseEntity.ok(alertsPage);
+        } catch (Exception e) {
+            System.err.println("오류 발생: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("오류가 발생했습니다.");
+        }
+    }
+    // 가디언의 확인 알림 조회
+    @GetMapping("/confirmed")
+    public ResponseEntity<?> getConfirmedAlerts(
+            @AuthenticationPrincipal CustomUserDetails currentUser
+    ) {
+        try {
+            Guardians guardian = currentUser.getGuardians();
+            if (guardian == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+            }
+
+            List<AlertsDto.AlertsSearchDto> alerts = alertsService.getAllConfirmedAlertsByGuardian(guardian);
+            return ResponseEntity.ok(alerts);
+        } catch (Exception e) {
+            System.err.println("오류 발생: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("오류가 발생했습니다.");
+        }
+    }
+    // 가디언의 미확인 알림 조회
+    @GetMapping("/unconfirmed")
+    public ResponseEntity<?> getUnconfirmedAlerts(
+            @AuthenticationPrincipal CustomUserDetails currentUser
+    ) {
+        try {
+            Guardians guardian = currentUser.getGuardians();
+            if (guardian == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+            }
+
+            List<AlertsDto.AlertsSearchDto> alerts = alertsService.getAllUnconfirmedAlertsByGuardian(guardian);
+            return ResponseEntity.ok(alerts);
+        } catch (Exception e) {
+            System.err.println("오류 발생: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("오류가 발생했습니다.");
+        }
+    }
+    // 특정 senior의 모든 알림 조회 (페이징)
+    @GetMapping("/seniors/{seniorId}")
     public ResponseEntity<?> getAlerts(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @PathVariable("id") Integer seniorId,
@@ -76,9 +131,9 @@ public class AlertsController {
         }
     }
 
-    // 미확인 알림 조회
-    @GetMapping("/unconfirmed")
-    public ResponseEntity<?> getUnconfirmedAlerts(
+    // 특정 senior의 미확인 알림 조회
+    @GetMapping("/seniors/{seniorId}/unconfirmed")
+    public ResponseEntity<?> getSeniorUnconfirmedAlerts(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @PathVariable("id") Integer seniorId
     ) {
@@ -97,9 +152,9 @@ public class AlertsController {
         }
     }
 
-    // 확인된 알림 조회
-    @GetMapping("/confirmed")
-    public ResponseEntity<?> getConfirmedAlerts(
+    // 특정 senior의 확인된 알림 조회
+    @GetMapping("/seniors/{seniorId}/confirmed")
+    public ResponseEntity<?> getSeniorConfirmedAlerts(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @PathVariable("id") Integer seniorId
     ) {

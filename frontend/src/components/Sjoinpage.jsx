@@ -25,7 +25,8 @@ import {
   EventOutlined,
   MessageOutlined,
   LogoutOutlined,
-  EditOutlined
+  EditOutlined,
+  SettingsOutlined
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
 import { getUserInfo, clearAuthData, getAuthToken } from '../utils/auth';

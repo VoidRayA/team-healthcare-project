@@ -32,7 +32,7 @@ public class AlertsService {
     private final SeniorRepository seniorRepository;
 
     // 알림 생성및 보호자에게 전달하는 서비스(특이 사항이 생길 때만)
-    public AlertsDto.AlertsCreateDto createDto(Integer vitalSignsId, String customTitle, String customDescription, CustomUserDetails currentUser){
+    public AlertsDto.AlertsCreateDto createDto(Long vitalSignsId, String customTitle, String customDescription, CustomUserDetails currentUser){
         VitalSigns vitalSigns = vitalSignRepository.findById(vitalSignsId)
                 .orElseThrow(() -> new EntityNotFoundException("VitalSigns 찾을 수 없습니다."));
 
@@ -184,7 +184,7 @@ public class AlertsService {
     /**
      * 생체신호 측정 시 자동 알림 생성 (정상 범위가 아닌 경우)
      */
-    public void checkAndCreateAlert(Integer vitalSignsId) {
+    public void checkAndCreateAlert(Long vitalSignsId) {
         VitalSigns vitalSigns = vitalSignRepository.findById(vitalSignsId)
                 .orElseThrow(() -> new EntityNotFoundException("VitalSigns를 찾을 수 없습니다."));
 

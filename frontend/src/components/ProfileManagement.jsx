@@ -383,20 +383,6 @@ const ProfileManagement = () => {
             <ListItemText primary="보호 대상자" />
           </ListItem>
 
-          <ListItem onClick={() => navigate('/monitoring')}>
-            <ListItemIcon>
-              <SecurityOutlined />
-            </ListItemIcon>
-            <ListItemText primary="안전 모니터링" />
-          </ListItem>
-
-          <ListItem onClick={() => navigate('/alerts')}>
-            <ListItemIcon>
-              <NotificationsOutlined />
-            </ListItemIcon>
-            <ListItemText primary="알림 센터" />
-          </ListItem>
-
           <ListItem onClick={() => navigate('/schedule')}>
             <ListItemIcon>
               <EventOutlined />
@@ -408,7 +394,7 @@ const ProfileManagement = () => {
             <ListItemIcon>
               <MessageOutlined />
             </ListItemIcon>
-            <ListItemText primary="메시지" />
+            <ListItemText primary="설정" />
           </ListItem>
         </List>
 
@@ -438,9 +424,10 @@ const ProfileManagement = () => {
         flex: 1,
         display: 'flex',
         overflow: 'auto',
-        margin: '1vw 1vw 1vw 240px',
-        height: 'calc(100vh - 2vw)',
-        minHeight: 'calc(100vh - 2vw)'
+        margin: '1vw 1vw 1vw 80px',
+        paddingLeft: '160px',
+        minHeight: 'calc(100vh - 2vw)',
+        boxSizing: 'border-box',
       }}>
         <Box sx={{
           flex: 1,

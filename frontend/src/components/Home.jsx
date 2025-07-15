@@ -953,10 +953,8 @@ const Home = () => {
     { text: '홈', icon: DashboardOutlined },
     { text: '회원정보 관리', icon: EditOutlined },
     { text: '보호 대상자', icon: PeopleOutlined },
-    { text: '안전 모니터링', icon: SecurityOutlined },
-    { text: '알림 센터', icon: NotificationsOutlined },
-    { text: '조회 날짜', icon: EventOutlined },
-    { text: '메시지', icon: MessageOutlined }
+    { text: '일정 관리', icon: EventOutlined },
+    { text: '설정', icon: SettingsOutlined }
   ];
 
   const statusData = [
@@ -985,6 +983,24 @@ const Home = () => {
       color: '#9c27b0'
     }
   ];
+
+  const getColoredIcon = (iconCode) => {
+    const map = {
+      '01n': '01d',
+      '02n': '02d',
+      '03n': '03d',
+      '04n': '04d',
+      '09n': '09d',
+      '10n': '10d',
+      '11n': '11d',
+      '13n': '13d',
+      '50n': '50d',
+    };
+    return map[iconCode] || iconCode;
+  };
+
+
+
 
   return (
     <Box sx={{
@@ -1094,7 +1110,7 @@ const Home = () => {
                   } else if (item.text === '보호 대상자') {
                     updateRecentAction(item.text);
                     navigate('/seniors');
-                  } else if (item.text === '조회 날짜') {
+                  } else if (item.text === '일정 관리') {
                     updateRecentAction(item.text);
                     navigate('/daily');
                   } else {
@@ -1137,15 +1153,14 @@ const Home = () => {
       </Paper>
 
       <Paper sx={{
-        backgroundColor: '#ffffff',  
+        backgroundColor: '#ffffff',
         flex: 1,
         display: 'flex',
         overflow: 'auto',
-        margin: '1vw 1vw 1vw 240px',
-        height: 'calc(100vh - 2vw)',
+        margin: '1vw 1vw 1vw 80px',
+        paddingLeft: '160px',
         minHeight: 'calc(100vh - 2vw)',
-        borderRadius: 1,
-        boxShadow: 3
+        boxSizing: 'border-box',
       }}>
         {/* 중앙 메인 콘텐츠 */}
         <Box sx={{
@@ -1202,7 +1217,7 @@ const Home = () => {
                 boxShadow: 2
               }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  📊 시스템 현황
+                  📊 헬스 모니터링 센터
                 </Typography>
                 
                 <Box sx={{ 
@@ -1261,7 +1276,7 @@ const Home = () => {
                 boxShadow: 2
               }}>
                 <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                  📋 최근 활동 현황
+                  🔔 오늘의 알림
                 </Typography>                
                 {/* 로딩 상태 또는 데이터 없을 때 처리 */}
                 {activitiesLoading ? (
@@ -1880,7 +1895,7 @@ const Home = () => {
                           margin: '0 auto 4px auto'
                         }}>
                           <img 
-                            src={`https://openweathermap.org/img/wn/${forecast.icon}@2x.png`}
+                            src={`https://openweathermap.org/img/wn/${getColoredIcon(forecast.icon)}@4x.png`}
                             alt={forecast.condition}
                             title={forecast.condition}
                             style={{

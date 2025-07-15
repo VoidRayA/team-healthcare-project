@@ -25,7 +25,8 @@ import {
   EventOutlined,
   MessageOutlined,
   LogoutOutlined,
-  EditOutlined
+  EditOutlined,
+  SettingsOutlined
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
 
@@ -392,7 +393,7 @@ const ProfileManagement = () => {
 
           <ListItem onClick={() => navigate('/messages')}>
             <ListItemIcon>
-              <MessageOutlined />
+              <SettingsOutlined />
             </ListItemIcon>
             <ListItemText primary="설정" />
           </ListItem>

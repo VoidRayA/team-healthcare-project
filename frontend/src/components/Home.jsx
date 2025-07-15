@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Home.css'; // CSS 파일 import
 import {
   Box,
   Typography,  
@@ -1027,7 +1026,7 @@ const Home = () => {
         left: 0,
         top: 0,
         zIndex: 1000,
-        boxShadow: 10
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
       }}>
         {/* 사용자 정보 영역 */}
         <Box sx={{ 

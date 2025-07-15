@@ -39,7 +39,8 @@ import {
   ClearOutlined,
   PhoneOutlined,
   HomeOutlined,
-  MedicalServicesOutlined
+  MedicalServicesOutlined,
+  SettingsOutlined
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
 import { getUserInfo, clearAuthData } from '../utils/auth';

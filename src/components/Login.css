@@ -1,0 +1,167 @@
+/* 로그인 페이지 전체 배경 - 팀원 디자인 적용 */
+.login-page {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(178.21deg, #007CFF 2.96%, #00BCFF 99.96%);
+  margin: 0;
+  padding: 0;  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Material-UI와 호환되는 로그인 박스 */
+.login-container {
+  background: #FFFFFF;
+  border-radius: 30px;
+  padding: 60px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 90%;
+}
+
+/* 로그인 헤더 */
+.login-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.login-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.login-subtitle {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+/* 입력 필드 스타일 */
+.MuiTextField-root {
+  margin-bottom: 20px !important;
+}
+
+.MuiOutlinedInput-root {
+  border-radius: 12px !important;
+  background: #f8f9fa !important;
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #007CFF !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #007CFF !important;
+  border-width: 2px !important;
+}
+
+/* 로그인 버튼 */
+.login-button {
+  background: linear-gradient(90deg, #007CFF 0%, #00BCFF 100%) !important;
+  color: white !important;
+  border-radius: 12px !important;
+  padding: 12px 0 !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  margin-top: 20px !important;
+  box-shadow: 0 4px 20px rgba(0, 124, 255, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(0, 124, 255, 0.4) !important;
+}
+
+/* 추가 링크들 */
+.login-links {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.login-links a {
+  color: #007CFF;
+  text-decoration: none;
+  font-size: 0.95rem;
+  margin: 0 10px;
+  transition: color 0.3s ease;
+}
+
+.login-links a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* 로고/이미지 영역 */
+.login-logo {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.login-logo img {
+  max-width: 150px;
+  height: auto;
+}
+
+/* 에러 메시지 */
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* 성공 메시지 */
+.success-message {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 40px 30px;
+  }
+  
+  .login-title {
+    font-size: 2rem;
+  }
+}
+
+/* 모니터링 상태 표시 추가 스타일 */
+.monitoring-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.monitoring-badge.safe {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.monitoring-badge.warning {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.monitoring-badge.danger {
+  background: #ffebee;
+  color: #c62828;
+}

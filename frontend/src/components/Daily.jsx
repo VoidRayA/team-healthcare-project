@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -31,7 +31,11 @@ import {
   MessageOutlined,
   LogoutOutlined,
   EditOutlined,
-  SettingsOutlined
+  SettingsOutlined,
+  CheckCircle,
+  RadioButtonUnchecked,
+  ArrowUpward,
+  ArrowDownward
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
 // import PasswordConfirmModal from './PasswordConfirmModal'; // ProfileManagement에서만 사용
@@ -60,6 +64,10 @@ const Daily = () => {
   // const [showPasswordModal, setShowPasswordModal] = useState(false); // ProfileManagement에서만 처리
   const [showSeniorSelectModal, setShowSeniorSelectModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  
+  // 정렬 관련 상태
+  const [sortColumn, setSortColumn] = useState('');
+  const [sortDirection, setSortDirection] = useState('asc');
   
   // 드롭다운 관련 상태
   const [dropdownItems, setDropdownItems] = useState([]);
@@ -90,6 +98,63 @@ const Daily = () => {
     // 드롭다운 데이터 로드
     fetchDropdownData();
   }, []);
+
+  // seniors가 변경될 때마다 displayedSeniors 업데이트
+  const displayedSeniors = useMemo(() => {
+    const sorted = sortColumn ? sortSeniors(seniors, sortColumn, sortDirection) : seniors;
+    const displayed = [...sorted];
+    
+    // 항상 6개 행을 유지하기 위해 빈 객체 추가
+    while (displayed.length < 6) {
+      displayed.push({ 
+        id: `empty-${displayed.length}`, 
+        isEmpty: true,
+        seniorName: '', 
+        age: '', 
+        phoneNumber: '', 
+        address: '', 
+        emergencyContact: '', 
+        medicalConditions: '', 
+        medications: '', 
+        specialNotes: '' 
+      });
+    }
+    
+    return displayed;
+  }, [seniors, sortColumn, sortDirection]);
+
+  // 정렬 함수
+  const sortSeniors = useCallback((data, column, direction) => {
+    if (!column) return data;
+    
+    return [...data].sort((a, b) => {
+      let aValue = a[column] || '';
+      let bValue = b[column] || '';
+      
+      // 나이의 경우 숫자로 비교
+      if (column === 'age') {
+        aValue = parseInt(aValue) || 0;
+        bValue = parseInt(bValue) || 0;
+      } else {
+        aValue = aValue.toString().toLowerCase();
+        bValue = bValue.toString().toLowerCase();
+      }
+      
+      if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, []);
+
+  // 헤더 클릭 핸들러
+  const handleHeaderClick = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
 
   // 보호 대상자 목록 로드
   const loadSeniors = async () => {
@@ -763,9 +828,17 @@ const Daily = () => {
                   backgroundColor: '#ffffff',
                   borderRadius: '0',
                   border: '2px solid #1976d2',
-                  boxShadow: 'none'
+                  boxShadow: 'none',
+                  height: {
+                    xs: '180px', // 소형 화면
+                    sm: '200px', // 중형 화면
+                    md: '220px', // 대형 화면
+                    lg: '224px'  // 현재 사이즈
+                  },
+                  overflow: 'auto', // 반응형에서는 스크롤 필요
+                  maxHeight: '224px' // 최대 높이 제한
                 }}>
-                  <Table>
+                  <Table stickyHeader>
                     <TableHead sx={{
                       '& .MuiTableCell-root': {
                         backgroundColor: 'rgba(51, 153, 255, 0.3)',
@@ -775,31 +848,108 @@ const Daily = () => {
                         fontSize: '14px',
                         color: '#000',
                         textAlign: 'center',
-                        padding: '6px 6px',
-                        height: '25px'
+                        padding: '6px 4px',
+                        height: '24px',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        '&:hover': {
+                          backgroundColor: 'rgba(51, 153, 255, 0.4)'
+                        }
                       }
                     }}>
                       <TableRow>
-                        <TableCell>이름</TableCell>
-                        <TableCell>나이</TableCell>
-                        <TableCell>전화번호</TableCell>
-                        <TableCell>주소</TableCell>
-                        <TableCell>비상연락처</TableCell>
-                        <TableCell>지병</TableCell>
-                        <TableCell>복용 약물</TableCell>
-                        <TableCell>특이사항</TableCell>
+                        <TableCell onClick={() => handleHeaderClick('seniorName')}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            이름
+                            {sortColumn === 'seniorName' && (
+                              sortDirection === 'asc' ? 
+                                <ArrowUpward sx={{ fontSize: '16px' }} /> : 
+                                <ArrowDownward sx={{ fontSize: '16px' }} />
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell onClick={() => handleHeaderClick('age')}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            나이
+                            {sortColumn === 'age' && (
+                              sortDirection === 'asc' ? 
+                                <ArrowUpward sx={{ fontSize: '16px' }} /> : 
+                                <ArrowDownward sx={{ fontSize: '16px' }} />
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell onClick={() => handleHeaderClick('phoneNumber')}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            전화번호
+                            {sortColumn === 'phoneNumber' && (
+                              sortDirection === 'asc' ? 
+                                <ArrowUpward sx={{ fontSize: '16px' }} /> : 
+                                <ArrowDownward sx={{ fontSize: '16px' }} />
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell onClick={() => handleHeaderClick('address')}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            주소
+                            {sortColumn === 'address' && (
+                              sortDirection === 'asc' ? 
+                                <ArrowUpward sx={{ fontSize: '16px' }} /> : 
+                                <ArrowDownward sx={{ fontSize: '16px' }} />
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell onClick={() => handleHeaderClick('emergencyContact')}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            비상연락처
+                            {sortColumn === 'emergencyContact' && (
+                              sortDirection === 'asc' ? 
+                                <ArrowUpward sx={{ fontSize: '16px' }} /> : 
+                                <ArrowDownward sx={{ fontSize: '16px' }} />
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell onClick={() => handleHeaderClick('medicalConditions')}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            지병
+                            {sortColumn === 'medicalConditions' && (
+                              sortDirection === 'asc' ? 
+                                <ArrowUpward sx={{ fontSize: '16px' }} /> : 
+                                <ArrowDownward sx={{ fontSize: '16px' }} />
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell onClick={() => handleHeaderClick('medications')}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            복용 약물
+                            {sortColumn === 'medications' && (
+                              sortDirection === 'asc' ? 
+                                <ArrowUpward sx={{ fontSize: '16px' }} /> : 
+                                <ArrowDownward sx={{ fontSize: '16px' }} />
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell onClick={() => handleHeaderClick('specialNotes')}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            특이사항
+                            {sortColumn === 'specialNotes' && (
+                              sortDirection === 'asc' ? 
+                                <ArrowUpward sx={{ fontSize: '16px' }} /> : 
+                                <ArrowDownward sx={{ fontSize: '16px' }} />
+                            )}
+                          </Box>
+                        </TableCell>
                         <TableCell>상태</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody sx={{
                       '& .MuiTableRow-root': {
+                        transition: 'background-color 0.15s ease',
                         '&:nth-of-type(even)': {
                           backgroundColor: '#f8f9fa'
                         },
                         '&.data-row:hover': {
                           backgroundColor: '#e3f2fd',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s ease'
+                          cursor: 'pointer'
                         },
                         '&.data-row.selected': {
                           backgroundColor: '#bbdefb !important',
@@ -819,60 +969,52 @@ const Daily = () => {
                         fontSize: '12px',
                         color: '#333',
                         textAlign: 'center',
-                        padding: '6px 6px',
-                        height: '25px'
+                        padding: '6px 4px', // 패딩 증가
+                        height: '28px', // 높이 증가
+                        transition: 'all 0.15s ease'
                       }
                     }}>
-                      {seniors.map((senior, index) => (
+                      {displayedSeniors.map((senior, index) => (
                         <TableRow 
                           key={senior.id}
-                          className="data-row"
+                          className={senior.isEmpty ? "" : "data-row"}
                           onClick={() => {
-                            console.log('선택된 Senior:', senior);
-                            setSelectedSenior(senior);
+                            if (!senior.isEmpty) {
+                              console.log('선택된 Senior:', senior);
+                              setSelectedSenior(senior);
+                            }
                           }}
                           sx={{
-                            backgroundColor: selectedSenior && selectedSenior.id === senior.id ? '#bbdefb !important' : 'inherit'
+                            backgroundColor: selectedSenior && selectedSenior.id === senior.id ? '#bbdefb !important' : 'inherit',
+                            cursor: senior.isEmpty ? 'default' : 'pointer',
+                            '& .MuiTableCell-root': {
+                              userSelect: senior.isEmpty ? 'none' : 'auto',
+                              pointerEvents: senior.isEmpty ? 'none' : 'auto'
+                            }
                           }}
                         >
                           <TableCell>{senior.seniorName}</TableCell>
-                          <TableCell>{senior.age ? `${senior.age}세` : '-'}</TableCell>
-                          <TableCell>{senior.phoneNumber || '-'}</TableCell>
-                          <TableCell>{senior.address || '-'}</TableCell>
-                          <TableCell>{senior.emergencyContact || '-'}</TableCell>
-                          <TableCell>{senior.medicalConditions || '-'}</TableCell>
-                          <TableCell>{senior.medications || '-'}</TableCell>
-                          <TableCell>{senior.specialNotes || '-'}</TableCell>
+                          <TableCell>{senior.age ? `${senior.age}세` : (senior.isEmpty ? '' : '-')}</TableCell>
+                          <TableCell>{senior.phoneNumber || (senior.isEmpty ? '' : '-')}</TableCell>
+                          <TableCell>{senior.address || (senior.isEmpty ? '' : '-')}</TableCell>
+                          <TableCell>{senior.emergencyContact || (senior.isEmpty ? '' : '-')}</TableCell>
+                          <TableCell>{senior.medicalConditions || (senior.isEmpty ? '' : '-')}</TableCell>
+                          <TableCell>{senior.medications || (senior.isEmpty ? '' : '-')}</TableCell>
+                          <TableCell>{senior.specialNotes || (senior.isEmpty ? '' : '-')}</TableCell>
                           <TableCell 
                             sx={{
                               color: selectedSenior && selectedSenior.id === senior.id ? '#1976d2' : '#666',
                               fontWeight: selectedSenior && selectedSenior.id === senior.id ? 'bold' : 'normal'
                             }}
                           >
-                            {selectedSenior && selectedSenior.id === senior.id ? '선택됨' : '대기'}
+                            {senior.isEmpty ? '' : (
+                              selectedSenior && selectedSenior.id === senior.id ? (
+                                <CheckCircle sx={{ color: '#1976d2', fontSize: '20px' }} />
+                              ) : (
+                                <RadioButtonUnchecked sx={{ color: '#ccc', fontSize: '20px' }} />
+                              )
+                            )}
                           </TableCell>
-                        </TableRow>
-                      ))}
-                      {/* 빈 행들 (디자인을 위해) */}
-                      {Array.from({ length: Math.max(0, 6 - seniors.length) }).map((_, index) => (
-                        <TableRow 
-                          key={`empty-${index}`}
-                          sx={{
-                            '& .MuiTableCell-root': {
-                              userSelect: 'none',
-                              pointerEvents: 'none'
-                            }
-                          }}
-                        >
-                          <TableCell>&nbsp;</TableCell>
-                          <TableCell>&nbsp;</TableCell>
-                          <TableCell>&nbsp;</TableCell>
-                          <TableCell>&nbsp;</TableCell>
-                          <TableCell>&nbsp;</TableCell>
-                          <TableCell>&nbsp;</TableCell>
-                          <TableCell>&nbsp;</TableCell>
-                          <TableCell>&nbsp;</TableCell>
-                          <TableCell>&nbsp;</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

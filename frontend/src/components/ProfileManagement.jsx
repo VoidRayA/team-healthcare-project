@@ -19,11 +19,8 @@ import {
 } from '@mui/material';
 import {
   DashboardOutlined,
-  PeopleOutlined,
-  SecurityOutlined,
-  NotificationsOutlined,
-  EventOutlined,
-  MessageOutlined,
+  PeopleOutlined,  
+  EventOutlined,  
   LogoutOutlined,
   EditOutlined,
   SettingsOutlined

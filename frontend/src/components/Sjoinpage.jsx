@@ -193,10 +193,8 @@ const Sjoinpage = () => {
     { text: '홈', icon: DashboardOutlined },
     { text: '회원정보 관리', icon: EditOutlined },
     { text: '보호 대상자', icon: PeopleOutlined },
-    { text: '안전 모니터링', icon: SecurityOutlined },
-    { text: '알림 센터', icon: NotificationsOutlined },
     { text: '일정 관리', icon: EventOutlined },
-    { text: '메시지', icon: MessageOutlined }
+    { text: '설정', icon: SettingsOutlined }
   ];
 
   // 공통 텍스트 필드 스타일
@@ -387,15 +385,14 @@ const Sjoinpage = () => {
       </Paper>
 
       <Paper sx={{
-        backgroundColor: '#ffffff',  
+        backgroundColor: '#ffffff',
         flex: 1,
         display: 'flex',
         overflow: 'auto',
-        margin: '1vw 1vw 1vw 240px',
-        height: 'calc(100vh - 2vw)',
+        margin: '1vw 1vw 1vw 80px',
+        paddingLeft: '160px',
         minHeight: 'calc(100vh - 2vw)',
-        borderRadius: 1,
-        boxShadow: 3
+        boxSizing: 'border-box',
       }}>
         <Box sx={{
           flex: 1,

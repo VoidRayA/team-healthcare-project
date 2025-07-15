@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -55,7 +55,6 @@ const SeniorList = () => {
     role: 'ADMIN'
   });
   
-  const [searchFilter, setSearchFilter] = useState('전체');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [seniors, setSeniors] = useState([]);
@@ -80,6 +79,30 @@ const SeniorList = () => {
     
     loadSeniors();
   }, [currentPage, orderBy, order]);
+
+  // seniors가 변경될 때마다 displayedSeniors 업데이트
+  const displayedSeniors = useMemo(() => {
+    const displayed = [...seniors];
+    
+    // 항상 10개 행을 유지하기 위해 빈 객체 추가
+    while (displayed.length < 10) {
+      displayed.push({ 
+        id: `empty-${displayed.length}`, 
+        isEmpty: true,
+        name: '', 
+        birthDate: '', 
+        gender: '', 
+        address: '', 
+        phone: '', 
+        emergencyContact: '', 
+        medicalConditions: '', 
+        medications: '', 
+        specialNotes: '' 
+      });
+    }
+    
+    return displayed;
+  }, [seniors]);
 
   const loadSeniors = async () => {
     setLoading(true);
@@ -183,12 +206,12 @@ const SeniorList = () => {
     navigate(`/senior/edit/${seniorId}`);
   };
 
-  const handleRequestSort = (property) => {
+  const handleRequestSort = useCallback((property) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
     setCurrentPage(1);
-  };
+  }, [orderBy, order]);
 
   const handleLogout = () => {
     clearAuthData();
@@ -384,48 +407,8 @@ const SeniorList = () => {
             marginBottom: '15px',
             padding: '10px 0'
           }}>
-            <Button 
-              onClick={() => setSearchFilter('항목')}
-              sx={{
-                height: '40px',
-                minWidth: '80px',
-                backgroundColor: searchFilter === '항목' ? '#00458B' : '#FFFFFF',
-                color: searchFilter === '항목' ? '#FFFFFF' : '#003C78',
-                border: '1px solid #00458B',
-                borderRadius: '5px',
-                fontFamily: 'Pretendard',
-                fontWeight: 700,
-                fontSize: '14px',
-                textTransform: 'none',
-                '&:hover': {
-                  backgroundColor: searchFilter === '항목' ? '#003366' : '#f0f8ff'
-                }
-              }}
-            >
-              항목
-            </Button>
-            <Button 
-              onClick={() => setSearchFilter('종류')}
-              sx={{
-                height: '40px',
-                minWidth: '80px',
-                backgroundColor: searchFilter === '종류' ? '#00458B' : '#FFFFFF',
-                color: searchFilter === '종류' ? '#FFFFFF' : '#003C78',
-                border: '1px solid #00458B',
-                borderRadius: '5px',
-                fontFamily: 'Pretendard',
-                fontWeight: 700,
-                fontSize: '14px',
-                textTransform: 'none',
-                '&:hover': {
-                  backgroundColor: searchFilter === '종류' ? '#003366' : '#f0f8ff'
-                }
-              }}
-            >
-              종류
-            </Button>
             <TextField
-              placeholder="검색"
+              placeholder="이름, 주소, 전화번호로 검색"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -453,7 +436,7 @@ const SeniorList = () => {
                   color: '#003C78',
                   '&::placeholder': {
                     color: '#003C78',
-                    opacity: 1
+                    opacity: 0.7
                   }
                 }
               }}
@@ -509,10 +492,21 @@ const SeniorList = () => {
 
           {/* 에러 메시지 */}
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+            <Alert severity="error" sx={{ mb: 2, height: '48px', display: 'flex', alignItems: 'center' }} onClose={() => setError(null)}>
               {error}
             </Alert>
           )}
+
+          {/* 테이블 영역 - 반응형 높이 */}
+          <Box sx={{ 
+            height: { 
+              xs: '350px', 
+              sm: '400px', 
+              md: '450px', 
+              lg: '472px' 
+            }, 
+            mb: 2 
+          }}>
 
           {/* 테이블 */}
           {loading ? (
@@ -520,7 +514,9 @@ const SeniorList = () => {
               display: 'flex', 
               justifyContent: 'center', 
               alignItems: 'center', 
-              height: '400px' 
+              height: '100%',
+              backgroundColor: '#ffffff',
+              border: '2px solid #1976d2'
             }}>
               <CircularProgress />
             </Box>
@@ -531,10 +527,19 @@ const SeniorList = () => {
                 backgroundColor: '#ffffff',
                 borderRadius: 0,
                 border: '2px solid #1976d2',
-                boxShadow: 'none'
+                boxShadow: 'none',
+                height: { 
+                  xs: '350px', 
+                  sm: '400px', 
+                  md: '450px', 
+                  lg: '470px' 
+                },
+                overflow: 'auto',
+                maxHeight: '469px'
+                // 최소 너비 제거로 반응형 개선
               }}
             >
-              <Table>
+              <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
                 <TableHead sx={{
                   '& .MuiTableCell-root': {
                     backgroundColor: 'rgba(51, 153, 255, 0.3)',
@@ -544,55 +549,73 @@ const SeniorList = () => {
                     fontSize: '14px',
                     color: '#000',
                     textAlign: 'center',
-                    padding: '12px 6px',
-                    height: '45px'
+                    padding: '10px 4px',
+                    height: '42px'
                   }
                 }}>
                   <TableRow>
-                    <TableCell>
+                    <TableCell sx={{ width: '6%', textAlign: 'center' }}>
                       <TableSortLabel
                         active={orderBy === 'seniorName'}
                         direction={orderBy === 'seniorName' ? order : 'asc'}
                         onClick={() => handleRequestSort('seniorName')}
+                        sx={{ 
+                          width: '100%', 
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}
                       >
                         이름
                       </TableSortLabel>
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ width: '10%', textAlign: 'center' }}>
                       <TableSortLabel
                         active={orderBy === 'birthDate'}
                         direction={orderBy === 'birthDate' ? order : 'asc'}
                         onClick={() => handleRequestSort('birthDate')}
+                        sx={{ 
+                          width: '100%', 
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}
                       >
                         생년월일
                       </TableSortLabel>
                     </TableCell>
-                    <TableCell>성별</TableCell>
-                    <TableCell>
+                    <TableCell sx={{ width: '5%' }}>성별</TableCell>
+                    <TableCell sx={{ width: '20%', textAlign: 'center' }}>
                       <TableSortLabel
                         active={orderBy === 'address'}
                         direction={orderBy === 'address' ? order : 'asc'}
                         onClick={() => handleRequestSort('address')}
+                        sx={{ 
+                          width: '100%', 
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}
                       >
                         주소
                       </TableSortLabel>
                     </TableCell>
-                    <TableCell>보호 대상자 연락처</TableCell>
-                    <TableCell>비상연락처</TableCell>
-                    <TableCell>지병</TableCell>
-                    <TableCell>복용 약물</TableCell>
-                    <TableCell>특이사항</TableCell>
+                    <TableCell sx={{ width: '13%', display: { xs: 'none', md: 'table-cell' } }}>보호 대상자 연락처</TableCell>
+                    <TableCell sx={{ width: '13%' }}>비상연락처</TableCell>
+                    <TableCell sx={{ width: '12%', display: { xs: 'none', sm: 'table-cell' } }}>지병</TableCell>
+                    <TableCell sx={{ width: '13%', display: { xs: 'none', sm: 'table-cell' } }}>복용 약물</TableCell>
+                    <TableCell sx={{ width: '11%', display: { xs: 'none', md: 'table-cell' } }}>특이사항</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody sx={{
                   '& .MuiTableRow-root': {
+                    transition: 'background-color 0.15s ease',
                     '&:nth-of-type(even)': {
                       backgroundColor: '#f8f9fa'
                     },
                     '&.data-row:hover': {
                       backgroundColor: '#e3f2fd',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s ease'
+                      cursor: 'pointer'
                     },
                     '&:nth-of-type(5):not(:last-child)': {
                       '& .MuiTableCell-root': {
@@ -606,59 +629,63 @@ const SeniorList = () => {
                     fontSize: '12px',
                     color: '#333',
                     textAlign: 'center',
-                    padding: '8px 6px',
-                    height: '35px'
+                    padding: '8px 4px',
+                    height: '25px',
+                    transition: 'all 0.15s ease'
                   }
                 }}>
-                  {seniors.map((senior) => (
+                  {displayedSeniors.map((senior) => (
                     <TableRow 
                       key={senior.id}
-                      className="data-row"
-                      onClick={() => handleRowClick(senior.id)}
+                      className={senior.isEmpty ? "" : "data-row"}
+                      onClick={() => {
+                        if (!senior.isEmpty) {
+                          handleRowClick(senior.id);
+                        }
+                      }}
+                      sx={{
+                        cursor: senior.isEmpty ? 'default' : 'pointer',
+                        '&:hover': {
+                          backgroundColor: senior.isEmpty ? 'inherit' : '#e3f2fd'
+                        },
+                        '& .MuiTableCell-root': {
+                          userSelect: senior.isEmpty ? 'none' : 'auto',
+                          pointerEvents: senior.isEmpty ? 'none' : 'auto'
+                        }
+                      }}
                     >
                       <TableCell>{senior.name}</TableCell>
                       <TableCell>{senior.birthDate}</TableCell>
                       <TableCell>{senior.gender}</TableCell>
-                      <TableCell>{senior.address}</TableCell>
-                      <TableCell>{senior.phone}</TableCell>
+                      <TableCell 
+                        sx={{ 
+                          whiteSpace: { xs: 'normal', lg: 'nowrap' },
+                          overflow: { xs: 'visible', lg: 'hidden' },
+                          textOverflow: { xs: 'clip', lg: 'ellipsis' },
+                          maxWidth: { xs: 'none', lg: '200px' }
+                        }}
+                      >
+                        {senior.address}
+                      </TableCell>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{senior.phone}</TableCell>
                       <TableCell>{senior.emergencyContact}</TableCell>
-                      <TableCell>{senior.medicalConditions}</TableCell>
-                      <TableCell>{senior.medications}</TableCell>
-                      <TableCell>{senior.specialNotes}</TableCell>
-                    </TableRow>
-                  ))}
-                  {Array.from({ length: Math.max(0, 10 - seniors.length) }).map((_, index) => (
-                    <TableRow 
-                      key={`empty-${index}`}
-                      sx={{
-                        '& .MuiTableCell-root': {
-                          userSelect: 'none',
-                          pointerEvents: 'none'
-                        }
-                      }}
-                    >
-                      <TableCell>&nbsp;</TableCell>
-                      <TableCell>&nbsp;</TableCell>
-                      <TableCell>&nbsp;</TableCell>
-                      <TableCell>&nbsp;</TableCell>
-                      <TableCell>&nbsp;</TableCell>
-                      <TableCell>&nbsp;</TableCell>
-                      <TableCell>&nbsp;</TableCell>
-                      <TableCell>&nbsp;</TableCell>
-                      <TableCell>&nbsp;</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{senior.medicalConditions}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{senior.medications}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{senior.specialNotes}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </TableContainer>
           )}
+          </Box>
 
           {/* 페이지네이션 */}
           <Box sx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            marginTop: '15px',
+            marginTop: '5px',
             padding: '10px 0',
             gap: '8px'
           }}>
@@ -669,10 +696,7 @@ const SeniorList = () => {
               color="primary"
               showFirstButton 
               showLastButton
-            />
-            <Typography variant="body2" sx={{ color: '#666' }}>
-              {currentPage}/{totalPages}
-            </Typography>
+            />            
           </Box>
         </Box>
       </Paper>

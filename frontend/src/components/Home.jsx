@@ -15,10 +15,8 @@ import {
 import {
   DashboardOutlined,
   PeopleOutlined,
-  SecurityOutlined,
-  NotificationsOutlined,
-  EventOutlined,
-  MessageOutlined,
+  SecurityOutlined,  
+  EventOutlined,  
   LogoutOutlined,
   WarningAmberOutlined,  
   FavoriteOutlined,

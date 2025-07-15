@@ -19,27 +19,17 @@ import {
   ListItemText,
   CircularProgress,
   InputAdornment,
-  IconButton,
-  Chip,
-  Tooltip,
+  IconButton,  
   Alert,
   TableSortLabel
 } from '@mui/material';
 import {
   DashboardOutlined,
-  PeopleOutlined,
-  SecurityOutlined,
-  NotificationsOutlined,
-  EventOutlined,
-  MessageOutlined,
+  PeopleOutlined,  
+  EventOutlined,  
   LogoutOutlined,
-  EditOutlined,
-  SearchOutlined,
-  PersonAddOutlined,
-  ClearOutlined,
-  PhoneOutlined,
-  HomeOutlined,
-  MedicalServicesOutlined,
+  EditOutlined,  
+  ClearOutlined,  
   SettingsOutlined
 } from '@mui/icons-material';
 import userImage from '../images/user.png';
@@ -550,7 +540,7 @@ const SeniorList = () => {
                     color: '#000',
                     textAlign: 'center',
                     padding: '10px 4px',
-                    height: '42px'
+                    height: '25px'
                   }
                 }}>
                   <TableRow>

@@ -126,8 +126,8 @@ export const getUserInfo = () => {
 
 // 인증 상태 확인
 export const isAuthenticated = () => {
-  // Access Token이 있거나 Refresh Token이 있으면 인증된 상태
-  return getAuthToken() !== null || getRefreshToken() !== null;
+  // Access Token이 유효한 경우만 인증된 상태로 판단
+  return getAuthToken() !== null;
 };
 
 // 토큰 만료 시간 갱신 (활동 시 호출) - 더 이상 사용하지 않음

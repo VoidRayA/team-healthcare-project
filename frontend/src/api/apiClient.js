@@ -1,4 +1,107 @@
 // =================================================================
+// Vital Signs 관련 API 함수들 (2025.07.17 신규 추가)
+// =================================================================
+
+/**
+ * 특정 Senior의 전체 생체 기록 조회
+ * @param {number} seniorId - Senior ID
+ * @returns {Promise} 생체 기록 데이터
+ */
+export const getVitalSigns = async (seniorId) => {
+  try {
+    const response = await apiClient.get(`/api/seniors/${seniorId}/vitalSign`);
+    return response.data;
+  } catch (error) {
+    console.error('생체 기록 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 특정 날짜의 생체 기록 조회
+ * @param {number} seniorId - Senior ID
+ * @param {string} date - 날짜 (YYYY-MM-DD 형식)
+ * @returns {Promise} 해당 날짜의 생체 기록 데이터
+ */
+export const getVitalSignsByDate = async (seniorId, date) => {
+  try {
+    const response = await apiClient.get(`/api/seniors/${seniorId}/vitalSign/date/${date}`);
+    return response.data;
+  } catch (error) {
+    console.error('날짜별 생체 기록 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 날짜 범위 내 생체 기록 조회
+ * @param {number} seniorId - Senior ID
+ * @param {string} startDate - 시작 날짜 (YYYY-MM-DD 형식)
+ * @param {string} endDate - 종료 날짜 (YYYY-MM-DD 형식)
+ * @returns {Promise} 기간 내 생체 기록 데이터
+ */
+export const getVitalSignsByDateRange = async (seniorId, startDate, endDate) => {
+  try {
+    const response = await apiClient.get(`/api/seniors/${seniorId}/vitalSign/date/range`, {
+      params: { start: startDate, end: endDate }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('기간별 생체 기록 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 생체 기록 생성
+ * @param {number} seniorId - Senior ID
+ * @param {Object} vitalData - 생체 기록 데이터
+ * @returns {Promise} 생성 결과
+ */
+export const createVitalSign = async (seniorId, vitalData) => {
+  try {
+    const response = await apiClient.post(`/api/seniors/${seniorId}/vitalSign`, vitalData);
+    return response.data;
+  } catch (error) {
+    console.error('생체 기록 생성 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 생체 기록 수정
+ * @param {number} seniorId - Senior ID
+ * @param {number} vitalId - Vital Sign ID
+ * @param {Object} updateData - 수정할 데이터
+ * @returns {Promise} 수정 결과
+ */
+export const updateVitalSign = async (seniorId, vitalId, updateData) => {
+  try {
+    const response = await apiClient.put(`/api/seniors/${seniorId}/vitalSign/${vitalId}`, updateData);
+    return response.data;
+  } catch (error) {
+    console.error('생체 기록 수정 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 생체 기록 삭제
+ * @param {number} seniorId - Senior ID
+ * @param {number} vitalId - Vital Sign ID
+ * @returns {Promise} 삭제 결과
+ */
+export const deleteVitalSign = async (seniorId, vitalId) => {
+  try {
+    const response = await apiClient.delete(`/api/seniors/${seniorId}/vitalSign/${vitalId}`);
+    return response.data;
+  } catch (error) {
+    console.error('생체 기록 삭제 실패:', error);
+    throw error;
+  }
+};
+
+// =================================================================
 // API 클라이언트 통합 설정 (2025.07.08 통합 버전)
 // 목적: axios 대신 중앙화된 API 클라이언트 사용
 // 기능: 토큰 자동 관리, 에러 처리, 요청/응답 인터셉터
@@ -9,7 +112,7 @@ import { getAuthToken, getRefreshToken, updateAccessToken, clearAuthData } from 
 
 // 기본 API 클라이언트 생성
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -68,7 +171,7 @@ apiClient.interceptors.response.use(
         // 중복 갱신 방지
         if (!refreshPromise) {
           refreshPromise = axios.post(
-            'http://localhost:8080/api/auth/refresh',
+            `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/auth/refresh`,
             { refreshToken },
             { headers: { 'Content-Type': 'application/json' } }
           )
@@ -430,15 +533,30 @@ export const getSeniorDailyActivities = async (seniorId) => {
 // =================================================================
 
 /**
- * 부산 지역 병원 목록 조회
- * @returns {Promise} 부산 병원 목록 데이터
+ * 전국 병원 목록 조회 (2025.07.17 부산 제한 제거)
+ * @param {Object} options - 검색 옵션
+ * @param {number} options.page - 페이지 번호 (기본값: 1)
+ * @param {number} options.size - 페이지 크기 (기본값: 10)
+ * @param {string} options.sidoCd - 시도 코드 (옵션)
+ * @returns {Promise} 병원 목록 데이터
  */
-export const getBusanHospitals = async () => {
+export const getAllHospitals = async (options = {}) => {
   try {
-    const response = await apiClient.get('/api/hospital/busan');
+    const {
+      page = 1,
+      size = 10,
+      sidoCd
+    } = options;
+
+    const params = { page, size };
+    if (sidoCd) {
+      params.sidoCd = sidoCd;
+    }
+
+    const response = await apiClient.get('/api/hospital/all', { params });
     return response.data;
   } catch (error) {
-    console.error('부산 병원 목록 조회 실패:', error);
+    console.error('전국 병원 목록 조회 실패:', error);
     throw error;
   }
 };
@@ -519,28 +637,35 @@ export const register = async (registerData) => {
 // =================================================================
 
 /**
- * 백엔드 카카오 API를 사용한 부산 지역 병원 검색 (2025.07.08 수정)
+ * 카카오 API를 사용한 전국 병원 검색 (2025.07.17 부산 제한 제거)
  * @param {Object} options - 검색 옵션
- * @returns {Promise} 병원 검색 결과
+ * @param {string} options.query - 검색어 (기본값: '병원')
+ * @param {number} options.page - 페이지 번호 (기본값: 1)
+ * @param {number} options.size - 한 페이지 결과 수 (기본값: 15)
+ * @param {number} options.lat - 검색 중심 위도
+ * @param {number} options.lon - 검색 중심 경도
+ * @param {number} options.radius - 검색 반경 (m, 기본값: 20000)
+ * @returns {Promise} 카카오 API 기반 병원 정보
  */
-export const getBusanHospitalsFromKakaoBackend = async (options = {}) => {
+export const getHospitalsByLocation = async (options = {}) => {
   try {
     const {
       query = '병원',
       page = 1,
       size = 15,
-      lat = 35.1796,  // 부산시청 위도
-      lon = 129.0756   // 부산시청 경도
+      lat = 37.5665,  // 서울시청 위도
+      lon = 126.9780,  // 서울시청 경도
+      radius = 20000   // 20km 반경
     } = options;
 
-    const response = await apiClient.get('/api/hospital/kakao/busan', {
-      params: { query, page, size, lat, lon }
+    const response = await apiClient.get('/api/hospital/kakao/search', {
+      params: { query, page, size, lat, lon, radius }
     });
     
-    console.log('백엔드 카카오 API 병원 검색 성공:', response.data);
+    console.log('카카오 API 병원 검색 성공:', response.data);
     return response.data;
   } catch (error) {
-    console.error('백엔드 카카오 병원 검색 실패:', error);
+    console.error('카카오 병원 검색 실패:', error);
     throw error;
   }
 };
@@ -578,8 +703,8 @@ export const searchAddress = async (address) => {
  */
 export const getNearbyPharmacies = async (location) => {
   try {
-    const { searchBusanPharmacies } = await import('../utils/kakaoAPI');
-    const result = await searchBusanPharmacies(location);
+    const { searchPharmaciesByLocation } = await import('../utils/kakaoAPI');
+    const result = await searchPharmaciesByLocation(location);
     
     if (result.success) {
       return {

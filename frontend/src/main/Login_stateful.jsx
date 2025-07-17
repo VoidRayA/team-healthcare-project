@@ -251,7 +251,7 @@ const Login = () => {
       const response = await login(user);
       
       // Stateful JWT 처리
-      const { accessToken, refreshToken, loginId, guardianName, role, expiresIn } = response;
+      const { accessToken, refreshToken, loginId, guardianName, role } = response;
       
       if (accessToken && refreshToken) {
         // 토큰 및 사용자 정보 저장

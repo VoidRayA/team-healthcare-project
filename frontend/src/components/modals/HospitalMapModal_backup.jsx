@@ -102,7 +102,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
       
       try {
         const tmapResponse = await fetch(
-          `http://localhost:8080/api/hospital/route/tmap?startLat=${currentPosition.latitude}&startLon=${currentPosition.longitude}&endLat=${hospital.latitude}&endLon=${hospital.longitude}&startName=현재위치&endName=${encodeURIComponent(hospital.yadmNm)}`,
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/hospital/route/tmap?startLat=${currentPosition.latitude}&startLon=${currentPosition.longitude}&endLat=${hospital.latitude}&endLon=${hospital.longitude}&startName=현재위치&endName=${encodeURIComponent(hospital.yadmNm)}`,
           {
             method: 'GET',
             headers: {
@@ -200,7 +200,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
       console.log('🗺️ 백엔드 카카오 Directions API로 시도...');
       
       const response = await fetch(
-        `http://localhost:8080/api/hospital/route/kakao?startLat=${currentPosition.latitude}&startLon=${currentPosition.longitude}&endLat=${hospital.latitude}&endLon=${hospital.longitude}`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/hospital/route/kakao?startLat=${currentPosition.latitude}&startLon=${currentPosition.longitude}&endLat=${hospital.latitude}&endLon=${hospital.longitude}`,
         {
           method: 'GET',
           headers: {
@@ -619,7 +619,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
                 ? { lat: parseFloat(hospitals[0].latitude), lng: parseFloat(hospitals[0].longitude) }
                 : currentPosition 
                   ? { lat: currentPosition.latitude, lng: currentPosition.longitude }
-                  : { lat: 35.1796, lng: 129.0756 }
+                  : { lat: 37.5665, lng: 126.9780 } // 서울 기본 좌표
             }
             onMapLoad={handleMapLoad}
           />

@@ -11,6 +11,7 @@ import Sjoinpage from './components/Sjoinpage';
 import Daily from './components/Daily';
 import Terms from './components/policy/Terms';
 import Privacy from './components/policy/Privacy';
+import Settings from './components/Setting';
 import Support from './components/policy/Support';
 import About from './components/policy/About';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -146,6 +147,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Daily />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           } 
         />

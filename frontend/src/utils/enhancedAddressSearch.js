@@ -71,8 +71,8 @@ export const enhancedAddressSearch = async (address) => {
       console.log('3️⃣ 지역명+건물명 검색:', regionAndBuilding);
       try {
         const combinedResult = await searchPlacesByKeyword(regionAndBuilding);
-        if (keywordResult.success && keywordResult.places.length > 0) {
-          const matchedPlace = findBestAddressMatch(keywordResult.places, address);
+        if (combinedResult.success && combinedResult.places.length > 0) {
+          const matchedPlace = findBestAddressMatch(combinedResult.places, address);
           if (matchedPlace) {
             results.push({
               method: 'combined_search',

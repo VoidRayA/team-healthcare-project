@@ -261,10 +261,10 @@ export const searchPlacesByCategory = async (categoryCode, x, y, options = {}) =
  * @param {Object} options - 검색 옵션
  * @returns {Promise} 병원 검색 결과
  */
-export const searchBusanHospitals = async (location = null, options = {}) => {
-  // 부산 중심 좌표 (부산시청 기준)
-  const BUSAN_CENTER = { x: 129.0756, y: 35.1796 };
-  const searchLocation = location || BUSAN_CENTER;
+export const searchHospitalsByLocation = async (location = null, options = {}) => {
+  // 기본 중심 좌표 (서울시청)
+  const DEFAULT_CENTER = { x: 126.9780, y: 37.5665 };
+  const searchLocation = location || DEFAULT_CENTER;
 
   return await searchPlacesByCategory('HP8', searchLocation.x, searchLocation.y, {
     radius: 20000,
@@ -280,9 +280,9 @@ export const searchBusanHospitals = async (location = null, options = {}) => {
  * @param {Object} options - 검색 옵션
  * @returns {Promise} 약국 검색 결과
  */
-export const searchBusanPharmacies = async (location = null, options = {}) => {
-  const BUSAN_CENTER = { x: 129.0756, y: 35.1796 };
-  const searchLocation = location || BUSAN_CENTER;
+export const searchPharmaciesByLocation = async (location = null, options = {}) => {
+  const DEFAULT_CENTER = { x: 126.9780, y: 37.5665 };
+  const searchLocation = location || DEFAULT_CENTER;
 
   return await searchPlacesByCategory('PM9', searchLocation.x, searchLocation.y, {
     radius: 15000,

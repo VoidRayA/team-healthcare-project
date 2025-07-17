@@ -219,7 +219,7 @@ const ProfileManagement = () => {
   // 비밀번호 확인 모달 핸들러
   const handlePasswordModalClose = () => {
     setShowPasswordModal(false);
-    navigate('/home'); // 취소시 홈으로 이동
+    navigate(-1); // 취소시 이전 페이지로 이동
   };
 
   const handlePasswordConfirm = () => {
@@ -469,8 +469,36 @@ const ProfileManagement = () => {
               </Box>
             )}
 
-            {/* 비밀번호 확인이 완료된 경우에만 내용 표시 */}
-            {isPasswordConfirmed && (
+            {/* 비밀번호 확인 전에는 대기 메시지 표시, 확인 후에는 실제 컨텐츠 표시 */}
+            {!isPasswordConfirmed ? (
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '60vh',
+                gap: '20px'
+              }}>
+                <CircularProgress size={60} sx={{ color: '#0869CC' }} />
+                <Typography sx={{ 
+                  color: '#0869CC', 
+                  fontSize: '24px', 
+                  fontWeight: 'bold',
+                  fontFamily: 'Pretendard',
+                  textAlign: 'center'
+                }}>
+                  회원정보 관리
+                </Typography>
+                <Typography sx={{ 
+                  color: '#666', 
+                  fontSize: '16px',
+                  fontFamily: 'Pretendard',
+                  textAlign: 'center'
+                }}>
+                  비밀번호 확인을 완료해주세요.
+                </Typography>
+              </Box>
+            ) : (
               <>
                 <Typography sx={{
                   fontFamily: 'Pretendard',

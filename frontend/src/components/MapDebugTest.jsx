@@ -35,7 +35,7 @@ const MapDebugTest = () => {
       window.kakao.maps.load(() => {
         const container = document.getElementById('map');
         const options = {
-          center: new window.kakao.maps.LatLng(35.1796, 129.0756),
+          center: new window.kakao.maps.LatLng(37.5665, 126.9780), // 서울 기본 좌표
           level: 3
         };
         

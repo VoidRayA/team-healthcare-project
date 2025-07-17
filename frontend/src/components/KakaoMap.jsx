@@ -22,7 +22,7 @@ import { loadKakaoMapScript, isKakaoMapLoaded } from '../utils/kakaoMapLoader';
 const KakaoMap = ({ 
   width = '100%', 
   height = '400px',
-  initialCenter = { lat: 35.1796, lng: 129.0756 }, // 부산 중심 좌표
+  initialCenter = null, // 동적으로 설정됨
   level = 3,
   markers = [],
   onMapLoad = null,

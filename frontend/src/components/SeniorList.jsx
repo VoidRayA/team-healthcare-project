@@ -12,7 +12,8 @@ import {
   TableRow,
   TextField,
   Button,  
-  Pagination,
+  Pagination,    
+  PaginationItem,
   List,
   ListItem,
   ListItemIcon,
@@ -54,7 +55,15 @@ const SeniorList = () => {
   const [pageSize] = useState(10);
   const [error, setError] = useState(null);
   const [orderBy, setOrderBy] = useState('id');
-  const [order, setOrder] = useState('desc');
+  const [order, setOrder] = useState('desc');  
+
+  // 페이지네이션 관련 상태  
+  const GROUP_SIZE = 10;
+  const totalGroups = Math.ceil(totalPages / GROUP_SIZE);
+  const currentGroup = Math.floor((currentPage - 1) / GROUP_SIZE);
+  const startPage = currentGroup * GROUP_SIZE + 1;
+  const endPage = Math.min(startPage + GROUP_SIZE - 1, totalPages);
+  const totalVisiblePages = Math.max(endPage - startPage + 1 + 4, 10);
 
   useEffect(() => {
     const userInfo = getUserInfo();
@@ -671,22 +680,55 @@ const SeniorList = () => {
           </Box>
 
           {/* 페이지네이션 */}
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            marginTop: '5px',
-            padding: '10px 0',
-            gap: '8px'
-          }}>
-            <Pagination 
-              count={totalPages}
-              page={currentPage}
-              onChange={(event, page) => setCurrentPage(page)}
-              color="primary"
-              showFirstButton 
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              marginTop: '5px',
+              padding: '10px 0',
+              gap: '8px'
+            }}
+          >
+            <Pagination
+              count={totalVisiblePages}
+              page={currentPage - startPage + 3} // offset 보정
+              onChange={(e, value) => {
+                if (value === 1) return setCurrentPage(1); // ≪
+                if (value === 2) return setCurrentPage(Math.max(1, startPage - GROUP_SIZE)); // <
+                if (value === totalVisiblePages - 1) return setCurrentPage(Math.min(totalPages, startPage + GROUP_SIZE)); // >
+                if (value === totalVisiblePages) return setCurrentPage(totalPages); // ≫
+                return setCurrentPage(startPage + value - 3); // 실제 페이지
+              }}
+              siblingCount={0}
+              boundaryCount={0}
+              showFirstButton
               showLastButton
-            />            
+              renderItem={(item) => {
+                const { type, page, ...rest } = item;
+
+                // ✅ "..." 제거
+                if (type === 'start-ellipsis' || type === 'end-ellipsis') {
+                  return null;
+                }
+
+                // ✅ 네비게이션: ≪, <, >, ≫
+                if (page === 1) return <PaginationItem {...rest} page="≪" />;
+                if (page === 2) return <PaginationItem {...rest} page="<" />;
+                if (page === totalVisiblePages - 1) return <PaginationItem {...rest} page=">" />;
+                if (page === totalVisiblePages) return <PaginationItem {...rest} page="≫" />;
+
+                // ✅ 실제 페이지 번호
+                const realPage = startPage + page - 3;
+                return (
+                  <PaginationItem
+                    {...rest}
+                    page={realPage}
+                    selected={realPage === currentPage}
+                  />
+                );
+              }}
+            />
           </Box>
         </Box>
       </Paper>

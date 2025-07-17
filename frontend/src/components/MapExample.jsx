@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Button, TextField, List, ListItem, ListItemText, Divider, CircularProgress } from '@mui/material';
 import KakaoMap from './KakaoMap';
-import { searchBusanHospitals, searchBusanPharmacies, getCurrentLocation } from '../utils/kakaoAPI';
+import { searchHospitalsByLocation, searchPharmaciesByLocation, getCurrentLocation } from '../utils/kakaoAPI';
 
 const MapExample = () => {
   const [markers, setMarkers] = useState([]);
@@ -39,9 +39,9 @@ const MapExample = () => {
   const handleSearchHospitals = async () => {
     try {
       setLoading(true);
-      const location = currentLocation || { x: 129.0756, y: 35.1796 }; // 현재 위치 또는 부산 중심
+      const location = currentLocation || { x: 126.9780, y: 37.5665 }; // 현재 위치 또는 서울 중심
       
-      const result = await searchBusanHospitals(location, { size: 10 });
+      const result = await searchHospitalsByLocation(location, { size: 10 });
       
       if (result.success) {
         setHospitals(result.places);
@@ -85,9 +85,9 @@ const MapExample = () => {
   const handleSearchPharmacies = async () => {
     try {
       setLoading(true);
-      const location = currentLocation || { x: 129.0756, y: 35.1796 };
+      const location = currentLocation || { x: 126.9780, y: 37.5665 };
       
-      const result = await searchBusanPharmacies(location, { size: 10 });
+      const result = await searchPharmaciesByLocation(location, { size: 10 });
       
       if (result.success) {
         setPharmacies(result.places);

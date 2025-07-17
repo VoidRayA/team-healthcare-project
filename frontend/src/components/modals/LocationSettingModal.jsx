@@ -28,16 +28,16 @@ const LocationSettingModal = ({ open, onClose, onLocationSet }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 주요 부산 지역 프리셋
-  const busanPresets = [
-    { name: '부산시청', address: '부산 연제구 중앙대로 1001', lat: 35.1796, lng: 129.0756 },
-    { name: '해운대해수욕장', address: '부산 해운대구 해운대해변로', lat: 35.1631, lng: 129.1635 },
-    { name: '서면역', address: '부산 부산진구 서면', lat: 35.1578, lng: 129.0600 },
-    { name: '남포동', address: '부산 중구 남포동', lat: 35.0979, lng: 129.0302 },
-    { name: '광안리해수욕장', address: '부산 수영구 광안해변로', lat: 35.1532, lng: 129.1188 },
-    { name: '센텀시티', address: '부산 해운대구 센텀중앙로', lat: 35.1689, lng: 129.1310 },
-    { name: '부산대학교', address: '부산 금정구 부산대학로63번길 2', lat: 35.2332, lng: 129.0794 },
-    { name: '동래역', address: '부산 동래구 동래역', lat: 35.2055, lng: 129.0788 }
+  // 주요 지역 프리셋
+  const locationPresets = [
+    { name: '시청', address: '서울시 중구 세종대로 110', lat: 37.5663, lng: 126.9779 },
+    { name: '강남역', address: '서울시 강남구 강남대로', lat: 37.4980, lng: 127.0276 },
+    { name: '명동', address: '서울시 중구 명동', lat: 37.5636, lng: 126.9864 },
+    { name: '해변공원', address: '주변 공원 지역', lat: 37.5500, lng: 126.9900 },
+    { name: '대학로', address: '주변 대학가', lat: 37.5400, lng: 127.0000 },
+    { name: '비즈니스 센터', address: '주변 비즈니스 지구', lat: 37.5200, lng: 127.0300 },
+    { name: '역사 지구', address: '전통 문화 지역', lat: 37.5800, lng: 126.9770 },
+    { name: '지하철역', address: '주요 교통 역', lat: 37.5660, lng: 126.9784 }
   ];
 
   // 주소 검색
@@ -228,7 +228,7 @@ const LocationSettingModal = ({ open, onClose, onLocationSet }) => {
           gap: 1, 
           mb: 3 
         }}>
-          {busanPresets.map((preset) => (
+          {locationPresets.map((preset) => (
             <Button
               key={preset.name}
               variant={selectedLocation?.name === preset.name ? "contained" : "outlined"}

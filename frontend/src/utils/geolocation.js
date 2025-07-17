@@ -8,10 +8,10 @@
  * - 사용자 친화적인 오류 메시지
  */
 
-// 기본 위치 설정 (부산)
+// 기본 위치 설정 (서울)
 const DEFAULT_POSITION = {
-  latitude: 35.1796,
-  longitude: 129.0756,
+  latitude: 37.5665,
+  longitude: 126.9780,
   isDefault: true
 };
 
@@ -27,7 +27,7 @@ export const getCurrentPosition = (options = {}) => {
     // 1. Geolocation API 지원 확인
     if (!navigator.geolocation) {
       console.error('❌ 이 브라우저는 위치 서비스를 지원하지 않습니다.');
-      console.log('🏢 부산 시청 기본 좌표로 대체');
+      console.log('🏢 서울 시청 기본 좌표로 대체');
       resolve({
         ...DEFAULT_POSITION,
         source: 'fallback',
@@ -134,7 +134,7 @@ export const getCurrentPosition = (options = {}) => {
           // 사용자에게 알림 표시 (옵션)
           if (defaultOptions.showAlert && error.code === error.PERMISSION_DENIED) {
             setTimeout(() => {
-              alert(`위치 정보 오류: ${errorMessage}\n${userAction}\n\n부산 시청 위치로 대체합니다.`);
+              alert(`위치 정보 오류: ${errorMessage}\n${userAction}\n\n서울 시청 위치로 대체합니다.`);
             }, 100);
           }
           

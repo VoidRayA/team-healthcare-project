@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Button, Avatar, Chip, Alert } from '@mui/material';
 import { LocationOn, LocalHospital, LocalPharmacy, Warning } from '@mui/icons-material';
 import KakaoMap from './KakaoMap';
-import { searchBusanHospitals, searchBusanPharmacies } from '../utils/kakaoAPI';
+import { searchHospitalsByLocation, searchPharmaciesByLocation } from '../utils/kakaoAPI';
 
 const SeniorLocationMap = ({ seniorId, seniorName }) => {
   const [markers, setMarkers] = useState([]);
@@ -14,9 +14,9 @@ const SeniorLocationMap = ({ seniorId, seniorName }) => {
 
   // 시뮬레이션용 위치 (실제로는 GPS 트래커나 스마트폰에서 받아옴)
   const simulateLocation = () => {
-    // 부산 지역 내 랜덤 위치
-    const baseLatitude = 35.1796;
-    const baseLongitude = 129.0756;
+    // 서울 지역 내 랜덤 위치
+    const baseLatitude = 37.5665;
+    const baseLongitude = 126.9780;
     const variance = 0.05; // 약 5km 범위
 
     return {
@@ -55,8 +55,8 @@ const SeniorLocationMap = ({ seniorId, seniorName }) => {
     setLoading(true);
     try {
       const [hospitalsResult, pharmaciesResult] = await Promise.all([
-        searchBusanHospitals({ x: seniorLocation.lng, y: seniorLocation.lat }, { size: 5 }),
-        searchBusanPharmacies({ x: seniorLocation.lng, y: seniorLocation.lat }, { size: 5 })
+        searchHospitalsByLocation({ x: seniorLocation.lng, y: seniorLocation.lat }, { size: 5 }),
+        searchPharmaciesByLocation({ x: seniorLocation.lng, y: seniorLocation.lat }, { size: 5 })
       ]);
 
       setNearbyFacilities({

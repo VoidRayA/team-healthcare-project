@@ -208,64 +208,73 @@ const Home = () => {
   
 // 바이탈 데이터 필터링 및 정리 함수 (시간대별 그룹화)
 const processVitalData = (rawData, selectedDate) => {
-  if (!rawData || rawData.length === 0) return [];
+console.log('📊 processVitalData 시작:');
+console.log('   - rawData:', rawData);
+console.log('   - selectedDate:', selectedDate);
+
+if (!rawData || rawData.length === 0) {
+  console.log('❌ 원본 데이터가 없음 - 빈 배열 반환');
+  return [];
+}
+
+console.log(`📊 원본 데이터: ${rawData.length}건`);
+
+// 시간대별로 그룹화 (1시간 단위)
+const hourlyData = {};
+
+rawData.forEach(item => {
+const time = new Date(item.measurementTime);
+  const hour = time.getHours();
+  const hourKey = `${hour.toString().padStart(2, '0')}:00`;
   
-  console.log(`📊 원본 데이터: ${rawData.length}건`);
-  
-  // 시간대별로 그룹화 (1시간 단위)
-  const hourlyData = {};
-  
-  rawData.forEach(item => {
-    const time = new Date(item.measurementTime);
-    const hour = time.getHours();
-    const hourKey = `${hour.toString().padStart(2, '0')}:00`;
+  if (!hourlyData[hourKey]) {
+  hourlyData[hourKey] = [];
+}
+hourlyData[hourKey].push(item);
+});
+
+// 각 시간대별 평균값 계산
+const processedData = Object.keys(hourlyData)
+.sort() // 시간순 정렬
+.map(hourKey => {
+const items = hourlyData[hourKey];
+const avgData = {
+measurementTime: `${getLocalDateString(selectedDate)}T${hourKey}:00`,
+bloodPressureHigh: Math.round(items.reduce((sum, item) => sum + (item.bloodPressureHigh || 0), 0) / items.length),
+bloodPressureLow: Math.round(items.reduce((sum, item) => sum + (item.bloodPressureLow || 0), 0) / items.length),
+  heartRate: Math.round(items.reduce((sum, item) => sum + (item.heartRate || 0), 0) / items.length),
+  bodyTemperature: Number((items.reduce((sum, item) => sum + (item.bodyTemperature || 0), 0) / items.length).toFixed(1)),
+  bloodSugar: Math.round(items.reduce((sum, item) => sum + (item.bloodSugar || 0), 0) / items.length),
+  dataCount: items.length, // 해당 시간대 데이터 개수
+// 위험도 판정
+isEmergency: false,
+isWarning: false
+};
+
+// 위험/경고 수치 판정 (의료진 기준)
+avgData.isEmergency = (
+  avgData.bloodPressureHigh >= 180 || avgData.bloodPressureHigh <= 90 ||
+avgData.bloodPressureLow >= 110 || avgData.bloodPressureLow <= 60 ||
+avgData.heartRate >= 100 || avgData.heartRate <= 50 ||
+avgData.bodyTemperature >= 38.0 || avgData.bodyTemperature <= 35.5 ||
+avgData.bloodSugar >= 250 || avgData.bloodSugar <= 70
+);
+
+avgData.isWarning = !avgData.isEmergency && (
+  avgData.bloodPressureHigh >= 140 || avgData.bloodPressureHigh <= 100 ||
+    avgData.bloodPressureLow >= 90 || avgData.bloodPressureLow <= 65 ||
+      avgData.heartRate >= 90 || avgData.heartRate <= 60 ||
+      avgData.bodyTemperature >= 37.5 || avgData.bodyTemperature <= 36.0 ||
+      avgData.bloodSugar >= 180 || avgData.bloodSugar <= 80
+    );
     
-    if (!hourlyData[hourKey]) {
-      hourlyData[hourKey] = [];
-    }
-    hourlyData[hourKey].push(item);
-  });
-  
-  // 각 시간대별 평균값 계산
-  const processedData = Object.keys(hourlyData)
-    .sort() // 시간순 정렬
-    .map(hourKey => {
-      const items = hourlyData[hourKey];
-      const avgData = {
-        measurementTime: `${getLocalDateString(selectedDate)}T${hourKey}:00`,
-        bloodPressureHigh: Math.round(items.reduce((sum, item) => sum + (item.bloodPressureHigh || 0), 0) / items.length),
-        bloodPressureLow: Math.round(items.reduce((sum, item) => sum + (item.bloodPressureLow || 0), 0) / items.length),
-        heartRate: Math.round(items.reduce((sum, item) => sum + (item.heartRate || 0), 0) / items.length),
-        bodyTemperature: Number((items.reduce((sum, item) => sum + (item.bodyTemperature || 0), 0) / items.length).toFixed(1)),
-        bloodSugar: Math.round(items.reduce((sum, item) => sum + (item.bloodSugar || 0), 0) / items.length),
-        dataCount: items.length, // 해당 시간대 데이터 개수
-        // 위험도 판정
-        isEmergency: false,
-        isWarning: false
-      };
-      
-      // 위험/경고 수치 판정 (의료진 기준)
-      avgData.isEmergency = (
-        avgData.bloodPressureHigh >= 180 || avgData.bloodPressureHigh <= 90 ||
-        avgData.bloodPressureLow >= 110 || avgData.bloodPressureLow <= 60 ||
-        avgData.heartRate >= 100 || avgData.heartRate <= 50 ||
-        avgData.bodyTemperature >= 38.0 || avgData.bodyTemperature <= 35.5 ||
-        avgData.bloodSugar >= 250 || avgData.bloodSugar <= 70
-      );
-      
-      avgData.isWarning = !avgData.isEmergency && (
-        avgData.bloodPressureHigh >= 140 || avgData.bloodPressureHigh <= 100 ||
-        avgData.bloodPressureLow >= 90 || avgData.bloodPressureLow <= 65 ||
-        avgData.heartRate >= 90 || avgData.heartRate <= 60 ||
-        avgData.bodyTemperature >= 37.5 || avgData.bodyTemperature <= 36.0 ||
-        avgData.bloodSugar >= 180 || avgData.bloodSugar <= 80
-      );
-      
       return avgData;
     });
   
   console.log(`📈 처리된 데이터: ${processedData.length}개 시간대`);
-  console.log('시간대별 요약:', processedData.map(d => `${d.measurementTime.split('T')[1].slice(0,5)}(${d.dataCount}건)`).join(', '));
+  if (processedData.length > 0) {
+    console.log('시간대별 요약:', processedData.map(d => `${d.measurementTime.split('T')[1].slice(0,5)}(${d.dataCount}건)`).join(', '));
+  }
   
   return processedData;
 };
@@ -273,15 +282,22 @@ const processVitalData = (rawData, selectedDate) => {
 // 혈압 차트 생성 함수
 const createBloodPressureChart = (processedData, selectedDate, selectedSenior) => {
   const canvas = document.getElementById('bloodPressureChart');
-  if (!canvas) return null;
+  if (!canvas) {
+    console.warn('혈압 차트 Canvas를 찾을 수 없습니다');
+    return null;
+  }
   
   const ctx = canvas.getContext('2d');
   
   // 기존 차트 정리
   const existingChart = Chart.getChart(canvas);
-  if (existingChart) existingChart.destroy();
+  if (existingChart) {
+    existingChart.destroy();
+    console.log('기존 혈압 차트 제거 완료');
+  }
   
   if (!processedData || processedData.length === 0) {
+    console.log('혈압 데이터가 없어서 NoData 차트 생성');
     return createNoDataChart(ctx, '혈압 데이터가 없습니다', selectedDate);
   }
   
@@ -372,15 +388,22 @@ const createBloodPressureChart = (processedData, selectedDate, selectedSenior) =
 // 심박수 + 체온 차트 생성 함수
 const createHeartRateTemperatureChart = (processedData, selectedDate, selectedSenior) => {
   const canvas = document.getElementById('heartRateTemperatureChart');
-  if (!canvas) return null;
+  if (!canvas) {
+    console.warn('심박수+체온 차트 Canvas를 찾을 수 없습니다');
+    return null;
+  }
   
   const ctx = canvas.getContext('2d');
   
   // 기존 차트 정리
   const existingChart = Chart.getChart(canvas);
-  if (existingChart) existingChart.destroy();
+  if (existingChart) {
+    existingChart.destroy();
+    console.log('기존 심박수+체온 차트 제거 완료');
+  }
   
   if (!processedData || processedData.length === 0) {
+    console.log('심박수+체온 데이터가 없어서 NoData 차트 생성');
     return createNoDataChart(ctx, '심박수 & 체온 데이터가 없습니다', selectedDate);
   }
   
@@ -483,9 +506,20 @@ const createHeartRateTemperatureChart = (processedData, selectedDate, selectedSe
   });
 };
 
-// No Data 차트 생성 함수
+// No Data 차트 생성 함수 - 개선된 버전
 const createNoDataChart = (ctx, message, selectedDate) => {
-  return new Chart(ctx, {
+  // 기존 차트가 있으면 제거
+  const canvas = ctx.canvas;
+  const existingChart = Chart.getChart(canvas);
+  if (existingChart) {
+    existingChart.destroy();
+    console.log('기존 NoData 차트 제거 완료');
+  }
+  
+  console.log(`📝 데이터 없음 차트 생성: ${message}`);
+  console.log(`📅 표시할 날짜: ${selectedDate ? getLocalDateString(selectedDate) : '날짜 없음'}`);
+  
+  const chart = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ['데이터 없음'],
@@ -493,7 +527,8 @@ const createNoDataChart = (ctx, message, selectedDate) => {
         data: [1],
         backgroundColor: ['#f5f5f5'],
         borderColor: ['#e0e0e0'],
-        borderWidth: 2
+        borderWidth: 2,
+        cutout: '75%' // 중앙 비움으로 텍스트 공간 확보
       }]
     },
     options: {
@@ -503,7 +538,7 @@ const createNoDataChart = (ctx, message, selectedDate) => {
         legend: { display: false },
         tooltip: { enabled: false }
       },
-      animation: { duration: 0 }
+      animation: { duration: 300 }
     },
     plugins: [{
       id: 'noDataText',
@@ -517,27 +552,54 @@ const createNoDataChart = (ctx, message, selectedDate) => {
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        
+        // 메인 메시지
+        ctx.font = 'bold 14px Pretendard, sans-serif';
+        ctx.fillStyle = '#666';
+        ctx.fillText('📊 데이터 없음', centerX, centerY - 15);
+        
+        // 서브 메시지
         ctx.font = '12px Pretendard, sans-serif';
         ctx.fillStyle = '#999';
-        ctx.fillText(message, centerX, centerY);
+        ctx.fillText(message, centerX, centerY + 5);
+        
+        // 날짜 정보
+        const dateStr = selectedDate ? getLocalDateString(selectedDate) : '';
+        if (dateStr) {
+          ctx.font = '10px Pretendard, sans-serif';
+          ctx.fillStyle = '#bbb';
+          ctx.fillText(`(${dateStr})`, centerX, centerY + 20);
+        }
+        
         ctx.restore();
       }
     }]
   });
+  
+  console.log('✅ NoData 차트 생성 완료:', !!chart);
+  return chart;
 };
 
 // 2개 차트로 분리된 업데이트 함수
 const updateVitalChart = (data, selectedDate, selectedSenior, chartInstance, setChartInstance) => {
-  console.log('📈 2개 차트 업데이트 시작:', data);
+  console.log('📈 2개 차트 업데이트 시작:');
+  console.log('   - 원본 데이터:', data);
+  console.log('   - 선택된 날짜:', selectedDate);
+  console.log('   - 선택된 Senior:', selectedSenior?.seniorName);
   
   // 데이터 처리 (시간대별 그룹화)
   const processedData = processVitalData(data, selectedDate);
+  console.log('   - 처리된 데이터:', processedData);
   
   // 1. 혈압 차트 생성
+  console.log('🩸 혈압 차트 생성 시작...');
   const bloodPressureChart = createBloodPressureChart(processedData, selectedDate, selectedSenior);
+  console.log('🩸 혈압 차트 생성 결과:', !!bloodPressureChart);
   
   // 2. 심박수 + 체온 차트 생성
+  console.log('💓 심박수+체온 차트 생성 시작...');
   const heartRateTemperatureChart = createHeartRateTemperatureChart(processedData, selectedDate, selectedSenior);
+  console.log('💓 심박수+체온 차트 생성 결과:', !!heartRateTemperatureChart);
   
   // 차트 인스턴스 저장 (배열로 관리)
   setChartInstance({
@@ -546,14 +608,14 @@ const updateVitalChart = (data, selectedDate, selectedSenior, chartInstance, set
   });
   
   console.log('✅ 2개 차트 업데이트 완료!');
-  console.log(`📊 혈압 차트 생성:`, !!bloodPressureChart);
-  console.log(`📊 심박수+체온 차트 생성:`, !!heartRateTemperatureChart);
   
   if (processedData && processedData.length > 0) {
     console.log(`📊 표시된 시간대: ${processedData.length}개`);
     console.log(`🔴 위험 구간: ${processedData.filter(d => d.isEmergency).length}개`);
     console.log(`🟠 경고 구간: ${processedData.filter(d => d.isWarning).length}개`);
     console.log(`✅ 정상 구간: ${processedData.filter(d => !d.isEmergency && !d.isWarning).length}개`);
+  } else {
+    console.log('📝 데이터가 없어서 "데이터 없음" 차트 표시');
   }
 };
   

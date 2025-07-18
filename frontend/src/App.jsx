@@ -18,7 +18,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { isAuthenticated } from './utils/auth';
 import MapExample from './components/MapExample';
 import MapDebugTest from './components/MapDebugTest';
-import MapDemo from './components/MapDemo';
 
 function App() {
   const [authState, setAuthState] = useState(isAuthenticated());
@@ -167,8 +166,7 @@ function App() {
         
         {/* 지도 테스트 페이지 */}
         <Route path="/map-test" element={<MapExample />} />
-        <Route path="/map-debug" element={<MapDebugTest />} />
-        <Route path="/map-demo" element={<MapDemo />} />
+        <Route path="/map-debug" element={<MapDebugTest />} />        
       </Routes>
     </BrowserRouter>
   );

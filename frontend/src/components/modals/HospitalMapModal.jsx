@@ -17,9 +17,7 @@ import KakaoMap from '../KakaoMap';
 
 // T-map API 비활성화 - SK OpenAPI 도메인 등록 문제
 // 임시로 카카오 API 만 사용
-
-const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
-  const [selectedHospital, setSelectedHospital] = useState(null);
+const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {  
   const [mapRef, setMapRef] = useState(null);
   const [showRoute, setShowRoute] = useState(false);
   const [routeInfo, setRouteInfo] = useState(null);
@@ -88,7 +86,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
   // 백엔드 T-map API 호출 (강제 시도)
   const tryBackendTmapRoute = async (hospital) => {
     try {
-      console.log('🚀 백엔드 T-map 도보 경로 API 호출... (강제 시도)');
+      console.log('🚀 백엔드 T-map 도보 경로 API 호출...');
       
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/hospital/route/tmap?startLat=${currentPosition.latitude}&startLon=${currentPosition.longitude}&endLat=${hospital.latitude}&endLon=${hospital.longitude}&startName=현재위치&endName=${encodeURIComponent(hospital.yadmNm)}`,
@@ -242,7 +240,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
     clearRoute();
 
     try {
-      console.log('🚀 T-map 도보 경로 검색 시작... (강제 시도)');
+      console.log('🚀 T-map 도보 경로 검색 시작...');
       
       // 백엔드 T-map API 시도
       const tmapSuccess = await tryBackendTmapRoute(hospital);
@@ -392,7 +390,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <LocalHospital sx={{ color: '#1976d2' }} />
           <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            주변 병원 지도 (T-map 경로 강제 시도)
+            주변 병원 지도
           </Typography>
           {currentPosition && (
             <Chip
@@ -400,7 +398,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
               label={currentPosition.isSeniorLocation ? "대상자 위치 기준" : "현재 위치 기준"}
               size="small"
               color="primary"
-              variant="outlined"              
+              variant="outlined"
             />
           )}
         </Box>
@@ -460,7 +458,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
               {isLoadingRoute && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="body2" sx={{ mb: 1 }}>
-                    T-map 경로 검색 중... (강제 시도)
+                    T-map 경로 검색 중...
                   </Typography>
                   <LinearProgress />
                 </Box>
@@ -560,7 +558,7 @@ const HospitalMapModal = ({ open, onClose, hospitals, currentPosition }) => {
                         }
                       }}
                     >
-                      내비 시작
+                      카카오 맵 내비
                     </Button>
                   </>
                 )}

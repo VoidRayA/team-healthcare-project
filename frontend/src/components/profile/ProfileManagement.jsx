@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getGuardianProfile, updateGuardianProfile, logout } from '../api/apiClient';
+import { getGuardianProfile, updateGuardianProfile, logout } from '../../api/apiClient';
 import PasswordConfirmModal from './PasswordConfirmModal';
-import { clearAuthData } from '../utils/auth';
+import { clearAuthData } from '../../utils/auth';
 
 import {
   Box,
@@ -25,7 +25,7 @@ import {
   EditOutlined,
   SettingsOutlined
 } from '@mui/icons-material';
-import userImage from '../images/user.png';
+import userImage from '../../images/user.png';
 
 const ProfileManagement = () => {
   const navigate = useNavigate();

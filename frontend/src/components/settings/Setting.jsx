@@ -27,10 +27,44 @@ import {
   ChevronRight,
   ClearOutlined
 } from '@mui/icons-material';
-import userImage from '../images/user.png';
-import { getUserInfo, clearAuthData } from '../utils/auth';
+import userImage from '../../images/user.png';
+import { getUserInfo, clearAuthData } from '../../utils/auth';
 
 const Setting = () => {
+  const navigate = useNavigate();
+  const [activeMenu, setActiveMenu] = useState('설정');
+  const [guardianInfo, setGuardianInfo] = useState({
+    name: '관리자',
+    loginId: 'admin',
+    role: 'ADMIN'
+  });
+
+  useEffect(() => {
+    const userInfo = getUserInfo();
+    
+    if (userInfo) {
+      setGuardianInfo({
+        name: userInfo.name,
+        loginId: userInfo.loginId,
+        role: userInfo.role || 'GUARDIAN'
+      });
+    }
+  }, []);
+
+  const handleLogout = () => {
+    clearAuthData();
+    alert('로그아웃 되었습니다.');
+    window.dispatchEvent(new Event('authStateChange'));
+    window.location.reload();
+  };
+
+  const menuItems = [
+    { text: '홈', icon: DashboardOutlined },
+    { text: '회원정보 관리', icon: EditOutlined },
+    { text: '보호 대상자', icon: PeopleOutlined },
+    { text: '일정 관리', icon: EventOutlined },
+    { text: '설정', icon: SettingsOutlined }
+  ];
 
 
   return (
@@ -105,16 +139,12 @@ const Setting = () => {
             padding: '0 20px',
             flex: 1,
             '& .MuiListItem-root': {
-              borderRadius: 1.5,
-              marginBottom: 1,
+              borderRadius: '12px',
+              marginBottom: '8px',
               color: 'white',
               cursor: 'pointer',
-              transition: theme => theme.transitions.create(['background-color', 'transform'], {
-                duration: theme.transitions.duration.short,
-              }),
               '&:hover': {
                 backgroundColor: 'rgba(255,255,255,0.1)',
-                transform: 'translateX(4px)'
               },
               '&.active': {
                 backgroundColor: 'rgba(255,255,255,0.2)',
@@ -132,10 +162,16 @@ const Setting = () => {
                   key={index}
                   className={activeMenu === item.text ? 'active' : ''}
                   onClick={() => {
-                    if (item.text === '회원정보 관리') {
-                      setActiveMenu(item.text);
-                    } else if (item.text === '홈') {
+                    if (item.text === '홈') {
                       navigate('/home');
+                    } else if (item.text === '회원정보 관리') {
+                      navigate('/profile/management');
+                    } else if (item.text === '보호 대상자') {
+                      navigate('/seniors');
+                    } else if (item.text === '일정 관리') {
+                      navigate('/daily');
+                    } else if (item.text === '설정') {
+                      setActiveMenu(item.text);
                     } else {
                       setActiveMenu(item.text);
                     }
@@ -155,12 +191,9 @@ const Setting = () => {
             <ListItem
               onClick={handleLogout}
               sx={{
-                borderRadius: 1.5,
+                borderRadius: '12px',
                 color: 'white',
                 cursor: 'pointer',
-                transition: theme => theme.transitions.create(['background-color'], {
-                  duration: theme.transitions.duration.short,
-                }),
                 '&:hover': {
                   backgroundColor: 'rgba(255,255,255,0.1)',
                 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { register } from '../api/apiClient';
+import { register } from '../../api/apiClient';
 
 import {
   Box,

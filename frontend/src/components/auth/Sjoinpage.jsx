@@ -28,8 +28,8 @@ import {
   EditOutlined,
   SettingsOutlined
 } from '@mui/icons-material';
-import userImage from '../images/user.png';
-import { getUserInfo, clearAuthData, getAuthToken } from '../utils/auth';
+import userImage from '../../images/user.png';
+import { getUserInfo, clearAuthData, getAuthToken } from '../../utils/auth';
 
 const Sjoinpage = () => {
   const navigate = useNavigate();

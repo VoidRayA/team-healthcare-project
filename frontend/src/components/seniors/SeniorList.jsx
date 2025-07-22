@@ -33,9 +33,9 @@ import {
   ClearOutlined,  
   SettingsOutlined
 } from '@mui/icons-material';
-import userImage from '../images/user.png';
-import { getUserInfo, clearAuthData } from '../utils/auth';
-import { getSeniorsWithPagination } from '../api/apiClient';
+import userImage from '../../images/user.png';
+import { getUserInfo, clearAuthData } from '../../utils/auth';
+import { getSeniorsWithPagination } from '../../api/apiClient';
 
 const SeniorList = () => {
   const navigate = useNavigate();
@@ -57,7 +57,7 @@ const SeniorList = () => {
   const [orderBy, setOrderBy] = useState('id');
   const [order, setOrder] = useState('desc');  
 
-  // 페이지네이션 관련 상태  
+  // // 페이지네이션 관련 상태  
   const GROUP_SIZE = 10;
   const totalGroups = Math.ceil(totalPages / GROUP_SIZE);
   const currentGroup = Math.floor((currentPage - 1) / GROUP_SIZE);
@@ -298,16 +298,12 @@ const SeniorList = () => {
           padding: '0 20px',
           flex: 1,
           '& .MuiListItem-root': {
-            borderRadius: 1.5,
-            marginBottom: 1,
+            borderRadius: '12px',
+            marginBottom: '8px',
             color: 'white',
             cursor: 'pointer',
-            transition: theme => theme.transitions.create(['background-color', 'transform'], {
-              duration: theme.transitions.duration.short,
-            }),
             '&:hover': {
               backgroundColor: 'rgba(255,255,255,0.1)',
-              transform: 'translateX(4px)'
             },
             '&.active': {
               backgroundColor: 'rgba(255,255,255,0.2)',
@@ -351,12 +347,9 @@ const SeniorList = () => {
           <ListItem
             onClick={handleLogout}
             sx={{
-              borderRadius: 1.5,
+              borderRadius: '12px',
               color: 'white',
               cursor: 'pointer',
-              transition: theme => theme.transitions.create(['background-color'], {
-                duration: theme.transitions.duration.short,
-              }),
               '&:hover': {
                 backgroundColor: 'rgba(255,255,255,0.1)',
               }
@@ -540,8 +533,11 @@ const SeniorList = () => {
             >
               <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
                 <TableHead sx={{
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 100,
                   '& .MuiTableCell-root': {
-                    backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                    backgroundColor: 'rgba(51, 153, 255, 1)', // 반투명도 제거 (0.3 → 1)
                     borderBottom: '2px solid #1976d2',
                     fontFamily: 'Pretendard',
                     fontWeight: 700,
@@ -549,7 +545,8 @@ const SeniorList = () => {
                     color: '#000',
                     textAlign: 'center',
                     padding: '10px 4px',
-                    height: '25px'
+                    height: '25px',
+                    backdropFilter: 'none', // 블러 효과 제거
                   }
                 }}>
                   <TableRow>

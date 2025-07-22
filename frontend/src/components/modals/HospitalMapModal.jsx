@@ -13,7 +13,7 @@ import {
   LinearProgress
 } from '@mui/material';
 import { Close, LocalHospital, Phone, LocationOn, Navigation, MyLocation, Route } from '@mui/icons-material';
-import KakaoMap from '../KakaoMap';
+import KakaoMap from '../maps/KakaoMap';
 
 // T-map API 비활성화 - SK OpenAPI 도메인 등록 문제
 // 임시로 카카오 API 만 사용

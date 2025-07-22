@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { LockOutlined } from '@mui/icons-material';
-import { verifyGuardianPassword } from '../api/apiClient';
+import { verifyGuardianPassword } from '../../api/apiClient';
 
 const StyledDialog = styled(Dialog)({
   '& .MuiDialog-paper': {

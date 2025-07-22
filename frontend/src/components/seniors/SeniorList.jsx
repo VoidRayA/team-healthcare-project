@@ -33,17 +33,24 @@ import {
   ClearOutlined,  
   SettingsOutlined
 } from '@mui/icons-material';
-import userImage from '../images/user.png';
-import { getUserInfo, clearAuthData } from '../utils/auth';
-import { getSeniorsWithPagination } from '../api/apiClient';
+import userImage from '../../images/user.png';
+import { getUserInfo, clearAuthData } from '../../utils/auth';
+import { getSeniorsWithPagination } from '../../api/apiClient';
 
 const SeniorList = () => {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('보호 대상자');
-  const [guardianInfo, setGuardianInfo] = useState({
-    name: '관리자',
-    loginId: 'admin',
-    role: 'ADMIN'
+  const [guardianInfo, setGuardianInfo] = useState(() => {
+    const userInfo = getUserInfo();
+    return userInfo ? {
+      name: userInfo.name,
+      loginId: userInfo.loginId,
+      role: userInfo.role || 'GUARDIAN'
+    } : {
+      name: '관리자',
+      loginId: 'admin',
+      role: 'ADMIN'
+    };
   });
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,23 +66,11 @@ const SeniorList = () => {
 
   // 페이지네이션 관련 상태  
   const GROUP_SIZE = 10;
-  const totalGroups = Math.ceil(totalPages / GROUP_SIZE);
   const currentGroup = Math.floor((currentPage - 1) / GROUP_SIZE);
   const startPage = currentGroup * GROUP_SIZE + 1;
   const endPage = Math.min(startPage + GROUP_SIZE - 1, totalPages);
-  const totalVisiblePages = Math.max(endPage - startPage + 1 + 4, 10);
 
   useEffect(() => {
-    const userInfo = getUserInfo();
-    
-    if (userInfo) {
-      setGuardianInfo({
-        name: userInfo.name,
-        loginId: userInfo.loginId,
-        role: userInfo.role || 'GUARDIAN'
-      });
-    }
-    
     loadSeniors();
   }, [currentPage, orderBy, order]);
 
@@ -115,7 +110,7 @@ const SeniorList = () => {
           id: senior.id,
           name: senior.seniorName,
           birthDate: formatDate(senior.birthDate),
-          gender: senior.gender === 'MALE' ? '남' : '여',
+          gender: senior.gender === 'M' ? '남' : '여',
           address: senior.address || '-',
           phone: formatPhoneNumber(senior.phone),
           emergencyContact: formatPhoneNumber(senior.emergencyContact),
@@ -167,7 +162,7 @@ const SeniorList = () => {
             id: senior.id,
             name: senior.seniorName,
             birthDate: formatDate(senior.birthDate),
-            gender: senior.gender === 'MALE' ? '남' : '여',
+            gender: senior.gender === 'M' ? '남' : '여',
             address: senior.address || '-',
             phone: formatPhoneNumber(senior.phone),
             emergencyContact: formatPhoneNumber(senior.emergencyContact),
@@ -209,7 +204,7 @@ const SeniorList = () => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
-    setCurrentPage(1);
+    // setCurrentPage(1); // 이 줄을 제거하여 깜빡임 방지
   }, [orderBy, order]);
 
   const handleLogout = () => {
@@ -298,16 +293,12 @@ const SeniorList = () => {
           padding: '0 20px',
           flex: 1,
           '& .MuiListItem-root': {
-            borderRadius: 1.5,
-            marginBottom: 1,
+            borderRadius: '12px',
+            marginBottom: '8px',
             color: 'white',
             cursor: 'pointer',
-            transition: theme => theme.transitions.create(['background-color', 'transform'], {
-              duration: theme.transitions.duration.short,
-            }),
             '&:hover': {
               backgroundColor: 'rgba(255,255,255,0.1)',
-              transform: 'translateX(4px)'
             },
             '&.active': {
               backgroundColor: 'rgba(255,255,255,0.2)',
@@ -333,6 +324,8 @@ const SeniorList = () => {
                     setActiveMenu(item.text);
                   } else if (item.text === '일정 관리') {
                     navigate('/daily');
+                  } else if (item.text === '설정') {
+                    navigate('/settings');
                   } else {
                     setActiveMenu(item.text);
                   }
@@ -351,12 +344,9 @@ const SeniorList = () => {
           <ListItem
             onClick={handleLogout}
             sx={{
-              borderRadius: 1.5,
+              borderRadius: '12px',
               color: 'white',
               cursor: 'pointer',
-              transition: theme => theme.transitions.create(['background-color'], {
-                duration: theme.transitions.duration.short,
-              }),
               '&:hover': {
                 backgroundColor: 'rgba(255,255,255,0.1)',
               }
@@ -384,8 +374,7 @@ const SeniorList = () => {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
-          padding: '20px 30px'
+          padding: '30px'
         }}>
           {/* 페이지 제목 */}
           <Typography sx={{
@@ -534,14 +523,31 @@ const SeniorList = () => {
                   lg: '470px' 
                 },
                 overflow: 'auto',
-                maxHeight: '469px'
-                // 최소 너비 제거로 반응형 개선
+                maxHeight: '469px',
+                // 스크롤바 스타일링 추가
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  backgroundColor: '#f1f1f1',
+                  borderRadius: '4px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: '#1976d2',
+                  borderRadius: '4px',
+                  '&:hover': {
+                    backgroundColor: '#1565c0',
+                  }
+                }
               }}
             >
               <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
                 <TableHead sx={{
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 100,
                   '& .MuiTableCell-root': {
-                    backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                    backgroundColor: 'rgba(51, 153, 255, 1)', // 반투명도 제거 (0.3 → 1)
                     borderBottom: '2px solid #1976d2',
                     fontFamily: 'Pretendard',
                     fontWeight: 700,
@@ -549,61 +555,100 @@ const SeniorList = () => {
                     color: '#000',
                     textAlign: 'center',
                     padding: '10px 4px',
-                    height: '25px'
+                    height: '25px',
+                    backdropFilter: 'none', // 블러 효과 제거
                   }
                 }}>
                   <TableRow>
-                    <TableCell sx={{ width: '6%', textAlign: 'center' }}>
-                      <TableSortLabel
-                        active={orderBy === 'seniorName'}
-                        direction={orderBy === 'seniorName' ? order : 'asc'}
-                        onClick={() => handleRequestSort('seniorName')}
-                        sx={{ 
-                          width: '100%', 
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center'
-                        }}
-                      >
-                        이름
-                      </TableSortLabel>
+                    <TableCell sx={{ width: '5%' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <TableSortLabel
+                          active={orderBy === 'seniorName'}
+                          direction={orderBy === 'seniorName' ? order : 'asc'}
+                          onClick={() => handleRequestSort('seniorName')}
+                          sx={{
+                            '& .MuiTableSortLabel-icon': {
+                              display: 'none'
+                            }
+                          }}
+                        >
+                          이름
+                        </TableSortLabel>
+                      </Box>
                     </TableCell>
-                    <TableCell sx={{ width: '10%', textAlign: 'center' }}>
-                      <TableSortLabel
-                        active={orderBy === 'birthDate'}
-                        direction={orderBy === 'birthDate' ? order : 'asc'}
-                        onClick={() => handleRequestSort('birthDate')}
-                        sx={{ 
-                          width: '100%', 
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center'
-                        }}
-                      >
-                        생년월일
-                      </TableSortLabel>
+                    <TableCell sx={{ width: '8%' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <TableSortLabel
+                          active={orderBy === 'birthDate'}
+                          direction={orderBy === 'birthDate' ? order : 'asc'}
+                          onClick={() => handleRequestSort('birthDate')}
+                          sx={{
+                            '& .MuiTableSortLabel-icon': {
+                              display: 'none'
+                            }
+                          }}
+                        >
+                          생년월일
+                        </TableSortLabel>
+                      </Box>
                     </TableCell>
-                    <TableCell sx={{ width: '5%' }}>성별</TableCell>
-                    <TableCell sx={{ width: '20%', textAlign: 'center' }}>
-                      <TableSortLabel
-                        active={orderBy === 'address'}
-                        direction={orderBy === 'address' ? order : 'asc'}
-                        onClick={() => handleRequestSort('address')}
-                        sx={{ 
-                          width: '100%', 
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center'
-                        }}
-                      >
-                        주소
-                      </TableSortLabel>
+                    <TableCell sx={{ width: '4%', textAlign: 'center' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <TableSortLabel
+                          active={orderBy === 'gender'}
+                          direction={orderBy === 'gender' ? order : 'asc'}
+                          onClick={() => handleRequestSort('gender')}
+                          sx={{
+                            '& .MuiTableSortLabel-icon': {
+                              display: 'none'
+                            }
+                          }}
+                        >
+                          성별
+                        </TableSortLabel>
+                      </Box>
                     </TableCell>
-                    <TableCell sx={{ width: '13%', display: { xs: 'none', md: 'table-cell' } }}>보호 대상자 연락처</TableCell>
-                    <TableCell sx={{ width: '13%' }}>비상연락처</TableCell>
-                    <TableCell sx={{ width: '12%', display: { xs: 'none', sm: 'table-cell' } }}>지병</TableCell>
-                    <TableCell sx={{ width: '13%', display: { xs: 'none', sm: 'table-cell' } }}>복용 약물</TableCell>
-                    <TableCell sx={{ width: '11%', display: { xs: 'none', md: 'table-cell' } }}>특이사항</TableCell>
+                    <TableCell sx={{ width: '25%' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <TableSortLabel
+                          active={orderBy === 'address'}
+                          direction={orderBy === 'address' ? order : 'asc'}
+                          onClick={() => handleRequestSort('address')}
+                          sx={{
+                            '& .MuiTableSortLabel-icon': {
+                              display: 'none'
+                            }
+                          }}
+                        >
+                          주소
+                        </TableSortLabel>
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ width: '12%', display: { xs: 'none', md: 'table-cell' } }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        보호 대상자 연락처
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ width: '12%' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        비상연락처
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ width: '13%', display: { xs: 'none', sm: 'table-cell' } }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        지병
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ width: '14%', display: { xs: 'none', sm: 'table-cell' } }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        복용 약물
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ width: '12%', display: { xs: 'none', md: 'table-cell' } }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        특이사항
+                      </Box>
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody sx={{
@@ -653,24 +698,25 @@ const SeniorList = () => {
                         }
                       }}
                     >
-                      <TableCell>{senior.name}</TableCell>
-                      <TableCell>{senior.birthDate}</TableCell>
-                      <TableCell>{senior.gender}</TableCell>
+                      <TableCell sx={{ textAlign: 'center' }}>{senior.name}</TableCell>
+                      <TableCell sx={{ textAlign: 'center' }}>{senior.birthDate}</TableCell>
+                      <TableCell sx={{ textAlign: 'center' }}>{senior.gender}</TableCell>
                       <TableCell 
                         sx={{ 
                           whiteSpace: { xs: 'normal', lg: 'nowrap' },
                           overflow: { xs: 'visible', lg: 'hidden' },
                           textOverflow: { xs: 'clip', lg: 'ellipsis' },
-                          maxWidth: { xs: 'none', lg: '200px' }
+                          maxWidth: { xs: 'none', lg: '200px' },
+                          textAlign: 'center'
                         }}
                       >
                         {senior.address}
                       </TableCell>
-                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{senior.phone}</TableCell>
-                      <TableCell>{senior.emergencyContact}</TableCell>
-                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{senior.medicalConditions}</TableCell>
-                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{senior.medications}</TableCell>
-                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{senior.specialNotes}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, textAlign: 'center' }}>{senior.phone}</TableCell>
+                      <TableCell sx={{ textAlign: 'center' }}>{senior.emergencyContact}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, textAlign: 'center' }}>{senior.medicalConditions}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, textAlign: 'center' }}>{senior.medications}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, textAlign: 'center' }}>{senior.specialNotes}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -690,46 +736,26 @@ const SeniorList = () => {
               gap: '8px'
             }}
           >
-            <Pagination
-              count={totalVisiblePages}
-              page={currentPage - startPage + 3} // offset 보정
-              onChange={(e, value) => {
-                if (value === 1) return setCurrentPage(1); // ≪
-                if (value === 2) return setCurrentPage(Math.max(1, startPage - GROUP_SIZE)); // <
-                if (value === totalVisiblePages - 1) return setCurrentPage(Math.min(totalPages, startPage + GROUP_SIZE)); // >
-                if (value === totalVisiblePages) return setCurrentPage(totalPages); // ≫
-                return setCurrentPage(startPage + value - 3); // 실제 페이지
-              }}
-              siblingCount={0}
-              boundaryCount={0}
-              showFirstButton
+            <Pagination 
+              count={totalPages}
+              page={currentPage}
+              onChange={(event, page) => setCurrentPage(page)}
+              color="primary"
+              showFirstButton 
               showLastButton
-              renderItem={(item) => {
-                const { type, page, ...rest } = item;
-
-                // ✅ "..." 제거
-                if (type === 'start-ellipsis' || type === 'end-ellipsis') {
-                  return null;
+              siblingCount={1}
+              boundaryCount={1}
+              sx={{
+                '& .MuiPaginationItem-root': {
+                  fontFamily: 'Pretendard',
+                  fontWeight: 500,
+                  fontSize: '14px',
                 }
-
-                // ✅ 네비게이션: ≪, <, >, ≫
-                if (page === 1) return <PaginationItem {...rest} page="≪" />;
-                if (page === 2) return <PaginationItem {...rest} page="<" />;
-                if (page === totalVisiblePages - 1) return <PaginationItem {...rest} page=">" />;
-                if (page === totalVisiblePages) return <PaginationItem {...rest} page="≫" />;
-
-                // ✅ 실제 페이지 번호
-                const realPage = startPage + page - 3;
-                return (
-                  <PaginationItem
-                    {...rest}
-                    page={realPage}
-                    selected={realPage === currentPage}
-                  />
-                );
               }}
             />
           </Box>
+
+
         </Box>
       </Paper>
     </Box>

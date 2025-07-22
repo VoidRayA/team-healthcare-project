@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../api/apiClient';
-import { saveAuthData } from '../utils/auth';
+import { login } from '../../api/apiClient';
+import { saveAuthData } from '../../utils/auth';
 
 import {
   Box,
@@ -15,8 +15,8 @@ import {
   FormControlLabel,
   Link
 } from '@mui/material';
-import lockicon from '../images/lock_icon.png';
-import image3 from '../images/image3.png';
+import lockicon from '../../images/lock_icon.png';
+import image3 from '../../images/image3.png';
 
 const Login = () => {
   const navigate = useNavigate();

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, CircularProgress, Alert, Button, GlobalStyles, useTheme } from '@mui/material';
-import { loadKakaoMapScript, isKakaoMapLoaded } from '../utils/kakaoMapLoader';
+import { loadKakaoMapScript, isKakaoMapLoaded } from '../../utils/kakaoMapLoader';
 
 /**
  * 카카오맵 컴포넌트

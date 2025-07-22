@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Button, TextField, List, ListItem, ListItemText, Divider, CircularProgress } from '@mui/material';
 import KakaoMap from './KakaoMap';
-import { searchHospitalsByLocation, searchPharmaciesByLocation, getCurrentLocation } from '../utils/kakaoAPI';
+import { searchHospitalsByLocation, searchPharmaciesByLocation, getCurrentLocation } from '../../utils/kakaoAPI';
 
 const MapExample = () => {
   const [markers, setMarkers] = useState([]);

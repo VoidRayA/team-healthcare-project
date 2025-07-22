@@ -21,7 +21,8 @@ import {
   TableHead,
   TableRow,
   Pagination,
-  Container
+  Container,
+  TableSortLabel
 } from '@mui/material';
 import {
   DashboardOutlined,
@@ -31,9 +32,7 @@ import {
   EditOutlined,
   SettingsOutlined,
   CheckCircle,
-  RadioButtonUnchecked,
-  ArrowUpward,
-  ArrowDownward
+  RadioButtonUnchecked
 } from '@mui/icons-material';
 import userImage from '../../images/user.png';
 // import PasswordConfirmModal from './PasswordConfirmModal'; // ProfileManagement에서만 사용
@@ -46,10 +45,17 @@ import { getUserInfo, clearAuthData, getAuthToken } from '../../utils/auth';
 const Daily = () => {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('일정 관리');
-  const [guardianInfo, setGuardianInfo] = useState({
-    name: '관리자',
-    loginId: 'admin',
-    role: 'ADMIN'
+  const [guardianInfo, setGuardianInfo] = useState(() => {
+    const userInfo = getUserInfo();
+    return userInfo ? {
+      name: userInfo.name,
+      loginId: userInfo.loginId,
+      role: userInfo.role || 'GUARDIAN'
+    } : {
+      name: '관리자',
+      loginId: 'admin',
+      role: 'ADMIN'
+    };
   });
   
   // 스크롤 위치 유지를 위한 ref (현재는 사용하지 않지만 추후 필요시 활용 가능)
@@ -67,9 +73,11 @@ const Daily = () => {
   const [showSeniorSelectModal, setShowSeniorSelectModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   
-  // 정렬 관련 상태
-  const [sortColumn, setSortColumn] = useState('');
-  const [sortDirection, setSortDirection] = useState('asc');
+  // 정렬 관련 상태 - 각 테이블별로 분리
+  const [seniorSortColumn, setSeniorSortColumn] = useState('');
+  const [seniorSortDirection, setSeniorSortDirection] = useState('asc');
+  const [activitySortColumn, setActivitySortColumn] = useState('');
+  const [activitySortDirection, setActivitySortDirection] = useState('asc');
   
   // 드롭다운 관련 상태
   const [dropdownItems, setDropdownItems] = useState([]);
@@ -85,16 +93,6 @@ const Daily = () => {
   });
 
   useEffect(() => {
-    const userInfo = getUserInfo();
-    
-    if (userInfo) {
-      setGuardianInfo({
-        name: userInfo.name,
-        loginId: userInfo.loginId,
-        role: userInfo.role || 'GUARDIAN'
-      });
-    }
-    
     // 보호 대상자 목록 로드
     loadSeniors();
     // 드롭다운 데이터 로드
@@ -103,9 +101,65 @@ const Daily = () => {
     // fetchDailyActivities();
   }, []);
 
+  // 정렬 함수 - displayedSeniors보다 먼저 정의해야 함
+  const sortSeniors = useCallback((data, column, direction) => {
+    if (!column || !data || data.length === 0) return data;
+    
+    return [...data].sort((a, b) => {
+      // isEmpty인 항목은 항상 마지막에 위치
+      if (a.isEmpty) return 1;
+      if (b.isEmpty) return -1;
+      
+      let aValue = a[column] || '';
+      let bValue = b[column] || '';
+      
+      // 나이의 경우 숫자로 비교
+      if (column === 'age') {
+        aValue = parseInt(aValue) || 0;
+        bValue = parseInt(bValue) || 0;
+      } else {
+        aValue = aValue.toString().toLowerCase();
+        bValue = bValue.toString().toLowerCase();
+      }
+      
+      if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, []);
+
+  const sortDailyActivites = useCallback((data, column, direction) => {
+    if (!column || !data || data.length === 0) return data;
+    
+    return [...data].sort((a, b) => {
+      // isEmpty인 항목은 항상 마지막에 위치
+      if (a.isEmpty) return 1;
+      if (b.isEmpty) return -1;
+      
+      let aValue = a[column] || '';
+      let bValue = b[column] || '';
+      
+      // 나이의 경우 숫자로 비교
+      if (column === 'age') {
+        aValue = parseInt(aValue) || 0;
+        bValue = parseInt(bValue) || 0;
+      } else {
+        aValue = aValue.toString().toLowerCase();
+        bValue = bValue.toString().toLowerCase();
+      }
+      
+      if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, []);
+
   // seniors가 변경될 때마다 displayedSeniors 업데이트
   const displayedSeniors = useMemo(() => {
-    const sorted = sortColumn ? sortSeniors(seniors, sortColumn, sortDirection) : seniors;
+    // 정렬이 필요한 경우만 정렬 수행
+    const sorted = seniorSortColumn ? sortSeniors(seniors, seniorSortColumn, seniorSortDirection) : [...seniors];
+    
+    // 빈 행 추가
     const displayed = [...sorted];    
     
     while (displayed.length < 10) {
@@ -124,7 +178,7 @@ const Daily = () => {
     }
     
     return displayed;
-  }, [seniors, sortColumn, sortDirection]);
+  }, [seniors, seniorSortColumn, seniorSortDirection, sortSeniors]);
 
   // 일정 관리 데이터 로드 함수
   const fetchDailyActivities = async (seniorId, date) => {
@@ -218,34 +272,12 @@ const Daily = () => {
     }
   }, [selectedSenior, selectedDate]);
 
-  // 정렬 함수
-  const sortSeniors = useCallback((data, column, direction) => {
-    if (!column) return data;
-    
-    return [...data].sort((a, b) => {
-      let aValue = a[column] || '';
-      let bValue = b[column] || '';
-      
-      // 나이의 경우 숫자로 비교
-      if (column === 'age') {
-        aValue = parseInt(aValue) || 0;
-        bValue = parseInt(bValue) || 0;
-      } else {
-        aValue = aValue.toString().toLowerCase();
-        bValue = bValue.toString().toLowerCase();
-      }
-      
-      if (aValue < bValue) return direction === 'asc' ? -1 : 1;
-      if (aValue > bValue) return direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, []);
-
   // 일정 관리 정보 표시
   const displayedDailyActivities = useMemo(() => {
-    const sorted = sortColumn === 'activity_category' || sortColumn === 'daily_notes'
-      ? sortDailyActivites(dailyActivities, sortColumn, sortDirection)
-      : dailyActivities;
+    const activities = dailyActivities || [];
+    const sorted = activitySortColumn === 'activity_category' || activitySortColumn === 'daily_notes'
+      ? sortDailyActivites(activities, activitySortColumn, activitySortDirection)
+      : [...activities];
 
     const displayed = [...sorted];
 
@@ -263,29 +295,7 @@ const Daily = () => {
     }
 
     return displayed;
-  }, [dailyActivities, sortColumn, sortDirection]);
-
-  const sortDailyActivites = useCallback((data, column, direction) => {
-    if (!column) return data;
-    
-    return [...data].sort((a, b) => {
-      let aValue = a[column] || '';
-      let bValue = b[column] || '';
-      
-      // 나이의 경우 숫자로 비교
-      if (column === 'age') {
-        aValue = parseInt(aValue) || 0;
-        bValue = parseInt(bValue) || 0;
-      } else {
-        aValue = aValue.toString().toLowerCase();
-        bValue = bValue.toString().toLowerCase();
-      }
-      
-      if (aValue < bValue) return direction === 'asc' ? -1 : 1;
-      if (aValue > bValue) return direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, []);
+  }, [dailyActivities, activitySortColumn, activitySortDirection, sortDailyActivites]);
 
   // 보호대상자 선택 시 스크롤 위치 유지
   const handleSeniorClick = useCallback((senior) => {
@@ -310,13 +320,23 @@ const Daily = () => {
 
   // 선택된 Senior가 변경된 후 스크롤 위치 복원 (제거 - 불필요해짐)
 
-  // 헤더 클릭 핸들러
-  const handleHeaderClick = (column) => {
-    if (sortColumn === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+  // 헤더 클릭 핸들러 - 보호 대상자 테이블
+  const handleSeniorHeaderClick = (column) => {
+    if (seniorSortColumn === column) {
+      setSeniorSortDirection(seniorSortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortColumn(column);
-      setSortDirection('asc');
+      setSeniorSortColumn(column);
+      setSeniorSortDirection('asc');
+    }
+  };
+
+  // 헤더 클릭 핸들러 - 일정 관리 테이블
+  const handleActivityHeaderClick = (column) => {
+    if (activitySortColumn === column) {
+      setActivitySortDirection(activitySortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setActivitySortColumn(column);
+      setActivitySortDirection('asc');
     }
   };
 
@@ -669,6 +689,8 @@ const Daily = () => {
                     navigate('/seniors');
                   } else if (item.text === '일정 관리') {
                     setActiveMenu(item.text);
+                  } else if (item.text === '설정') {
+                    navigate('/settings');
                   } else {
                     setActiveMenu(item.text);
                   }
@@ -720,6 +742,16 @@ const Daily = () => {
           padding: '30px',
           gap: '30px'
         }}>
+          {/* 페이지 제목 */}
+          <Typography sx={{
+            fontFamily: 'Pretendard',
+            fontWeight: 700,
+            fontSize: '28px',
+            color: '#1976d2'
+          }}>
+            일정 관리
+          </Typography>
+
           {/* 상단 영역: 달력 + 활동기록 */}
           <Box sx={{
             display: 'flex',
@@ -733,30 +765,22 @@ const Daily = () => {
               flexDirection: 'column',
               gap: '20px'
             }}>
-              <Typography variant="h2" sx={{
-                fontFamily: 'Pretendard',
-                fontWeight: 700,
-                fontSize: '28px',
-                color: '#0869CC',
-                marginBottom: '20px'
-              }}>
-                일정 관리
-              </Typography>
 
               <Box sx={{
                 width: '320px',
-                height: '300px', // 고정 높이 설정
+                height: '270px', // CalendarWidget 기본 높이
                 marginBottom: '20px',
                 border: '1px solid #e0e0e0',
-                borderRadius: '12px',
-                padding: '15px',
-                backgroundColor: '#fafafa',
+                borderRadius: '10px', // 1.25 * 8 = 10px
+                padding: '12px', // 1.5 * 8 = 12px
+                backgroundColor: '#f8f9fa',
                 overflow: 'hidden',
+                boxSizing: 'border-box',
                 display: 'flex',
                 flexDirection: 'column',
                 '& .react-calendar': {
                   width: '100%',
-                  height: '100%', // 내부 전체 높이 사용
+                  height: '100%',
                   border: 'none',
                   fontFamily: 'Pretendard',
                   backgroundColor: 'transparent',
@@ -764,37 +788,51 @@ const Daily = () => {
                   flexDirection: 'column'
                 },
                 '& .react-calendar__navigation': {
-                  height: '40px',
+                  height: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   marginBottom: '10px'
                 },
                 '& .react-calendar__navigation button': {
-                  minWidth: '36px',
-                  height: '36px',
+                  minWidth: '32px',
+                  height: '44px',
                   fontSize: '16px',
                   fontWeight: 'bold',
-                  borderRadius: '6px'
+                  color: '#1976d2',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                  '&:hover': {
+                    backgroundColor: '#1976d2',
+                    color: 'white'
+                  },
+                  '&:disabled': {
+                    color: '#bdbdbd'
+                  }
                 },
                 '& .react-calendar__navigation__label': {
                   fontSize: '16px',
                   fontWeight: 'bold',
                   textAlign: 'center',
-                  flex: 1
+                  flex: 1,
+                  color: '#212121'
                 },
                 '& .react-calendar__month-view__weekdays': {
                   borderBottom: '1px solid #e0e0e0',
                   paddingBottom: '5px',
                   marginBottom: '5px',
                   display: 'flex',
-                  justifyContent: 'space-between'
+                  justifyContent: 'space-between',
+                  flex: '0 0 auto'
                 },
                 '& .react-calendar__month-view__weekdays__weekday': {
-                  padding: '4px 4px',
+                  padding: '4px',
                   fontSize: '14px',
                   fontWeight: 'bold',
                   textAlign: 'center',
-                  color: '#666',
+                  color: '#757575',
                   flex: 1,
                   display: 'flex',
                   alignItems: 'center',
@@ -804,38 +842,45 @@ const Daily = () => {
                   overflow: 'hidden'
                 },
                 '& .react-calendar__month-view__days': {
-                  display: 'grid !important',
-                  gridTemplateColumns: 'repeat(7, 1fr) !important',
-                  gridTemplateRows: 'repeat(6, 1fr) !important', // 6주 고정
-                  gap: '2px !important',
-                  height: '200px !important', // 날짜 영역 고정 높이
-                  flex: 1 // 남은 공간 모두 사용
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  flex: 1,
+                  alignContent: 'stretch',
+                  gap: 0,
+                  '& > *': {
+                    flexBasis: 'calc(100% / 7)',
+                    flexGrow: 1,
+                    flexShrink: 0
+                  }
                 },
                 '& .react-calendar__tile': {
-                  padding: '4px',
+                  padding: '8px',
                   fontSize: '0.85rem',
-                  border: '1px solid #f0f0f0',
+                  border: '1px solid #e0e0e0',
                   backgroundColor: 'white',
-                  minHeight: '28px', // 최소 높이 고정
-                  maxHeight: '28px', // 최대 높이 고정
-                  height: '28px',    // 높이 고정
+                  minHeight: 'auto',
+                  height: 'auto',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  overflow: 'hidden', // 내용 넘침 숨김
+                  cursor: 'pointer',
+                  aspectRatio: '1 / 0.8',
+                  transition: 'background-color 0.2s, color 0.2s',
                   '&:hover': {
-                    backgroundColor: '#e3f2fd'
+                    backgroundColor: '#bbdefb',
+                    color: 'white'
                   }
                 },
                 '& .react-calendar__tile--active': {
                   backgroundColor: '#1976d2 !important',
-                  color: 'white',
+                  color: 'white !important',
+                  fontWeight: 'bold',
                   border: '1px solid #1976d2'
                 },
                 '& .react-calendar__tile--now': {
-                  backgroundColor: '#e3f2fd',
-                  color: '#white',
-                  border: '1px solid #1976d2'
+                  backgroundColor: '#bbdefb !important',
+                  color: 'white !important',
+                  fontWeight: 'bold'
                 }
               }}>
                 <Calendar
@@ -989,8 +1034,8 @@ const Daily = () => {
             flexDirection: 'row',
             gap: '15px'
           }}>
-            <Box flex={{
-              width: '30%',
+            <Box sx={{
+              width: '48%'
             }}>
               <Typography variant="h6" sx={{
                 fontFamily: 'Pretendard',
@@ -1002,7 +1047,7 @@ const Daily = () => {
                 보호 대상자 목록
               </Typography>
               
-              {seniors.length > 0 ? (
+              {seniors && seniors.length > 0 ? (
                 <>
                   <TableContainer 
                     component={Paper} 
@@ -1055,39 +1100,66 @@ const Daily = () => {
                           userSelect: 'none',
                           backdropFilter: 'none', // 블러 효과 제거
                           '&:hover': {
-                            backgroundColor: 'rgba(51, 153, 255, 0.8)' // 호버 시에만 약간 투명도
+                            backgroundColor: 'rgba(51, 153, 255, 1)' // 호버 시에도 불투명하게 유지
                           }
                         }
                       }}>
                         <TableRow>
-                          <TableCell onClick={() => handleHeaderClick('seniorName')}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                              이름
-                              {sortColumn === 'seniorName' && (
-                                sortDirection === 'asc' ? 
-                                  <ArrowUpward sx={{ fontSize: '16px' }} /> : 
-                                  <ArrowDownward sx={{ fontSize: '16px' }} />
-                              )}
+                          <TableCell>
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                              <TableSortLabel
+                                active={seniorSortColumn === 'seniorName'}
+                                direction={seniorSortColumn === 'seniorName' ? seniorSortDirection : 'asc'}
+                                onClick={() => handleSeniorHeaderClick('seniorName')}
+                                sx={{
+                                  '& .MuiTableSortLabel-icon': {
+                                    display: 'none'
+                                  },
+                                  '&:hover': {
+                                    color: '#1976d2'
+                                  }
+                                }}
+                              >
+                                이름
+                              </TableSortLabel>
                             </Box>
                           </TableCell>
-                          <TableCell onClick={() => handleHeaderClick('age')}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                              나이
-                              {sortColumn === 'age' && (
-                                sortDirection === 'asc' ? 
-                                  <ArrowUpward sx={{ fontSize: '16px' }} /> : 
-                                  <ArrowDownward sx={{ fontSize: '16px' }} />
-                              )}
+                          <TableCell>
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                              <TableSortLabel
+                                active={seniorSortColumn === 'age'}
+                                direction={seniorSortColumn === 'age' ? seniorSortDirection : 'asc'}
+                                onClick={() => handleSeniorHeaderClick('age')}
+                                sx={{
+                                  '& .MuiTableSortLabel-icon': {
+                                    display: 'none'
+                                  },
+                                  '&:hover': {
+                                    color: '#1976d2'
+                                  }
+                                }}
+                              >
+                                나이
+                              </TableSortLabel>
                             </Box>
                           </TableCell>
-                          <TableCell onClick={() => handleHeaderClick('phoneNumber')}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                              전화번호
-                              {sortColumn === 'phoneNumber' && (
-                                sortDirection === 'asc' ? 
-                                  <ArrowUpward sx={{ fontSize: '16px' }} /> : 
-                                  <ArrowDownward sx={{ fontSize: '16px' }} />
-                              )}
+                          <TableCell>
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                              <TableSortLabel
+                                active={seniorSortColumn === 'phoneNumber'}
+                                direction={seniorSortColumn === 'phoneNumber' ? seniorSortDirection : 'asc'}
+                                onClick={() => handleSeniorHeaderClick('phoneNumber')}
+                                sx={{
+                                  '& .MuiTableSortLabel-icon': {
+                                    display: 'none'
+                                  },
+                                  '&:hover': {
+                                    color: '#1976d2'
+                                  }
+                                }}
+                              >
+                                전화번호
+                              </TableSortLabel>
                             </Box>
                           </TableCell>                        
                           <TableCell>상태</TableCell>
@@ -1201,7 +1273,7 @@ const Daily = () => {
                   </Paper>
               )}
             </Box>
-            <Box flex={1}>
+            <Box sx={{ flex: 1 }}>
               <Typography variant="h6" sx={{
                 fontFamily: 'Pretendard',
                 fontWeight: 700,
@@ -1212,7 +1284,7 @@ const Daily = () => {
                 일정 관리 목록
               </Typography>
               
-              {dailyActivities.length > 0 || selectedSenior ? (
+              {(dailyActivities && dailyActivities.length > 0) || selectedSenior ? (
                 <>
                   <TableContainer component={Paper} sx={{
                     backgroundColor: '#ffffff',
@@ -1226,7 +1298,22 @@ const Daily = () => {
                       lg: '224px'  // 현재 사이즈
                     },
                     overflow: 'auto', // 반응형에서는 스크롤 필요
-                    maxHeight: '224px' // 최대 높이 제한
+                    maxHeight: '224px', // 최대 높이 제한
+                    // 스크롤바 스타일링 추가
+                    '&::-webkit-scrollbar': {
+                      width: '8px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      backgroundColor: '#f1f1f1',
+                      borderRadius: '4px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: '#1976d2',
+                      borderRadius: '4px',
+                      '&:hover': {
+                        backgroundColor: '#1565c0',
+                      }
+                    }
                   }}>
                     <Table stickyHeader>
                       <TableHead sx={{
@@ -1247,29 +1334,47 @@ const Daily = () => {
                           userSelect: 'none',
                           backdropFilter: 'none', // 블러 효과 제거
                           '&:hover': {
-                            backgroundColor: 'rgba(51, 153, 255, 0.8)' // 호버 시에만 약간 투명도
+                            backgroundColor: 'rgba(51, 153, 255, 1)' // 호버 시에도 불투명하게 유지
                           }
                         }
                       }}>
                         <TableRow>
-                          <TableCell onClick={() => handleHeaderClick('activity_category')}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                              항목
-                              {sortColumn === 'activity_category' && (
-                                sortDirection === 'asc' ? 
-                                  <ArrowUpward sx={{ fontSize: '16px' }} /> : 
-                                  <ArrowDownward sx={{ fontSize: '16px' }} />
-                              )}
+                          <TableCell>
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                              <TableSortLabel
+                                active={activitySortColumn === 'activity_category'}
+                                direction={activitySortColumn === 'activity_category' ? activitySortDirection : 'asc'}
+                                onClick={() => handleActivityHeaderClick('activity_category')}
+                                sx={{
+                                  '& .MuiTableSortLabel-icon': {
+                                    display: 'none'
+                                  },
+                                  '&:hover': {
+                                    color: '#1976d2'
+                                  }
+                                }}
+                              >
+                                항목
+                              </TableSortLabel>
                             </Box>
                           </TableCell>
-                          <TableCell onClick={() => handleHeaderClick('daily_notes')}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                              특이사항
-                              {sortColumn === 'daily_notes' && (
-                                sortDirection === 'asc' ? 
-                                  <ArrowUpward sx={{ fontSize: '16px' }} /> : 
-                                  <ArrowDownward sx={{ fontSize: '16px' }} />
-                              )}
+                          <TableCell>
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                              <TableSortLabel
+                                active={activitySortColumn === 'daily_notes'}
+                                direction={activitySortColumn === 'daily_notes' ? activitySortDirection : 'asc'}
+                                onClick={() => handleActivityHeaderClick('daily_notes')}
+                                sx={{
+                                  '& .MuiTableSortLabel-icon': {
+                                    display: 'none'
+                                  },
+                                  '&:hover': {
+                                    color: '#1976d2'
+                                  }
+                                }}
+                              >
+                                특이사항
+                              </TableSortLabel>
                             </Box>
                           </TableCell>                
                         </TableRow>

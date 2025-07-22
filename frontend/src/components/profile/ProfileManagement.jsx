@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getGuardianProfile, updateGuardianProfile, logout } from '../../api/apiClient';
 import PasswordConfirmModal from './PasswordConfirmModal';
-import { clearAuthData } from '../../utils/auth';
+import { getUserInfo, clearAuthData } from '../../utils/auth';
 
 import {
   Box,
@@ -41,6 +41,12 @@ const ProfileManagement = () => {
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
+  });
+  
+  // 사이드바에 표시할 사용자 정보
+  const [displayName, setDisplayName] = useState(() => {
+    const userInfo = getUserInfo();
+    return userInfo?.name || '신규보호자';
   });
   
   const [loading, setLoading] = useState(false);
@@ -333,7 +339,7 @@ const ProfileManagement = () => {
           
           {/* 사용자 정보 */}
           <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'white', mb: 0.5 }}>
-            {formData.guardianName || '신규보호자'}
+            {displayName}
           </Typography>
           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>
             보호자
@@ -381,14 +387,14 @@ const ProfileManagement = () => {
             <ListItemText primary="보호 대상자" />
           </ListItem>
 
-          <ListItem onClick={() => navigate('/schedule')}>
+          <ListItem onClick={() => navigate('/daily')}>
             <ListItemIcon>
               <EventOutlined />
             </ListItemIcon>
             <ListItemText primary="일정 관리" />
           </ListItem>
 
-          <ListItem onClick={() => navigate('/messages')}>
+          <ListItem onClick={() => navigate('/settings')}>
             <ListItemIcon>
               <SettingsOutlined />
             </ListItemIcon>

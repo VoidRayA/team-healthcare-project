@@ -68,6 +68,9 @@ const Sidebar = ({
     } else if (item.text === '일정 관리') {
       updateRecentAction(item.text);
       navigate('/daily');
+    } else if (item.text === '설정') {
+      updateRecentAction(item.text);
+      navigate('/settings');
     } else {
       setActiveMenu(item.text);
       updateRecentAction(item.text);

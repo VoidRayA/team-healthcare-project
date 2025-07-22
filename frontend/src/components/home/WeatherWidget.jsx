@@ -30,23 +30,7 @@ const WeatherWidget = () => {
         const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
         
         if (!apiKey) {
-          console.warn('OpenWeatherMap API 키가 설정되지 않았습니다. 더미 데이터를 사용합니다.');
-          // 더미 데이터에 아이콘과 주간 예보 추가
-          setWeather({
-            temperature: '22°C',
-            condition: '맑음',
-            humidity: '65%',
-            location: '부산',
-            maxTemp: '25',
-            minTemp: '18',
-            icon: '01d', // 맑은 날씨 아이콘
-            weeklyForecast: [
-              { day: '내일', icon: '02d', condition: '구름 조금', maxTemp: '24', minTemp: '17' },
-              { day: '모레', icon: '03d', condition: '구름 많음', maxTemp: '23', minTemp: '16' },
-              { day: '3일후', icon: '10d', condition: '비', maxTemp: '20', minTemp: '15' },
-              { day: '4일후', icon: '01d', condition: '맑음', maxTemp: '26', minTemp: '19' }
-            ]
-          });
+          console.error('OpenWeatherMap API 키가 설정되지 않았습니다.');
           return;
         }
         
@@ -58,23 +42,6 @@ const WeatherWidget = () => {
         
       } catch (error) {
         console.error('❌ 날씨 정보 로드 오류:', error);
-        
-        // 오류 시에도 아이콘과 주간 예보가 있는 더미 데이터
-        setWeather({
-          temperature: '22°C',
-          condition: '맑음',
-          humidity: '65%',
-          location: '기본 위치',
-          maxTemp: '25',
-          minTemp: '18',
-          icon: '01d',
-          weeklyForecast: [
-            { day: '내일', icon: '02d', condition: '구름 조금', maxTemp: '24', minTemp: '17' },
-            { day: '모레', icon: '03d', condition: '구름 많음', maxTemp: '23', minTemp: '16' },
-            { day: '3일후', icon: '10d', condition: '비', maxTemp: '20', minTemp: '15' },
-            { day: '4일후', icon: '01d', condition: '맑음', maxTemp: '26', minTemp: '19' }
-          ]
-        });
       }
     };
 

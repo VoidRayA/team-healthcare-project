@@ -473,8 +473,8 @@ const getBestLocation = async () => {
 export const getCurrentWeather = async (apiKey, coords = null) => {
   try {
     if (!apiKey) {
-      console.warn('OpenWeatherMap API 키가 설정되지 않았습니다. 더미 데이터를 사용합니다.');
-      return getDummyWeatherData();
+      console.error('OpenWeatherMap API 키가 설정되지 않았습니다.');
+      throw new Error('API 키 필요');
     }
 
     // 좌표 획득 우선순위: 1) GPS 위치 2) 사용자 지정 3) IP 위치 4) 기본값
@@ -577,11 +577,11 @@ export const getCurrentWeather = async (apiKey, coords = null) => {
       };
     } else {
       console.error('OpenWeatherMap API 오류:', currentData.message || forecastData.message);
-      return getDummyWeatherData();
+      throw new Error('API 오류: ' + (currentData.message || forecastData.message));
     }
   } catch (error) {
     console.error('날씨 정보 조회 실패:', error);
-    return getDummyWeatherData();
+    throw error;
   }
 };
 
@@ -658,49 +658,6 @@ const processWeeklyForecast = (forecastList) => {
   return weeklyForecast;
 };
 
-// API 키가 없을 때 사용할 더미 데이터
-const getDummyWeatherData = async () => {
-  console.log('🌡️ 더미 데이터 생성 중 - 강제 한국어 적용...');
-  
-  // 기본적으로 부산으로 설정 (대부분의 학생들이 부산에 있으므로)
-  let locationName = '부산';
-  let locationSource = '더미 데이터 (기본 부산)';
-  
-  // IP 위치도 시도해보기
-  try {
-    const locationInfo = await getLocationByIP();
-    if (locationInfo && locationInfo.city) {
-      locationName = locationInfo.city; // 이미 한국어로 변환된 상태
-      locationSource = `더미 데이터 (${locationInfo.source})`;
-      console.log(`✅ 더미 데이터에서 IP 위치 사용: ${locationName}`);
-    } else {
-      console.log(`⚠️ IP 위치 실패, 기본 위치 사용: ${locationName}`);
-    }
-  } catch (error) {
-    console.warn('⚠️ 더미 데이터에서 IP 위치 조회 실패:', error.message);
-  }
-  
-  console.log(`🌡️ 더미 데이터 위치 결정: ${locationName}`);
-  
-  return {
-    temperature: '26°C',
-    condition: '맑음',
-    humidity: '89%',
-    location: locationName,
-    maxTemp: '27°C',
-    minTemp: '22°C',
-    lastUpdate: new Date().toLocaleTimeString('ko-KR'),
-    icon: '01d',
-    weeklyForecast: [
-      { day: '내일', date: '7/18', condition: '구름많음', icon: '03d', maxTemp: 24, minTemp: 19 },
-      { day: '모레', date: '7/19', condition: '비', icon: '10d', maxTemp: 21, minTemp: 17 },
-      { day: '글피', date: '7/20', condition: '맑음', icon: '01d', maxTemp: 26, minTemp: 20 },
-      { day: '일요', date: '7/21', condition: '흐림', icon: '04d', maxTemp: 23, minTemp: 18 }
-    ],
-    source: locationSource
-  };
-};
-
 // 통합 날씨 정보 조회 함수
 export const getWeatherInfo = async (apiKey = null, coords = null) => {
   return await getCurrentWeather(apiKey, coords);
@@ -708,57 +665,3 @@ export const getWeatherInfo = async (apiKey = null, coords = null) => {
 
 // 한국어 지역명 변환 함수 export
 export { getKoreanLocationName };
-
-// IP 위치 테스트 함수 (디버깅용)
-export const testIPLocation = async () => {
-  console.log('🔍 IP 위치 테스트 시작...');
-  const location = await getLocationByIP();
-  
-  if (location) {
-    console.log('✅ IP 위치 성공:', {
-      '한국어 도시': location.city,
-      '한국어 국가': location.country,
-      '영어 도시': location.originalCity,
-      '영어 국가': location.originalCountry,
-      '좌표': `${location.lat}, ${location.lon}`,
-      '제공자': location.provider
-    });
-    return location;
-  } else {
-    console.log('❌ IP 위치 실패');
-    return null;
-  }
-};
-
-// 전체 위치 테스트 함수 (디버깅용)
-export const testAllLocations = async () => {
-  console.log('🌍 전체 위치 감지 테스트 시작...');
-  const location = await getBestLocation();
-  
-  console.log('📍 최종 위치 결과:', {
-    '한국어 도시': location.city,
-    '한국어 국가': location.country,
-    '영어 도시': location.originalCity,
-    '영어 국가': location.originalCountry,
-    '좌표': `${location.lat}, ${location.lon}`,
-    '소스': location.source
-  });
-  
-  return location;
-};
-
-// 강제로 한국어 위치 테스트 (디버깅용)
-export const forceKoreanLocation = () => {
-  console.log('🇰🇷 강제 한국어 위치 테스트');
-  
-  // 부산 예시
-  const testLocation = {
-    city: getKoreanLocationName('Busan', 'city'),
-    country: getKoreanLocationName('South Korea', 'country'),
-    originalCity: 'Busan',
-    originalCountry: 'South Korea'
-  };
-  
-  console.log('테스트 결과:', testLocation);
-  return testLocation;
-};

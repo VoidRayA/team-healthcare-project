@@ -20,7 +20,7 @@ public class AlertsDto {
             String title,
             String description,
             Integer seniorId,
-            Integer relatedVitalId
+            Long relatedVitalId
     ) {}
 
     // 알림 확인 용 DTO

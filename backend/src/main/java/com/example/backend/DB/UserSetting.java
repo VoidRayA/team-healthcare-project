@@ -9,6 +9,7 @@ public class UserSetting {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
     
     @Column(name = "guardian_id")
@@ -20,7 +21,7 @@ public class UserSetting {
     @Column(name = "sub_category", length = 255) 
     private String subCategory;
     
-    @Column(name = "values", columnDefinition = "TEXT")
+    @Column(name = "`values`", columnDefinition = "TEXT")
     private String values;
     
     @Column(name = "created_at")

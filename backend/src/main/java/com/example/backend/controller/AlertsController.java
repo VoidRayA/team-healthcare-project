@@ -28,7 +28,7 @@ public class AlertsController {
         try {
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
             AlertsDto.AlertsCreateDto createDto = alertsService.createDto(
                     dto.relatedVitalId(),
@@ -59,7 +59,7 @@ public class AlertsController {
         try {
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
 
             AlertsDto.AlertsPageDto alertsPage = alertsService.getAllAlertsByGuardian(guardian.getId(), page, size);
@@ -78,7 +78,7 @@ public class AlertsController {
         try {
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
 
             List<AlertsDto.AlertsSearchDto> alerts = alertsService.getAllConfirmedAlertsByGuardian(guardian);
@@ -97,7 +97,7 @@ public class AlertsController {
         try {
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
 
             List<AlertsDto.AlertsSearchDto> alerts = alertsService.getAllUnconfirmedAlertsByGuardian(guardian);
@@ -112,14 +112,14 @@ public class AlertsController {
     @GetMapping("/seniors/{seniorId}")
     public ResponseEntity<?> getAlerts(
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            @PathVariable("id") Integer seniorId,
+            @PathVariable("seniorId") Integer seniorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         try {
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
 
             AlertsDto.AlertsPageDto alertsPage = alertsService.getAlerts(seniorId, guardian.getId(), page, size);
@@ -135,12 +135,12 @@ public class AlertsController {
     @GetMapping("/seniors/{seniorId}/unconfirmed")
     public ResponseEntity<?> getSeniorUnconfirmedAlerts(
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            @PathVariable("id") Integer seniorId
+            @PathVariable("seniorId") Integer seniorId
     ) {
         try {
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
 
             List<AlertsDto.AlertsSearchDto> alerts = alertsService.getFalseAlerts(seniorId, guardian);
@@ -156,12 +156,12 @@ public class AlertsController {
     @GetMapping("/seniors/{seniorId}/confirmed")
     public ResponseEntity<?> getSeniorConfirmedAlerts(
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            @PathVariable("id") Integer seniorId
+            @PathVariable("seniorId") Integer seniorId
     ) {
         try {
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
 
             List<AlertsDto.AlertsSearchDto> alerts = alertsService.getTrueAlerts(seniorId, guardian);
@@ -182,7 +182,7 @@ public class AlertsController {
         try {
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
 
             alertsService.deleteAlert(alertId, guardian);

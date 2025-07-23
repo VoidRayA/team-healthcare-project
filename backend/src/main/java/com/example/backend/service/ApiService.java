@@ -50,10 +50,9 @@ public class ApiService {
         }
     }
 
-    public String getBusanHospitals(int pageNo, int numOfRows) {
+    public String getAllHospitals(int pageNo, int numOfRows) {
         String url = "https://apis.data.go.kr/B551182/MadmDtlInfoService2.7/getDtlInfo2.7"
                 + "?serviceKey=" + serviceKey
-                + "&sidoCd=26" // 부산광역시 코드
                 + "&numOfRows=" + numOfRows
                 + "&pageNo=" + pageNo
                 + "&_type=json";
@@ -69,7 +68,32 @@ public class ApiService {
             return response.body();
 
         } catch (Exception e) {
-            System.err.println("부산 병원 목록 조회 중 예외 발생: " + e.getMessage());
+            System.err.println("전국 병원 목록 조회 중 예외 발생: " + e.getMessage());
+            e.printStackTrace();
+            return "{\"error\": \"API 호출 실패\", \"message\": \"" + e.getMessage() + "\"}";
+        }
+    }
+
+    public String getHospitalsBySido(String sidoCd, int pageNo, int numOfRows) {
+        String url = "https://apis.data.go.kr/B551182/MadmDtlInfoService2.7/getDtlInfo2.7"
+                + "?serviceKey=" + serviceKey
+                + "&sidoCd=" + sidoCd
+                + "&numOfRows=" + numOfRows
+                + "&pageNo=" + pageNo
+                + "&_type=json";
+
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            return response.body();
+
+        } catch (Exception e) {
+            System.err.println("시도별 병원 목록 조회 중 예외 발생: " + e.getMessage());
             e.printStackTrace();
             return "{\"error\": \"API 호출 실패\", \"message\": \"" + e.getMessage() + "\"}";
         }

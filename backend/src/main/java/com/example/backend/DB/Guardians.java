@@ -63,6 +63,7 @@ public class Guardians {
     // senior 과의 관계 설정
     @JsonIgnore
     @OneToMany(mappedBy = "guardian", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<GuardianSenior> guardianSeniors = new ArrayList<>();
 
     // getSeniors() 도우미 메서드

@@ -71,6 +71,7 @@ public class Seniors {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "senior", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<GuardianSenior> guardianSeniors = new ArrayList<>();
 
     // 활동기록 저장용 컬럼
@@ -79,6 +80,7 @@ public class Seniors {
 
     @JsonIgnore
     @OneToMany(mappedBy = "senior", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @Builder.Default
     private List<DailyActivities> activities = new ArrayList<>();
 
     // 활동기록 저장용 도우미 메서드
@@ -89,6 +91,7 @@ public class Seniors {
 
     // 생체기록 저장용 컬럼
     @OneToMany(mappedBy = "senior", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @Builder.Default
     private List<VitalSigns> vitalSigns = new ArrayList<>();
     // 생체 기록 저장용 도우미 메서드
     public void addVitalSign(VitalSigns vitalSign) {

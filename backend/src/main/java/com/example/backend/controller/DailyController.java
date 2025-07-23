@@ -79,7 +79,7 @@ public class DailyController {
             if (guardian == null) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
-                response.put("message", "Guardian 정보가 없습니다.");
+                response.put("message", "사용자 정보가 없습니다.");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
             
@@ -170,7 +170,7 @@ public class DailyController {
             if (guardian == null) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
-                response.put("message", "Guardian 정보가 없습니다.");
+                response.put("message", "사용자 정보가 없습니다.");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
             
@@ -250,7 +250,7 @@ public class DailyController {
             // 현재 로그인한 Guardian 정보 얻기
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
 
             // DailyActivitiesService를 통해 최근 활동 현황 조회
@@ -278,8 +278,8 @@ public class DailyController {
         try {
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
-                System.out.println("Guardian 정보가 없습니다.");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                System.out.println("사용자 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
 
             SeniorDto.SeniorDailyDto activitiesDto = dailyActivitiesService.getDaily(id, activityId, guardian);
@@ -305,7 +305,7 @@ public class DailyController {
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
                 System.out.println("Guardian 정보가 없습니다.");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
 
             // =================================================================
@@ -363,7 +363,7 @@ public class DailyController {
             // Guardian 인증 체크 (기존 코드와 동일)
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
             
             // 활동 날짜 결정: DTO에 날짜가 없으면 오늘 날짜 사용
@@ -412,7 +412,7 @@ public class DailyController {
             Guardians guardian = currentUser.getGuardians();
             if (guardian == null) {
                 System.out.println("Guardian 정보가 없습니다.");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("guardian 정보가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("사용자 정보가 없습니다.");
             }
             // 특정 senior 정보 조회
             Seniors senior = seniorRepository.findByIdAndGuardianId(id, guardian.getId())

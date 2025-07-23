@@ -15,7 +15,8 @@ import {
   Select,
   MenuItem,
   Button,
-  Divider
+  Divider,
+  Alert
 } from '@mui/material';
 import {
   DashboardOutlined,
@@ -29,10 +30,11 @@ import {
   DevicesOutlined,
   AccessibilityOutlined,
   ContactsOutlined,
-  LockOutlined
+  LockOutlined,
+  MonitorHeartOutlined
 } from '@mui/icons-material';
 import userImage from '../../images/user.png';
-import { getUserInfo, clearAuthData } from '../../utils/auth';
+import { getUserInfo, clearAuthData, getToken } from '../../utils/auth';
 
 const Setting = () => {
   const navigate = useNavigate();
@@ -64,7 +66,157 @@ const Setting = () => {
     guardianAlarm: true
   });
 
+  // 모니터링 설정 상태
+  const [monitoringSettings, setMonitoringSettings] = useState({
+    bloodPressure: {
+      attentionMax: 180,
+      attentionMin: 90,
+      cautionMax: 140,
+      cautionMin: 100,
+      diastolicAttentionMax: 110,
+      diastolicAttentionMin: 60,
+      diastolicCautionMax: 90,
+      diastolicCautionMin: 65
+    },
+    heartRate: {
+      attentionMax: 100,
+      attentionMin: 50,
+      cautionMax: 90,
+      cautionMin: 60
+    },
+    bodyTemperature: {
+      attentionMax: 38.0,
+      attentionMin: 35.5,
+      cautionMax: 37.5,
+      cautionMin: 36.0
+    },
+    bloodSugar: {
+      attentionMax: 250,
+      attentionMin: 70,
+      cautionMax: 180,
+      cautionMin: 80
+    }
+  });
+
+  // 로딩 및 에러 상태
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  // 백엔드에서 모니터링 설정 조회
+  const fetchMonitoringSettings = async () => {
+    try {
+      setLoading(true);
+      const token = getToken();
+      
+      const response = await fetch('/api/monitoring-settings', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // 백엔드 데이터를 프론트엔드 구조로 변환
+        setMonitoringSettings({
+          bloodPressure: {
+            attentionMax: data.bloodPressureAttentionMax,
+            attentionMin: data.bloodPressureAttentionMin,
+            cautionMax: data.bloodPressureCautionMax,
+            cautionMin: data.bloodPressureCautionMin,
+            diastolicAttentionMax: data.diastolicAttentionMax,
+            diastolicAttentionMin: data.diastolicAttentionMin,
+            diastolicCautionMax: data.diastolicCautionMax,
+            diastolicCautionMin: data.diastolicCautionMin
+          },
+          heartRate: {
+            attentionMax: data.heartRateAttentionMax,
+            attentionMin: data.heartRateAttentionMin,
+            cautionMax: data.heartRateCautionMax,
+            cautionMin: data.heartRateCautionMin
+          },
+          bodyTemperature: {
+            attentionMax: data.bodyTemperatureAttentionMax,
+            attentionMin: data.bodyTemperatureAttentionMin,
+            cautionMax: data.bodyTemperatureCautionMax,
+            cautionMin: data.bodyTemperatureCautionMin
+          },
+          bloodSugar: {
+            attentionMax: data.bloodSugarAttentionMax,
+            attentionMin: data.bloodSugarAttentionMin,
+            cautionMax: data.bloodSugarCautionMax,
+            cautionMin: data.bloodSugarCautionMin
+          }
+        });
+      } else {
+        throw new Error('설정을 불러오는데 실패했습니다.');
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error('모니터링 설정 조회 실패:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 백엔드에 모니터링 설정 저장
+  const saveMonitoringSettings = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = getToken();
+      
+      // 프론트엔드 구조를 백엔드 구조로 변환
+      const requestData = {
+        bloodPressureAttentionMax: monitoringSettings.bloodPressure.attentionMax,
+        bloodPressureAttentionMin: monitoringSettings.bloodPressure.attentionMin,
+        bloodPressureCautionMax: monitoringSettings.bloodPressure.cautionMax,
+        bloodPressureCautionMin: monitoringSettings.bloodPressure.cautionMin,
+        diastolicAttentionMax: monitoringSettings.bloodPressure.diastolicAttentionMax,
+        diastolicAttentionMin: monitoringSettings.bloodPressure.diastolicAttentionMin,
+        diastolicCautionMax: monitoringSettings.bloodPressure.diastolicCautionMax,
+        diastolicCautionMin: monitoringSettings.bloodPressure.diastolicCautionMin,
+        heartRateAttentionMax: monitoringSettings.heartRate.attentionMax,
+        heartRateAttentionMin: monitoringSettings.heartRate.attentionMin,
+        heartRateCautionMax: monitoringSettings.heartRate.cautionMax,
+        heartRateCautionMin: monitoringSettings.heartRate.cautionMin,
+        bodyTemperatureAttentionMax: monitoringSettings.bodyTemperature.attentionMax,
+        bodyTemperatureAttentionMin: monitoringSettings.bodyTemperature.attentionMin,
+        bodyTemperatureCautionMax: monitoringSettings.bodyTemperature.cautionMax,
+        bodyTemperatureCautionMin: monitoringSettings.bodyTemperature.cautionMin,
+        bloodSugarAttentionMax: monitoringSettings.bloodSugar.attentionMax,
+        bloodSugarAttentionMin: monitoringSettings.bloodSugar.attentionMin,
+        bloodSugarCautionMax: monitoringSettings.bloodSugar.cautionMax,
+        bloodSugarCautionMin: monitoringSettings.bloodSugar.cautionMin
+      };
+
+      const response = await fetch('/api/monitoring-settings', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      if (response.ok) {
+        setSuccess('설정이 성공적으로 저장되었습니다.');
+        setTimeout(() => setSuccess(null), 3000);
+      } else {
+        throw new Error('설정 저장에 실패했습니다.');
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error('모니터링 설정 저장 실패:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    fetchMonitoringSettings();
   }, []);
 
   const handleLogout = () => {
@@ -84,6 +236,7 @@ const Setting = () => {
 
   const settingTabs = [
     { label: '알림', icon: NotificationsOutlined },
+    { label: '모니터링 설정', icon: MonitorHeartOutlined },
     { label: '디바이스 연결', icon: DevicesOutlined },
     { label: '화면 / 접근성 설정', icon: AccessibilityOutlined },
     { label: '비상 연락 / 보호자', icon: ContactsOutlined },
@@ -109,6 +262,52 @@ const Setting = () => {
         [field]: event.target.value
       }
     }));
+  };
+
+  // 모니터링 설정 변경 핸들러
+  const handleMonitoringSettingChange = (category, field) => (event) => {
+    const value = parseFloat(event.target.value) || 0;
+    setMonitoringSettings(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [field]: value
+      }
+    }));
+  };
+
+  // 모니터링 설정 초기화
+  const resetMonitoringSettings = () => {
+    setMonitoringSettings({
+      bloodPressure: {
+        attentionMax: 180,
+        attentionMin: 90,
+        cautionMax: 140,
+        cautionMin: 100,
+        diastolicAttentionMax: 110,
+        diastolicAttentionMin: 60,
+        diastolicCautionMax: 90,
+        diastolicCautionMin: 65
+      },
+      heartRate: {
+        attentionMax: 100,
+        attentionMin: 50,
+        cautionMax: 90,
+        cautionMin: 60
+      },
+      bodyTemperature: {
+        attentionMax: 38.0,
+        attentionMin: 35.5,
+        cautionMax: 37.5,
+        cautionMin: 36.0
+      },
+      bloodSugar: {
+        attentionMax: 250,
+        attentionMin: 70,
+        cautionMax: 180,
+        cautionMin: 80
+      }
+    });
   };
 
   // 알림 설정 탭 컨텐츠
@@ -256,12 +455,272 @@ const Setting = () => {
     </Box>
   );
 
+  // 모니터링 설정 탭 컨텐츠
+  const renderMonitoringSettings = () => (
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', color: '#000' }}>
+        모니터링 설정
+      </Typography>
+      
+      {/* 에러 및 성공 메시지 */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
+          {success}
+        </Alert>
+      )}
+      
+      <Box sx={{ mb: 3, p: 2, backgroundColor: '#fff3cd', borderRadius: 2, border: '1px solid #ffeaa7' }}>
+        <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1, color: '#856404' }}>
+          ⚠️ 주의사항
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#856404' }}>
+          이 설정은 참고용입니다. 정확한 진단은 반드시 의료진과 상담하세요.
+        </Typography>
+      </Box>
+
+      {/* 혈압 설정 */}
+      <Box sx={{ mb: 4, p: 3, border: '1px solid #D7D7D7', borderRadius: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3, display: 'flex', alignItems: 'center' }}>
+          🩸 혈압 기준 (mmHg)
+        </Typography>
+        
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 3 }}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#ff9800' }}>
+              주의 수치 (수축기)
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select
+                  value={monitoringSettings.bloodPressure.attentionMin}
+                  onChange={handleMonitoringSettingChange('bloodPressure', 'attentionMin')}
+                  sx={{ backgroundColor: 'white' }}
+                >
+                  {Array.from({ length: 31 }, (_, i) => 80 + i).map(val => (
+                    <MenuItem key={val} value={val}>{val}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography variant="body2">~</Typography>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select
+                  value={monitoringSettings.bloodPressure.attentionMax}
+                  onChange={handleMonitoringSettingChange('bloodPressure', 'attentionMax')}
+                  sx={{ backgroundColor: 'white' }}
+                >
+                  {Array.from({ length: 41 }, (_, i) => 160 + i).map(val => (
+                    <MenuItem key={val} value={val}>{val}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#2196f3' }}>
+              관찰 수치 (수축기)
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select
+                  value={monitoringSettings.bloodPressure.cautionMin}
+                  onChange={handleMonitoringSettingChange('bloodPressure', 'cautionMin')}
+                  sx={{ backgroundColor: 'white' }}
+                >
+                  {Array.from({ length: 21 }, (_, i) => 95 + i).map(val => (
+                    <MenuItem key={val} value={val}>{val}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography variant="body2">~</Typography>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select
+                  value={monitoringSettings.bloodPressure.cautionMax}
+                  onChange={handleMonitoringSettingChange('bloodPressure', 'cautionMax')}
+                  sx={{ backgroundColor: 'white' }}
+                >
+                  {Array.from({ length: 21 }, (_, i) => 130 + i).map(val => (
+                    <MenuItem key={val} value={val}>{val}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#ff9800' }}>
+              주의 수치 (이완기)
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select
+                  value={monitoringSettings.bloodPressure.diastolicAttentionMin}
+                  onChange={handleMonitoringSettingChange('bloodPressure', 'diastolicAttentionMin')}
+                  sx={{ backgroundColor: 'white' }}
+                >
+                  {Array.from({ length: 21 }, (_, i) => 50 + i).map(val => (
+                    <MenuItem key={val} value={val}>{val}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography variant="body2">~</Typography>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select
+                  value={monitoringSettings.bloodPressure.diastolicAttentionMax}
+                  onChange={handleMonitoringSettingChange('bloodPressure', 'diastolicAttentionMax')}
+                  sx={{ backgroundColor: 'white' }}
+                >
+                  {Array.from({ length: 31 }, (_, i) => 100 + i).map(val => (
+                    <MenuItem key={val} value={val}>{val}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#2196f3' }}>
+              관찰 수치 (이완기)
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select
+                  value={monitoringSettings.bloodPressure.diastolicCautionMin}
+                  onChange={handleMonitoringSettingChange('bloodPressure', 'diastolicCautionMin')}
+                  sx={{ backgroundColor: 'white' }}
+                >
+                  {Array.from({ length: 16 }, (_, i) => 60 + i).map(val => (
+                    <MenuItem key={val} value={val}>{val}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography variant="body2">~</Typography>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select
+                  value={monitoringSettings.bloodPressure.diastolicCautionMax}
+                  onChange={handleMonitoringSettingChange('bloodPressure', 'diastolicCautionMax')}
+                  sx={{ backgroundColor: 'white' }}
+                >
+                  {Array.from({ length: 16 }, (_, i) => 85 + i).map(val => (
+                    <MenuItem key={val} value={val}>{val}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* 심박수 설정 */}
+      <Box sx={{ mb: 4, p: 3, border: '1px solid #D7D7D7', borderRadius: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3, display: 'flex', alignItems: 'center' }}>
+          💓 심박수 기준 (bpm)
+        </Typography>
+        
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 3 }}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#ff9800' }}>
+              주의 수치
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select
+                  value={monitoringSettings.heartRate.attentionMin}
+                  onChange={handleMonitoringSettingChange('heartRate', 'attentionMin')}
+                  sx={{ backgroundColor: 'white' }}
+                >
+                  {Array.from({ length: 21 }, (_, i) => 40 + i).map(val => (
+                    <MenuItem key={val} value={val}>{val}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography variant="body2">~</Typography>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select
+                  value={monitoringSettings.heartRate.attentionMax}
+                  onChange={handleMonitoringSettingChange('heartRate', 'attentionMax')}
+                  sx={{ backgroundColor: 'white' }}
+                >
+                  {Array.from({ length: 41 }, (_, i) => 90 + i).map(val => (
+                    <MenuItem key={val} value={val}>{val}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#2196f3' }}>
+              관찰 수치
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select
+                  value={monitoringSettings.heartRate.cautionMin}
+                  onChange={handleMonitoringSettingChange('heartRate', 'cautionMin')}
+                  sx={{ backgroundColor: 'white' }}
+                >
+                  {Array.from({ length: 21 }, (_, i) => 50 + i).map(val => (
+                    <MenuItem key={val} value={val}>{val}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography variant="body2">~</Typography>
+              <FormControl size="small" sx={{ minWidth: 70 }}>
+                <Select
+                  value={monitoringSettings.heartRate.cautionMax}
+                  onChange={handleMonitoringSettingChange('heartRate', 'cautionMax')}
+                  sx={{ backgroundColor: 'white' }}
+                >
+                  {Array.from({ length: 21 }, (_, i) => 80 + i).map(val => (
+                    <MenuItem key={val} value={val}>{val}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* 저장 및 초기화 버튼 */}
+      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+        <Button
+          variant="outlined"
+          onClick={resetMonitoringSettings}
+          sx={{ fontWeight: 'bold' }}
+          disabled={loading}
+        >
+          기본값으로 초기화
+        </Button>
+        <Button
+          variant="contained"
+          sx={{ fontWeight: 'bold', backgroundColor: '#1976d2' }}
+          onClick={saveMonitoringSettings}
+          disabled={loading}
+        >
+          {loading ? '저장 중...' : '설정 저장'}
+        </Button>
+      </Box>
+    </Box>
+  );
+
   // 다른 탭들의 기본 컨텐츠
   const renderTabContent = (tabIndex) => {
     switch (tabIndex) {
       case 0:
         return renderNotificationSettings();
       case 1:
+        return renderMonitoringSettings();
+      case 2:
         return (
           <Box sx={{ p: 3 }}>
             <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
@@ -272,7 +731,7 @@ const Setting = () => {
             </Typography>
           </Box>
         );
-      case 2:
+      case 3:
         return (
           <Box sx={{ p: 3 }}>
             <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
@@ -283,7 +742,7 @@ const Setting = () => {
             </Typography>
           </Box>
         );
-      case 3:
+      case 4:
         return (
           <Box sx={{ p: 3 }}>
             <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
@@ -294,7 +753,7 @@ const Setting = () => {
             </Typography>
           </Box>
         );
-      case 4:
+      case 5:
         return (
           <Box sx={{ p: 3 }}>
             <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>

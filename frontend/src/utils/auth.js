@@ -152,3 +152,6 @@ export const getTokenExpirationTime = (token) => {
   if (!payload || !payload.exp) return null;
   return payload.exp * 1000; // milliseconds로 변환
 };
+
+// getToken 별칭 추가 (호환성을 위해)
+export const getToken = getAuthToken;

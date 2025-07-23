@@ -656,35 +656,22 @@ const Home = () => {
             padding: 2,
             display: 'flex',
             flexDirection: 'column',
-            height: `${totalRightBoxHeight}px`,
-            maxHeight: `${totalRightBoxHeight}px`,
-            minHeight: `${totalRightBoxHeight}px`,
-            overflow: 'hidden',
             boxShadow: 2,
-            transition: 'height 0.3s ease-in-out'
-          }}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              📅 조회 날짜
-            </Typography>
-            
-            {/* 달력 컴테이너 */}
-            <Box sx={{
-              width: '100%',
-              height: `320px`,
-              marginBottom: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-start',
-              overflow: 'hidden',
-              transition: 'height 0.3s ease-in-out'              
-            }}>
-              <CalendarWidget 
-                selectedDate={selectedDate}
-                onDateChange={handleDateChange}
-                totalRightBoxHeight={320} // 달력만의 높이
-              />
-            </Box>            
-            <WeatherWidget />
+            transition: 'all 0.3s ease-in-out',
+          }}
+          >
+          <Typography variant="h6" fontWeight="bold" gutterBottom>
+            📅 조회 날짜
+          </Typography>
+
+          <Box sx={{ width: '100%', marginBottom: 2 }}>
+            <CalendarWidget
+              selectedDate={selectedDate}
+              onDateChange={handleDateChange}
+            />
+          </Box>
+
+          <WeatherWidget selectedDate={selectedDate} />
           </Paper>
         </Box>
       </Paper>

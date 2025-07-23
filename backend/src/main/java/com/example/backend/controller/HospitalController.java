@@ -27,10 +27,16 @@ public class HospitalController {
         this.tmapApiTester = tmapApiTester;
     }
 
-    @GetMapping("/busan")
-    public String getBusanHospitals(){
-        // 부산광역시 병원 목록 조회 (sidoCd=26)
-        return apiService.getBusanHospitals(1, 10); // 첫 번째 페이지, 10개 반환
+    @GetMapping("/all")
+    public String getAllHospitals(@RequestParam(value = "page", defaultValue = "1") int page,
+                                  @RequestParam(value = "size", defaultValue = "10") int size,
+                                  @RequestParam(value = "sidoCd", required = false) String sidoCd){
+        // 전국 병원 목록 조회 (시도 코드 옵션)
+        if (sidoCd != null && !sidoCd.trim().isEmpty()) {
+            return apiService.getHospitalsBySido(sidoCd, page, size);
+        } else {
+            return apiService.getAllHospitals(page, size); // 전국 전체
+        }
     }
     
     @GetMapping("/{ykiho}")
@@ -54,23 +60,25 @@ public class HospitalController {
     }
     
     /**
-     * 카카오 API를 사용한 부산 지역 병원 검색 (2025.07.08 신규 추가)
+     * 카카오 API를 사용한 위치 기반 병원 검색 (2025.07.17 전국 범위로 확장)
      * @param query 검색어 (기본값: "병원")
      * @param page 페이지 번호 (기본값: 1)
      * @param size 한 페이지 결과 수 (기본값: 15)
-     * @param lat 검색 중심 위도 (기본값: 35.1796 - 부산시청)
-     * @param lon 검색 중심 경도 (기본값: 129.0756 - 부산시청)
+     * @param lat 검색 중심 위도 (기본값: 37.5665 - 서울시청)
+     * @param lon 검색 중심 경도 (기본값: 126.9780 - 서울시청)
+     * @param radius 검색 반경 (m, 기본값: 20000 - 20km)
      * @return 카카오 API 기반 병원 정보
      */
-    @GetMapping("/kakao/busan")
-    public String getBusanHospitalsFromKakao(
+    @GetMapping("/kakao/search")
+    public String getHospitalsByLocation(
             @RequestParam(value = "query", defaultValue = "병원") String query,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "15") int size,
-            @RequestParam(value = "lat", defaultValue = "35.1796") double lat,
-            @RequestParam(value = "lon", defaultValue = "129.0756") double lon
+            @RequestParam(value = "lat", defaultValue = "37.5665") double lat,
+            @RequestParam(value = "lon", defaultValue = "126.9780") double lon,
+            @RequestParam(value = "radius", defaultValue = "20000") int radius
     ) {
-        return kakaoApiService.searchBusanHospitals(query, page, size, lat, lon);
+        return kakaoApiService.searchHospitalsByLocation(query, page, size, lat, lon, radius);
     }
     
     /**

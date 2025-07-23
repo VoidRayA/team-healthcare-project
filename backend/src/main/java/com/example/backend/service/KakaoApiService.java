@@ -235,14 +235,7 @@ public class KakaoApiService {
     }
     
     /**
-     * 부산 지역 병원 검색
-     * @param query 검색어 (기본값: "병원")
-     * @param page 페이지 번호 (1~45)
-     * @param size 한 페이지 결과 수 (1~15)
-     * @return 병원 정보 JSON
-     */
-    /**
-     * 부산 지역 병원 검색
+     * 모든 지역 병원 검색
      * @param query 검색어 (기본값: "병원")
      * @param page 페이지 번호 (1~45)
      * @param size 한 페이지 결과 수 (1~15)
@@ -250,7 +243,7 @@ public class KakaoApiService {
      * @param centerLon 검색 중심 경도
      * @return 병원 정보 JSON
      */
-    public String searchBusanHospitals(String query, int page, int size, double centerLat, double centerLon) {
+    public String searchHospitalsByLocation(String query, int page, int size, double centerLat, double centerLon, int radius) {
         try {
             // API 키 확인
             if (restApiKey == null || restApiKey.equals("YOUR_KAKAO_REST_API_KEY")) {
@@ -263,13 +256,13 @@ public class KakaoApiService {
             }
             
             // Kakao 지역검색 API URL
-            String encodedQuery = URLEncoder.encode(query + " 부산", StandardCharsets.UTF_8);
+            String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
             String url = "https://dapi.kakao.com/v2/local/search/keyword.json"
                     + "?query=" + encodedQuery
                     // + "&category_group_code=HP8" // 병원 카테고리 제거
                     + "&x=" + centerLon // 사용자 지정 경도
                     + "&y=" + centerLat  // 사용자 지정 위도
-                    + "&radius=20000" // 20km 반경
+                    + "&radius=" + radius // 사용자 지정 반경
                     + "&page=" + page
                     + "&size=" + size
                     + "&sort=distance"; // 거리순 정렬
@@ -372,12 +365,12 @@ public class KakaoApiService {
                 + "\"body\": {"
                 + "\"items\": {"
                 + "\"item\": ["
-                + "{\"yadmNm\": \"부산대학교병원\", \"telno\": \"051-240-7000\", \"addr\": \"부산광역시 서구 구덕로 179\", \"categoryName\": \"의료,건강 > 종합병원\", \"distance\": \"1200\"},"
-                + "{\"yadmNm\": \"인제대학교 부산백병원\", \"telno\": \"051-890-6114\", \"addr\": \"부산광역시 부산진구 복지로 75\", \"categoryName\": \"의료,건강 > 종합병원\", \"distance\": \"2300\"},"
-                + "{\"yadmNm\": \"가톨릭대학교 부산성모병원\", \"telno\": \"051-933-7114\", \"addr\": \"부산광역시 남구 용호로 232번길 25-14\", \"categoryName\": \"의료,건강 > 종합병원\", \"distance\": \"3500\"},"
-                + "{\"yadmNm\": \"동아대학교병원\", \"telno\": \"051-554-0114\", \"addr\": \"부산광역시 서구 대신공원로 26\", \"categoryName\": \"의료,건강 > 종합병원\", \"distance\": \"1800\"},"
-                + "{\"yadmNm\": \"부산의료원\", \"telno\": \"051-607-2000\", \"addr\": \"부산광역시 연제구 반송로 75\", \"categoryName\": \"의료,건강 > 종합병원\", \"distance\": \"4200\"},"
-                + "{\"yadmNm\": \"해운대백병원\", \"telno\": \"051-797-0100\", \"addr\": \"부산광역시 해운대구 해운대로 875\", \"categoryName\": \"의료,건강 > 종합병원\", \"distance\": \"6800\"}"
+                + "{\"yadmNm\": \"서울대학교병원\", \"telno\": \"02-2072-2114\", \"addr\": \"서울특별시 종로구 대학로 101\", \"categoryName\": \"의료,건강 > 종합병원\", \"distance\": \"1200\"},"
+                + "{\"yadmNm\": \"연세대학교 세브란스병원\", \"telno\": \"02-2228-5800\", \"addr\": \"서울특별시 서대문구 연세로 50다길 7\", \"categoryName\": \"의료,건강 > 종합병원\", \"distance\": \"2300\"},"
+                + "{\"yadmNm\": \"삼성서울병원\", \"telno\": \"02-3410-2114\", \"addr\": \"서울특별시 강남구 일원본동 50\", \"categoryName\": \"의료,건강 > 종합병원\", \"distance\": \"3500\"},"
+                + "{\"yadmNm\": \"대한의료원\", \"telno\": \"02-2224-2114\", \"addr\": \"서울특별시 중구 조선대학로 139-1\", \"categoryName\": \"의료,건강 > 종합병원\", \"distance\": \"1800\"},"
+                + "{\"yadmNm\": \"아산의료원\", \"telno\": \"02-3010-3114\", \"addr\": \"서울특별시 송파구 올림픽로 88\", \"categoryName\": \"의료,건강 > 종합병원\", \"distance\": \"4200\"},"
+                + "{\"yadmNm\": \"강남세브란스병원\", \"telno\": \"02-3429-0100\", \"addr\": \"서울특별시 강남구 언주로 146다길 23\", \"categoryName\": \"의료,건강 > 종합병원\", \"distance\": \"6800\"}"
                 + "],"
                 + "\"numOfRows\": 6,"
                 + "\"pageNo\": 1,"

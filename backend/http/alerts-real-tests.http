@@ -1,0 +1,84 @@
+### Healthcare Project - Alerts API 실제 테스트
+### 팀원이 만든 AlertsController 기반
+
+### Variables
+@base_url = http://localhost:8080
+@jwt_token = YOUR_JWT_TOKEN_HERE
+
+### 1. Guardian 로그인 (먼저 실행)
+POST {{base_url}}/api/auth/login
+Content-Type: application/json
+
+{
+  "loginId": "your_guardian_login_id",
+  "loginPw": "your_password"
+}
+
+### 2. 알림 수동 생성 (POST) - AlertsCreateDto 사용
+POST {{base_url}}/api/guardian/alert
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "title": "혈압 이상 감지",
+  "description": "수축기 혈압이 정상 범위를 벗어났습니다.",
+  "relatedVitalId": 1
+}
+
+### 3. 가디언의 모든 알림 조회 - 페이징 (GET) - AlertsPageDto 응답
+GET {{base_url}}/api/guardian/alert?page=0&size=10
+Authorization: Bearer {{jwt_token}}
+
+### 4. 가디언의 확인된 알림 조회 (GET) - List<AlertsSearchDto> 응답
+GET {{base_url}}/api/guardian/alert/confirmed
+Authorization: Bearer {{jwt_token}}
+
+### 5. 가디언의 미확인 알림 조회 (GET) - List<AlertsSearchDto> 응답
+GET {{base_url}}/api/guardian/alert/unconfirmed
+Authorization: Bearer {{jwt_token}}
+
+### 6. 특정 시니어의 모든 알림 조회 - 페이징 (GET) - AlertsPageDto 응답
+GET {{base_url}}/api/guardian/alert/seniors/1?page=0&size=10
+Authorization: Bearer {{jwt_token}}
+
+### 7. 특정 시니어의 미확인 알림 조회 (GET) - List<AlertsSearchDto> 응답
+GET {{base_url}}/api/guardian/alert/seniors/1/unconfirmed
+Authorization: Bearer {{jwt_token}}
+
+### 8. 특정 시니어의 확인된 알림 조회 (GET) - List<AlertsSearchDto> 응답
+GET {{base_url}}/api/guardian/alert/seniors/1/confirmed
+Authorization: Bearer {{jwt_token}}
+
+### 9. 알림 삭제 (DELETE) - String 응답
+DELETE {{base_url}}/api/guardian/alert/1
+Authorization: Bearer {{jwt_token}}
+
+### 10. 이상 생체신호 생성 - 자동 알림 생성 테스트
+POST {{base_url}}/api/seniors/1/vitalSign
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "measurementTime": "2025-07-14T15:30:00",
+  "bloodPressureHigh": 180,
+  "bloodPressureLow": 95,
+  "heartRate": 100,
+  "bloodSugar": 250,
+  "bodyTemperature": 38.5,
+  "notes": "이상 수치 - 자동 알림 생성 테스트"
+}
+
+### 11. 정상 생체신호 생성 - 알림 생성 안됨
+POST {{base_url}}/api/seniors/1/vitalSign
+Authorization: Bearer {{jwt_token}}
+Content-Type: application/json
+
+{
+  "measurementTime": "2025-07-14T16:00:00",
+  "bloodPressureHigh": 120,
+  "bloodPressureLow": 80,
+  "heartRate": 70,
+  "bloodSugar": 100,
+  "bodyTemperature": 36.5,
+  "notes": "정상 수치 - 알림 생성 안됨"
+}

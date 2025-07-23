@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Login.css'; // CSS 파일 import
-// API 클라이언트 import로 axios 대체 (2025.07.08)
-import { login } from '../api/apiClient';
-import { saveAuthData } from '../utils/auth';
+import { login } from '../../api/apiClient';
+import { saveAuthData } from '../../utils/auth';
 
 import {
   Box,
@@ -17,8 +15,8 @@ import {
   FormControlLabel,
   Link
 } from '@mui/material';
-import lockicon from '../images/lock_icon.png';
-import image3 from '../images/image3.png';
+import lockicon from '../../images/lock_icon.png';
+import image3 from '../../images/image3.png';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -84,12 +82,10 @@ const Login = () => {
       });
 
       console.log('로그인 응답:', response);
-
-      // 응답에서 데이터 추출 (AuthResponseDto 구조와 일치)
+            
       const { 
         accessToken, 
-        refreshToken, 
-        tokenType, 
+        refreshToken,
         expiresIn, 
         loginId, 
         guardianName, 

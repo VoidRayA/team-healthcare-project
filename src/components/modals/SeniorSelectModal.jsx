@@ -259,8 +259,11 @@ const SeniorSelectModal = ({ open, onClose, onSelect, selectedSenior }) => {
         >
           <Table stickyHeader>
             <TableHead sx={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 100,
               '& .MuiTableCell-root': {
-                backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                backgroundColor: 'rgba(51, 153, 255, 1)', // 반투명도 제거 (0.3 → 1)
                 borderBottom: '2px solid #1976d2',
                 fontFamily: 'Pretendard',
                 fontWeight: 700,
@@ -268,7 +271,8 @@ const SeniorSelectModal = ({ open, onClose, onSelect, selectedSenior }) => {
                 color: '#000',
                 textAlign: 'center',
                 padding: '12px 6px',
-                height: '45px'
+                height: '45px',
+                backdropFilter: 'none', // 블러 효과 제거
               }
             }}>
               <TableRow>

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getGuardianProfile, updateGuardianProfile, logout } from '../api/apiClient';
+import { getGuardianProfile, updateGuardianProfile, logout } from '../../api/apiClient';
 import PasswordConfirmModal from './PasswordConfirmModal';
-import { clearAuthData } from '../utils/auth';
+import { getUserInfo, clearAuthData } from '../../utils/auth';
 
 import {
   Box,
@@ -19,15 +19,13 @@ import {
 } from '@mui/material';
 import {
   DashboardOutlined,
-  PeopleOutlined,
-  SecurityOutlined,
-  NotificationsOutlined,
-  EventOutlined,
-  MessageOutlined,
+  PeopleOutlined,  
+  EventOutlined,  
   LogoutOutlined,
-  EditOutlined
+  EditOutlined,
+  SettingsOutlined
 } from '@mui/icons-material';
-import userImage from '../images/user.png';
+import userImage from '../../images/user.png';
 
 const ProfileManagement = () => {
   const navigate = useNavigate();
@@ -43,6 +41,12 @@ const ProfileManagement = () => {
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
+  });
+  
+  // 사이드바에 표시할 사용자 정보
+  const [displayName, setDisplayName] = useState(() => {
+    const userInfo = getUserInfo();
+    return userInfo?.name || '신규보호자';
   });
   
   const [loading, setLoading] = useState(false);
@@ -221,7 +225,7 @@ const ProfileManagement = () => {
   // 비밀번호 확인 모달 핸들러
   const handlePasswordModalClose = () => {
     setShowPasswordModal(false);
-    navigate('/home'); // 취소시 홈으로 이동
+    navigate(-1); // 취소시 이전 페이지로 이동
   };
 
   const handlePasswordConfirm = () => {
@@ -335,7 +339,7 @@ const ProfileManagement = () => {
           
           {/* 사용자 정보 */}
           <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'white', mb: 0.5 }}>
-            {formData.guardianName || '신규보호자'}
+            {displayName}
           </Typography>
           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>
             보호자
@@ -383,16 +387,16 @@ const ProfileManagement = () => {
             <ListItemText primary="보호 대상자" />
           </ListItem>
 
-          <ListItem onClick={() => navigate('/schedule')}>
+          <ListItem onClick={() => navigate('/daily')}>
             <ListItemIcon>
               <EventOutlined />
             </ListItemIcon>
             <ListItemText primary="일정 관리" />
           </ListItem>
 
-          <ListItem onClick={() => navigate('/messages')}>
+          <ListItem onClick={() => navigate('/settings')}>
             <ListItemIcon>
-              <MessageOutlined />
+              <SettingsOutlined />
             </ListItemIcon>
             <ListItemText primary="설정" />
           </ListItem>
@@ -471,8 +475,36 @@ const ProfileManagement = () => {
               </Box>
             )}
 
-            {/* 비밀번호 확인이 완료된 경우에만 내용 표시 */}
-            {isPasswordConfirmed && (
+            {/* 비밀번호 확인 전에는 대기 메시지 표시, 확인 후에는 실제 컨텐츠 표시 */}
+            {!isPasswordConfirmed ? (
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '60vh',
+                gap: '20px'
+              }}>
+                <CircularProgress size={60} sx={{ color: '#0869CC' }} />
+                <Typography sx={{ 
+                  color: '#0869CC', 
+                  fontSize: '24px', 
+                  fontWeight: 'bold',
+                  fontFamily: 'Pretendard',
+                  textAlign: 'center'
+                }}>
+                  회원정보 관리
+                </Typography>
+                <Typography sx={{ 
+                  color: '#666', 
+                  fontSize: '16px',
+                  fontFamily: 'Pretendard',
+                  textAlign: 'center'
+                }}>
+                  비밀번호 확인을 완료해주세요.
+                </Typography>
+              </Box>
+            ) : (
               <>
                 <Typography sx={{
                   fontFamily: 'Pretendard',

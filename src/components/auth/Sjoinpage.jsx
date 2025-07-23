@@ -25,10 +25,12 @@ import {
   EventOutlined,
   MessageOutlined,
   LogoutOutlined,
-  EditOutlined
+  EditOutlined,
+  SettingsOutlined
 } from '@mui/icons-material';
-import userImage from '../images/user.png';
-import { getUserInfo, clearAuthData, getAuthToken } from '../utils/auth';
+import userImage from '../../images/user.png';
+import { getUserInfo, clearAuthData, getAuthToken } from '../../utils/auth';
+import { getSeniorById, createSenior, updateSenior } from '../../api/apiClient';
 
 const Sjoinpage = () => {
   const navigate = useNavigate();
@@ -36,10 +38,17 @@ const Sjoinpage = () => {
   const isEditMode = Boolean(id); // ID가 있으면 수정 모드
   
   const [activeMenu, setActiveMenu] = useState('보호 대상자');
-  const [guardianInfo, setGuardianInfo] = useState({
-    name: '관리자',
-    loginId: 'admin',
-    role: 'ADMIN'
+  const [guardianInfo, setGuardianInfo] = useState(() => {
+    const userInfo = getUserInfo();
+    return userInfo ? {
+      name: userInfo.name,
+      loginId: userInfo.loginId,
+      role: userInfo.role || 'GUARDIAN'
+    } : {
+      name: '관리자',
+      loginId: 'admin',
+      role: 'ADMIN'
+    };
   });
   
   const [formData, setFormData] = useState({
@@ -60,16 +69,6 @@ const Sjoinpage = () => {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    const userInfo = getUserInfo();
-    
-    if (userInfo) {
-      setGuardianInfo({
-        name: userInfo.name,
-        loginId: userInfo.loginId,
-        role: userInfo.role || 'GUARDIAN'
-      });
-    }
-
     // 수정 모드일 때 기존 데이터 로드
     if (isEditMode && id) {
       loadSeniorData(id);
@@ -80,18 +79,42 @@ const Sjoinpage = () => {
   const loadSeniorData = async (seniorId) => {
     try {
       setLoading(true);
-      // TODO: 실제 API 호출
-      // const response = await getSeniorById(seniorId);
+      setError('');
       
-      // API가 준비되면 여기에 실제 데이터 로드 로직 추가
-      console.log('보호 대상자 데이터 로드 기다리는 중...', seniorId);
+      const token = getAuthToken();
+      if (!token) {
+        setError('로그인이 필요합니다.');
+        navigate('/');
+        return;
+      }
       
-      // 임시로 빈 데이터 표시
-      setError('데이터를 불러오는 기능이 준비 중입니다.');
+      // 실제 API 호출
+      const response = await getSeniorById(seniorId);
+      console.log('보호 대상자 데이터 로드 성공:', response);
+      
+      if (response) {
+        // 데이터 포맷팅
+        setFormData({
+          seniorName: response.seniorName || '',
+          birthDate: response.birthDate ? response.birthDate.replace(/-/g, '') : '',
+          calendarType: '양력',  // 기본값 사용
+          gender: response.gender === 'M' ? '남성' : '여성',
+          address: response.address || '',
+          phone: response.phone || '',
+          emergencyContact: response.emergencyContact || '',
+          medicalConditions: response.chronicDiseases || '',
+          medications: response.medications || '',
+          specialNotes: response.notes || ''
+        });
+      }
       
     } catch (err) {
       console.error('보호 대상자 데이터 로드 오류:', err);
-      setError('데이터를 불러오는데 실패했습니다.');
+      if (err.response?.status === 404) {
+        setError('해당 보호 대상자를 찾을 수 없습니다.');
+      } else {
+        setError('데이터를 불러오는데 실패했습니다.');
+      }
     } finally {
       setLoading(false);
     }
@@ -142,11 +165,33 @@ const Sjoinpage = () => {
         return;
       }
 
-      // TODO: 백엔드 API 호출
-      console.log('Senior 등록/수정 데이터:', formData);
+      // API에 전송할 데이터 포맷팅
+      const submitData = {
+        seniorName: formData.seniorName,
+        birthDate: formData.birthDate.length === 8 
+          ? `${formData.birthDate.slice(0, 4)}-${formData.birthDate.slice(4, 6)}-${formData.birthDate.slice(6, 8)}`
+          : formData.birthDate,
+        gender: formData.gender === '남성' ? 'M' : 'F',  // Character 타입으로 변경
+        address: formData.address,
+        phone: formData.phone,
+        emergencyContact: formData.emergencyContact,
+        chronicDiseases: formData.medicalConditions || null,
+        medications: formData.medications || null,
+        notes: formData.specialNotes || null
+      };
+
+      console.log('Senior 등록/수정 데이터:', submitData);
       
-      // 임시 성공 처리
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let response;
+      if (isEditMode) {
+        // 수정 API 호출
+        response = await updateSenior(id, submitData);
+      } else {
+        // 등록 API 호출
+        response = await createSenior(submitData);
+      }
+      
+      console.log('API 응답:', response);
       
       setSuccess(isEditMode ? '보호 대상자 정보가 성공적으로 수정되었습니다!' : '보호 대상자가 성공적으로 등록되었습니다!');
       
@@ -166,14 +211,18 @@ const Sjoinpage = () => {
         });
       }
       
-      // 3초 후 보호 대상자 리스트로 이동
+      // 2초 후 보호 대상자 리스트로 이동
       setTimeout(() => {
         navigate('/seniors');
       }, 2000);
       
     } catch (err) {
-      console.error('Senior 등록 오류:', err);
-      setError('등록 중 오류가 발생했습니다.');
+      console.error('Senior 등록/수정 오류:', err);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError(isEditMode ? '수정 중 오류가 발생했습니다.' : '등록 중 오류가 발생했습니다.');
+      }
     } finally {
       setLoading(false);
     }
@@ -346,6 +395,10 @@ const Sjoinpage = () => {
                     navigate('/profile/management');
                   } else if (item.text === '보호 대상자') {
                     navigate('/seniors');
+                  } else if (item.text === '일정 관리') {
+                    navigate('/daily');
+                  } else if (item.text === '설정') {
+                    navigate('/settings');
                   } else {
                     setActiveMenu(item.text);
                   }
@@ -809,34 +862,64 @@ const Sjoinpage = () => {
               </Box>
             </Box>
 
-            {/* 등록/수정 버튼 */}
-            <Button
-              variant="contained"
-              onClick={handleSubmit}
-              disabled={loading}
-              startIcon={loading && <CircularProgress size={20} color="inherit" />}
-              sx={{
-                width: '200px',
-                height: '60px',
-                backgroundColor: '#0869CC',
-                borderRadius: '30px',
-                fontFamily: 'Pretendard',
-                fontWeight: 700,
-                fontSize: '20px',
-                color: '#FFFFFF',
-                textTransform: 'none',
-                margin: '40px auto 0 auto',
-                display: 'block',
-                '&:hover': {
-                  backgroundColor: '#0653A3'
-                },
-                '&:disabled': {
-                  backgroundColor: '#ccc'
-                }
-              }}
-            >
-              {loading ? (isEditMode ? '수정 중...' : '등록 중...') : (isEditMode ? '수정하기' : '등록하기')}
-            </Button>
+            {/* 버튼 영역 */}
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '20px',
+              marginTop: '40px'
+            }}>
+              {/* 등록/수정 버튼 */}
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                disabled={loading}
+                startIcon={loading && <CircularProgress size={20} color="inherit" />}
+                sx={{
+                  width: '200px',
+                  height: '60px',
+                  backgroundColor: '#0869CC',
+                  borderRadius: '30px',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '20px',
+                  color: '#FFFFFF',
+                  textTransform: 'none',
+                  '&:hover': {
+                    backgroundColor: '#0653A3'
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#ccc'
+                  }
+                }}
+              >
+                {loading ? (isEditMode ? '수정 중...' : '등록 중...') : (isEditMode ? '수정하기' : '등록하기')}
+              </Button>
+              
+              {/* 돌아가기 버튼 */}
+              <Button
+                variant="outlined"
+                onClick={() => navigate('/seniors')}
+                sx={{
+                  width: '200px',
+                  height: '60px',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '30px',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '20px',
+                  color: '#0869CC',
+                  textTransform: 'none',
+                  border: '2px solid #0869CC',
+                  '&:hover': {
+                    backgroundColor: '#F5F5F5',
+                    border: '2px solid #0653A3'
+                  }
+                }}
+              >
+                돌아가기
+              </Button>
+            </Box>
 
             {/* 메시지 표시 */}
             {error && (

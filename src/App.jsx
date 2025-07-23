@@ -1,23 +1,23 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './components/Login';
-import Register from './components/Register';
-import GJoinpage from './components/GJoinpage';
-import ProfileEdit from './components/ProfileEdit';
-import ProfileManagement from './components/ProfileManagement';
-import Home from './components/Home';
-import SeniorList from './components/SeniorList';
-import Sjoinpage from './components/Sjoinpage';
-import Daily from './components/Daily';
+import Login from './components/auth/Login';
+import Register from './components/auth/Register';
+import GJoinpage from './components/auth/GJoinpage';
+import ProfileEdit from './components/profile/ProfileEdit';
+import ProfileManagement from './components/profile/ProfileManagement';
+import Home from './components/home/Home';
+import SeniorList from './components/seniors/SeniorList';
+import Sjoinpage from './components/auth/Sjoinpage';
+import Daily from './components/daily/Daily';
 import Terms from './components/policy/Terms';
 import Privacy from './components/policy/Privacy';
+import Settings from './components/settings/Setting';
 import Support from './components/policy/Support';
 import About from './components/policy/About';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from './components/common/ProtectedRoute';
 import { isAuthenticated } from './utils/auth';
-import MapExample from './components/MapExample';
-import MapDebugTest from './components/MapDebugTest';
-import MapDemo from './components/MapDemo';
+import MapExample from './components/maps/MapExample';
+import MapDebugTest from './components/maps/MapDebugTest';
 
 function App() {
   const [authState, setAuthState] = useState(isAuthenticated());
@@ -149,6 +149,14 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } 
+        />
         
         {/* 정책 페이지들 - 로그인 없이도 접근 가능 */}
         <Route path="/terms" element={<Terms />} />
@@ -158,8 +166,7 @@ function App() {
         
         {/* 지도 테스트 페이지 */}
         <Route path="/map-test" element={<MapExample />} />
-        <Route path="/map-debug" element={<MapDebugTest />} />
-        <Route path="/map-demo" element={<MapDemo />} />
+        <Route path="/map-debug" element={<MapDebugTest />} />        
       </Routes>
     </BrowserRouter>
   );

@@ -139,15 +139,7 @@ const WeatherWidget = () => {
                   }}
                 />
               </Box>
-            )}
-            <Typography variant="body2" sx={{ 
-              fontSize: '1.2rem',
-              color: '#333', 
-              mb: 0, 
-              fontWeight: 'bold' 
-            }}>
-              {weather.condition}
-            </Typography>
+            )}           
             <Typography variant="caption" sx={{ 
               color: '#666',
               fontSize: '0.9rem',

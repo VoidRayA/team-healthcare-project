@@ -683,9 +683,8 @@ const Home = () => {
                 onDateChange={handleDateChange}
                 totalRightBoxHeight={320} // 달력만의 높이
               />
-            </Box>
-            
-            <WeatherWidget />            
+            </Box>            
+            <WeatherWidget />
           </Paper>
         </Box>
       </Paper>

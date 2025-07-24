@@ -49,5 +49,11 @@ export const DEFAULT_THRESHOLD_LINES = {
   heartRateCautionMax: false,
   heartRateCautionMin: false,
   temperatureAttentionMax: false,
-  temperatureCautionMax: false
+  temperatureAttentionMin: false,
+  temperatureCautionMax: false,
+  temperatureCautionMin: false,
+  bloodSugarAttentionMax: false,
+  bloodSugarAttentionMin: false,
+  bloodSugarCautionMax: false,
+  bloodSugarCautionMin: false
 };

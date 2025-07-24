@@ -62,12 +62,6 @@ const Setting = () => {
 
   // 알림 설정 상태
   const [notificationSettings, setNotificationSettings] = useState({
-    medicationAlarm: {
-      enabled: true,
-      medicationType: '혈압약',
-      hour: '08',
-      minute: '00'
-    },
     healthCheckAlarm: true,
     weatherAlarm: true,
     guardianAlarm: true
@@ -193,16 +187,6 @@ const Setting = () => {
     }));
   };
 
-  const handleMedicationSettingChange = (field) => (event) => {
-    setNotificationSettings(prev => ({
-      ...prev,
-      medicationAlarm: {
-        ...prev.medicationAlarm,
-        [field]: event.target.value
-      }
-    }));
-  };
-
   // 바이탈 사인 설정 변경 핸들러 (TextField용)
   const handleMonitoringSettingChange = (category, field) => (event) => {
     const value = event.target.value;
@@ -288,66 +272,6 @@ const Setting = () => {
         알림
       </Typography>
       
-      {/* 약 복용 알림 */}
-      <Box sx={{ mb: 4, p: 3, border: '1px solid #D7D7D7', borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            약 복용 알림
-          </Typography>
-        </Box>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="body1">약 종류:</Typography>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <Select
-              value={notificationSettings.medicationAlarm.medicationType}
-              onChange={handleMedicationSettingChange('medicationType')}
-              sx={{ backgroundColor: 'white', border: '1px solid #00458B', borderRadius: 1 }}
-            >
-              <MenuItem value="혈압약">혈압약</MenuItem>
-              <MenuItem value="당뇨약">당뇨약</MenuItem>
-              <MenuItem value="심장약">심장약</MenuItem>
-              <MenuItem value="기타">기타</MenuItem>
-            </Select>
-          </FormControl>
-          
-          <Typography variant="body1">시간:</Typography>
-          <FormControl size="small" sx={{ minWidth: 70 }}>
-            <Select
-              value={notificationSettings.medicationAlarm.hour}
-              onChange={handleMedicationSettingChange('hour')}
-              sx={{ backgroundColor: 'white', border: '1px solid #00458B', borderRadius: 1 }}
-            >
-              {Array.from({ length: 24 }, (_, i) => (
-                <MenuItem key={i} value={i.toString().padStart(2, '0')}>
-                  {i.toString().padStart(2, '0')}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          
-          <Typography variant="body1">시</Typography>
-          
-          <FormControl size="small" sx={{ minWidth: 70 }}>
-            <Select
-              value={notificationSettings.medicationAlarm.minute}
-              onChange={handleMedicationSettingChange('minute')}
-              sx={{ backgroundColor: 'white', border: '1px solid #00458B', borderRadius: 1 }}
-            >
-              {['00', '15', '30', '45'].map((min) => (
-                <MenuItem key={min} value={min}>
-                  {min}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          
-          <Typography variant="body1">분</Typography>
-        </Box>
-      </Box>
-
-      <Divider sx={{ my: 3 }} />
-
       {/* 건강 체크 알림 */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2 }}>
         <Box>
@@ -453,15 +377,6 @@ const Setting = () => {
           초기 설정은 참고용입니다. 정확한 진단은 반드시 의료진과 상담 후 설정하세요.
         </Typography>
       </Box>
-
-      {/* 성공 메시지 */}
-      {success && (
-        <Box sx={{ mb: 3, p: 2, backgroundColor: '#d4edda', borderRadius: 2, border: '1px solid #c3e6cb' }}>
-          <Typography variant="body2" sx={{ color: '#155724', fontWeight: 'bold' }}>
-            ✓ {success}
-          </Typography>
-        </Box>
-      )}
 
       {/* 혈압 설정 */}
       <Box sx={{ mb: 4, p: 3, border: '1px solid #D7D7D7', borderRadius: 2 }}>
@@ -627,6 +542,128 @@ const Setting = () => {
                 onChange={handleMonitoringSettingChange('heartRate', 'cautionMax')}
                 sx={{ width: 80 }}
                 inputProps={{ min: 80, max: 120 }}
+              />
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* 체온 설정 */}
+      <Box sx={{ mb: 4, p: 3, border: '1px solid #D7D7D7', borderRadius: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3, display: 'flex', alignItems: 'center' }}>
+          🌡️ 체온 기준 (°C)
+        </Typography>
+        
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 3 }}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#ff9800' }}>
+              주의 수치
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bodyTemperature.attentionMin}
+                onChange={handleMonitoringSettingChange('bodyTemperature', 'attentionMin')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 34, max: 37, step: 0.1 }}
+              />
+              <Typography variant="body2">~</Typography>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bodyTemperature.attentionMax}
+                onChange={handleMonitoringSettingChange('bodyTemperature', 'attentionMax')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 37, max: 41, step: 0.1 }}
+              />
+            </Box>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#2196f3' }}>
+              관찰 수치
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bodyTemperature.cautionMin}
+                onChange={handleMonitoringSettingChange('bodyTemperature', 'cautionMin')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 35, max: 37, step: 0.1 }}
+              />
+              <Typography variant="body2">~</Typography>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bodyTemperature.cautionMax}
+                onChange={handleMonitoringSettingChange('bodyTemperature', 'cautionMax')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 37, max: 39, step: 0.1 }}
+              />
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* 혈당 설정 */}
+      <Box sx={{ mb: 4, p: 3, border: '1px solid #D7D7D7', borderRadius: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3, display: 'flex', alignItems: 'center' }}>
+          🩸 혈당 기준 (mg/dL)
+        </Typography>
+        
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 3 }}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#ff9800' }}>
+              주의 수치
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bloodSugar.attentionMin}
+                onChange={handleMonitoringSettingChange('bloodSugar', 'attentionMin')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 50, max: 100 }}
+              />
+              <Typography variant="body2">~</Typography>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bloodSugar.attentionMax}
+                onChange={handleMonitoringSettingChange('bloodSugar', 'attentionMax')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 200, max: 400 }}
+              />
+            </Box>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#2196f3' }}>
+              관찰 수치
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bloodSugar.cautionMin}
+                onChange={handleMonitoringSettingChange('bloodSugar', 'cautionMin')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 60, max: 100 }}
+              />
+              <Typography variant="body2">~</Typography>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bloodSugar.cautionMax}
+                onChange={handleMonitoringSettingChange('bloodSugar', 'cautionMax')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 140, max: 250 }}
               />
             </Box>
           </Box>

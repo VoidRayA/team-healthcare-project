@@ -111,4 +111,21 @@ public class UserSettingService {
     public List<UserSetting> getAllSettings(Integer guardianId) {
         return userSettingRepository.findByGuardianIdOrderByCategoryAscSubCategoryAsc(guardianId.longValue());
     }
+    
+    /**
+     * 설정 저장/업데이트
+     */
+    public UserSetting saveSetting(UserSetting userSetting) {
+        return userSettingRepository.save(userSetting);
+    }
+    
+    /**
+     * 특정 카테고리와 서브카테고리로 설정 조회
+     */
+    public Optional<UserSetting> findByCategoryAndSubCategory(Integer guardianId, String category, String subCategory) {
+        List<UserSetting> settings = userSettingRepository.findByCategoryAndSubCategoryAndGuardianId(
+            category, subCategory, guardianId.longValue()
+        );
+        return settings.isEmpty() ? Optional.empty() : Optional.of(settings.get(0));
+    }
 }

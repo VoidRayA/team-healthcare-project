@@ -793,7 +793,13 @@ export const getUserSettingsByCategory = async (category) => {
  */
 export const saveUserSetting = async (settingData) => {
   try {
-    const response = await apiClient.post('/api/user-settings', settingData);
+    // guardianId가 없으면 인증 정보에서 가져오기
+    if (!settingData.guardianId) {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      settingData.guardianId = userInfo.id || 37; // 기본값 37
+    }
+    
+    const response = await apiClient.post('/api/monitoring-settings/user-settings', settingData);
     return response.data;
   } catch (error) {
     console.error('사용자 설정 저장 실패:', error);
@@ -831,9 +837,9 @@ export const getThresholdDisplaySettings = async () => {
     const thresholdSettings = {};
     if (Array.isArray(response)) {
       response.forEach(setting => {
-        // dropdown_기준표_ 로 시작하는 설정만 필터링
-        if (setting.subCategory.startsWith('dropdown_기준표_')) {
-          const cleanKey = setting.subCategory.replace('dropdown_기준표_', '');
+        // dropdown_threshold_ 로 시작하는 설정만 필터링
+        if (setting.subCategory.startsWith('dropdown_threshold_')) {
+          const cleanKey = setting.subCategory.replace('dropdown_threshold_', '');
           thresholdSettings[cleanKey] = setting.values === 'true';
         }
       });
@@ -857,7 +863,7 @@ export const saveThresholdDisplaySetting = async (thresholdKey, isVisible) => {
   try {
     const settingData = {
       category: '그래프',  // 카테고리: '그래프'
-      subCategory: `dropdown_기준표_${thresholdKey}`,  // 서브카테고리: 'dropdown_기준표_xxx'
+      subCategory: `dropdown_threshold_${thresholdKey}`,  // 서브카테고리: 'dropdown_threshold_xxx'
       values: isVisible.toString()
     };
     

@@ -270,6 +270,26 @@ export const createThresholdAnnotations = (settings, thresholdLines) => {
     };
   }
   
+  if (thresholdLines.temperatureAttentionMin) {
+    annotations.tempAttentionMin = {
+      type: 'line',
+      yMin: settings.bodyTemperatureAttentionMin,
+      yMax: settings.bodyTemperatureAttentionMin,
+      yScaleID: 'temperature',
+      borderColor: '#f44336',
+      borderWidth: 2,
+      borderDash: [5, 5],
+      label: {
+        content: `체온위험 ${settings.bodyTemperatureAttentionMin}°C`,
+        enabled: true,
+        position: 'start',
+        backgroundColor: 'rgba(244, 67, 54, 0.8)',
+        color: 'white',
+        font: { size: 10 }
+      }
+    };
+  }
+  
   if (thresholdLines.temperatureCautionMax) {
     annotations.tempCautionMax = {
       type: 'line',
@@ -290,13 +310,114 @@ export const createThresholdAnnotations = (settings, thresholdLines) => {
     };
   }
   
+  if (thresholdLines.temperatureCautionMin) {
+    annotations.tempCautionMin = {
+      type: 'line',
+      yMin: settings.bodyTemperatureCautionMin,
+      yMax: settings.bodyTemperatureCautionMin,
+      yScaleID: 'temperature',
+      borderColor: '#ff9800',
+      borderWidth: 2,
+      borderDash: [3, 3],
+      label: {
+        content: `체온주의 ${settings.bodyTemperatureCautionMin}°C`,
+        enabled: true,
+        position: 'start',
+        backgroundColor: 'rgba(255, 152, 0, 0.8)',
+        color: 'white',
+        font: { size: 10 }
+      }
+    };
+  }
+
+  // 🩸 혈당 기준선 추가
+  if (thresholdLines.bloodSugarAttentionMax) {
+    annotations.bsAttentionMax = {
+      type: 'line',
+      yMin: settings.bloodSugarAttentionMax,
+      yMax: settings.bloodSugarAttentionMax,
+      yScaleID: 'blood-sugar',
+      borderColor: '#9c27b0',
+      borderWidth: 2,
+      borderDash: [5, 5],
+      label: {
+        content: `혈당위험 ${settings.bloodSugarAttentionMax}`,
+        enabled: true,
+        position: 'end',
+        backgroundColor: 'rgba(156, 39, 176, 0.8)',
+        color: 'white',
+        font: { size: 10 }
+      }
+    };
+  }
+  
+  if (thresholdLines.bloodSugarAttentionMin) {
+    annotations.bsAttentionMin = {
+      type: 'line',
+      yMin: settings.bloodSugarAttentionMin,
+      yMax: settings.bloodSugarAttentionMin,
+      yScaleID: 'blood-sugar',
+      borderColor: '#9c27b0',
+      borderWidth: 2,
+      borderDash: [5, 5],
+      label: {
+        content: `혈당위험 ${settings.bloodSugarAttentionMin}`,
+        enabled: true,
+        position: 'start',
+        backgroundColor: 'rgba(156, 39, 176, 0.8)',
+        color: 'white',
+        font: { size: 10 }
+      }
+    };
+  }
+  
+  if (thresholdLines.bloodSugarCautionMax) {
+    annotations.bsCautionMax = {
+      type: 'line',
+      yMin: settings.bloodSugarCautionMax,
+      yMax: settings.bloodSugarCautionMax,
+      yScaleID: 'blood-sugar',
+      borderColor: '#e1bee7',
+      borderWidth: 2,
+      borderDash: [3, 3],
+      label: {
+        content: `혈당주의 ${settings.bloodSugarCautionMax}`,
+        enabled: true,
+        position: 'end',
+        backgroundColor: 'rgba(225, 190, 231, 0.8)',
+        color: 'black',
+        font: { size: 10 }
+      }
+    };
+  }
+  
+  if (thresholdLines.bloodSugarCautionMin) {
+    annotations.bsCautionMin = {
+      type: 'line',
+      yMin: settings.bloodSugarCautionMin,
+      yMax: settings.bloodSugarCautionMin,
+      yScaleID: 'blood-sugar',
+      borderColor: '#e1bee7',
+      borderWidth: 2,
+      borderDash: [3, 3],
+      label: {
+        content: `혈당주의 ${settings.bloodSugarCautionMin}`,
+        enabled: true,
+        position: 'start',
+        backgroundColor: 'rgba(225, 190, 231, 0.8)',
+        color: 'black',
+        font: { size: 10 }
+      }
+    };
+  }
+  
   console.log('🏁 최종 생성된 annotations:', annotations);
   console.log('🏁 annotations 개수:', Object.keys(annotations).length);
   
   return annotations;
 };
 
-// 차트 데이터셋 생성
+// 차트 데이터셋 생성 - 🩸 혈당 추가
 export const createChartDatasets = (processedData) => {
   const datasets = [];
   
@@ -307,6 +428,7 @@ export const createChartDatasets = (processedData) => {
     const bloodPressureLowData = processedData.map(item => item.hasData ? item.bloodPressureLow : null);
     const heartRateData = processedData.map(item => item.hasData ? item.heartRate : null);
     const temperatureData = processedData.map(item => item.hasData ? item.bodyTemperature : null);
+    const bloodSugarData = processedData.map(item => item.hasData ? item.bloodSugar : null);
     
     datasets.push(
       {
@@ -355,6 +477,18 @@ export const createChartDatasets = (processedData) => {
         pointHoverRadius: 7,
         tension: 0.3,
         yAxisID: 'temperature',
+        spanGaps: false
+      },
+      {
+        label: '혈당 (mg/dL)',
+        data: bloodSugarData,
+        borderColor: '#9c27b0',
+        backgroundColor: 'rgba(156, 39, 176, 0.1)',
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        tension: 0.3,
+        yAxisID: 'blood-sugar',
         spanGaps: false
       }
     );

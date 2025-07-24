@@ -306,12 +306,104 @@ const ThresholdMenu = ({
           <FormControlLabel
             control={
               <Checkbox
+                checked={thresholdLines.temperatureAttentionMin}
+                onChange={onThresholdLineChange('temperatureAttentionMin')}
+                size="small"
+              />
+            }
+            label="위험 하한 (35.5)"
+            sx={{ fontSize: '0.8rem' }}
+          />
+        </MenuItem>
+        
+        <MenuItem onClick={(e) => e.stopPropagation()}>
+          <FormControlLabel
+            control={
+              <Checkbox
                 checked={thresholdLines.temperatureCautionMax}
                 onChange={onThresholdLineChange('temperatureCautionMax')}
                 size="small"
               />
             }
             label="주의 상한 (37.5)"
+            sx={{ fontSize: '0.8rem' }}
+          />
+        </MenuItem>
+        <MenuItem onClick={(e) => e.stopPropagation()}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={thresholdLines.temperatureCautionMin}
+                onChange={onThresholdLineChange('temperatureCautionMin')}
+                size="small"
+              />
+            }
+            label="주의 하한 (36.0)"
+            sx={{ fontSize: '0.8rem' }}
+          />
+        </MenuItem>
+        
+        <Divider />
+        
+        {/* 혈당 기준선들 */}
+        <MenuItem disabled>
+          <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#666' }}>
+            🩸 혈당 (mg/dL)
+          </Typography>
+        </MenuItem>
+        
+        <MenuItem onClick={(e) => e.stopPropagation()}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={thresholdLines.bloodSugarAttentionMax}
+                onChange={onThresholdLineChange('bloodSugarAttentionMax')}
+                size="small"
+              />
+            }
+            label="위험 상한 (250)"
+            sx={{ fontSize: '0.8rem' }}
+          />
+        </MenuItem>
+        
+        <MenuItem onClick={(e) => e.stopPropagation()}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={thresholdLines.bloodSugarAttentionMin}
+                onChange={onThresholdLineChange('bloodSugarAttentionMin')}
+                size="small"
+              />
+            }
+            label="위험 하한 (70)"
+            sx={{ fontSize: '0.8rem' }}
+          />
+        </MenuItem>
+        
+        <MenuItem onClick={(e) => e.stopPropagation()}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={thresholdLines.bloodSugarCautionMax}
+                onChange={onThresholdLineChange('bloodSugarCautionMax')}
+                size="small"
+              />
+            }
+            label="주의 상한 (180)"
+            sx={{ fontSize: '0.8rem' }}
+          />
+        </MenuItem>
+
+        <MenuItem onClick={(e) => e.stopPropagation()}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={thresholdLines.bloodSugarCautionMin}
+                onChange={onThresholdLineChange('bloodSugarCautionMin')}
+                size="small"
+              />
+            }
+            label="주의 하한 (80)"
             sx={{ fontSize: '0.8rem' }}
           />
         </MenuItem>

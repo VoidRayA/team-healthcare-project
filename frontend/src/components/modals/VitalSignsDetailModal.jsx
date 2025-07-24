@@ -94,7 +94,8 @@ const VitalSignsDetailModal = ({
     '수축기 혈압 (mmHg)': true,
     '이완기 혈압 (mmHg)': true,
     '심박수 (bpm)': true,
-    '체온 (°C)': true
+    '체온 (°C)': true,
+    '혈당 (mg/dL)': true
   });
 
   // Chart refs
@@ -214,7 +215,8 @@ const VitalSignsDetailModal = ({
       '수축기 혈압 (mmHg)': 'bloodPressure',
       '이완기 혈압 (mmHg)': 'bloodPressure', // 수축기와 동일한 데이터 사용
       '심박수 (bpm)': 'heartRate',
-      '체온 (°C)': 'temperature'
+      '체온 (°C)': 'temperature',
+      '혈당 (mg/dL)': 'bloodSugar'
     };
     
     // 표시된 항목들만 합산 (중복 제거를 위해 Set 사용)
@@ -285,7 +287,11 @@ const VitalSignsDetailModal = ({
       bodyTemperatureAttentionMax: getSettingValue('bodyTemperatureAttentionMax', DEFAULT_VITAL_SETTINGS.bodyTemperatureAttentionMax),
       bodyTemperatureAttentionMin: getSettingValue('bodyTemperatureAttentionMin', DEFAULT_VITAL_SETTINGS.bodyTemperatureAttentionMin),
       bodyTemperatureCautionMax: getSettingValue('bodyTemperatureCautionMax', DEFAULT_VITAL_SETTINGS.bodyTemperatureCautionMax),
-      bodyTemperatureCautionMin: getSettingValue('bodyTemperatureCautionMin', DEFAULT_VITAL_SETTINGS.bodyTemperatureCautionMin)
+      bodyTemperatureCautionMin: getSettingValue('bodyTemperatureCautionMin', DEFAULT_VITAL_SETTINGS.bodyTemperatureCautionMin),
+      bloodSugarAttentionMax: getSettingValue('bloodSugarAttentionMax', DEFAULT_VITAL_SETTINGS.bloodSugarAttentionMax),
+      bloodSugarAttentionMin: getSettingValue('bloodSugarAttentionMin', DEFAULT_VITAL_SETTINGS.bloodSugarAttentionMin),
+      bloodSugarCautionMax: getSettingValue('bloodSugarCautionMax', DEFAULT_VITAL_SETTINGS.bloodSugarCautionMax),
+      bloodSugarCautionMin: getSettingValue('bloodSugarCautionMin', DEFAULT_VITAL_SETTINGS.bloodSugarCautionMin)
     };
 
     const thresholdAnnotations = createThresholdAnnotations(settings, thresholdLines);
@@ -354,6 +360,14 @@ const VitalSignsDetailModal = ({
             title: { display: true, text: '체온 (°C)', color: '#69db7c' },
             min: 35,
             max: 40,
+            grid: { display: false }
+          },
+          'blood-sugar': {
+            type: 'linear',
+            position: 'right',
+            title: { display: true, text: '혈당 (mg/dL)', color: '#9c27b0' },
+            min: 50,
+            max: 300,
             grid: { display: false }
           },
           x: {

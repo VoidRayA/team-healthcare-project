@@ -648,31 +648,45 @@ const Home = () => {
           </Box>
 
           {/* 오른쪽 세로 긴 박스 - 달력과 날씨 */}
-          <Paper sx={{
-            width: '320px',
-            backgroundColor: '#ffffff',
-            border: theme => `1px solid ${theme.palette.divider}`,
-            borderRadius: 2,
-            padding: 2,
-            display: 'flex',
-            flexDirection: 'column',
-            boxShadow: 2,
-            transition: 'all 0.3s ease-in-out',
-          }}
+          <Paper
+            sx={{
+              width: '320px',
+              backgroundColor: '#ffffff',
+              border: theme => `1px solid ${theme.palette.divider}`,
+              borderRadius: 2,
+              padding: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: 2,
+              transition: 'all 0.3s ease-in-out',
+            }}
           >
-          <Typography variant="h6" fontWeight="bold" gutterBottom>
-            📅 조회 날짜
-          </Typography>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              📅 조회 날짜
+            </Typography>
 
-          <Box sx={{ width: '100%', marginBottom: 2 }}>
-            <CalendarWidget
-              selectedDate={selectedDate}
-              onDateChange={handleDateChange}
-            />
-          </Box>
+            {/* 🎯 고정된 높이의 달력 래퍼 */}
+            <Box
+              sx={{
+                height: '300px', // 달력 전체 공간 확보
+                overflow: 'hidden', // 내부가 늘어나더라도 외부에 영향 안 주게
+                marginBottom: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-start',
+              }}
+            >
+              <CalendarWidget
+                selectedDate={selectedDate}
+                onDateChange={handleDateChange}
+              />
+            </Box>
 
-          <WeatherWidget selectedDate={selectedDate} />
+            {/* 날씨 위젯 - 위치 고정 */}
+            <WeatherWidget selectedDate={selectedDate} />
           </Paper>
+
+
         </Box>
       </Paper>
 

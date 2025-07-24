@@ -2,6 +2,7 @@ package com.example.backend.service.daily;
 
 import com.example.backend.DB.Alerts;
 import com.example.backend.DB.Guardians;
+import com.example.backend.DB.MonitoringSettings;
 import com.example.backend.DB.Seniors;
 import com.example.backend.DB.VitalSigns;
 import com.example.backend.DB.care.VitalSignsThreshold;
@@ -10,6 +11,7 @@ import com.example.backend.dto.seviceDto.AlertsDto;
 import com.example.backend.repository.AlertsRepository;
 import com.example.backend.repository.SeniorRepository;
 import com.example.backend.repository.VitalSignRepository;
+import com.example.backend.service.MonitoringSettingsService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,15 +32,18 @@ public class AlertsService {
     private final VitalSignRepository vitalSignRepository;
     private final AlertsRepository alertsRepository;
     private final SeniorRepository seniorRepository;
+    private final MonitoringSettingsService monitoringSettingsService;
 
     // 알림 생성및 보호자에게 전달하는 서비스(특이 사항이 생길 때만)
     public AlertsDto.AlertsCreateDto createDto(Long vitalSignsId, String customTitle, String customDescription, CustomUserDetails currentUser){
         VitalSigns vitalSigns = vitalSignRepository.findById(vitalSignsId)
                 .orElseThrow(() -> new EntityNotFoundException("VitalSigns 찾을 수 없습니다."));
 
-        String alertType = VitalSignsThreshold.determineAlertType(vitalSigns);
+        // 사용자 설정 적용
+        MonitoringSettings settings = monitoringSettingsService.getSettingsEntity(currentUser.getGuardian());
+        String alertType = VitalSignsThreshold.determineAlertType(vitalSigns, settings);
         String title = customTitle != null ? customTitle : generateAutoTitle(vitalSigns, alertType);
-        String description = customDescription != null ? customDescription : generateAutoDescription(vitalSigns, alertType);
+        String description = customDescription != null ? customDescription : generateAutoDescription(vitalSigns, alertType, settings);
 
         Guardians guardian = currentUser.getGuardians(); // `CustomUserDetails`에서 guardian 객체를 받아옴
 
@@ -160,6 +165,17 @@ public class AlertsService {
     // 내용 자동 생성
     private String generateAutoDescription(VitalSigns vitalSigns, String alertType) {
         String abnormalValues = VitalSignsThreshold.getAbnormalValues(vitalSigns);
+        return generateDescriptionContent(vitalSigns, alertType, abnormalValues);
+    }
+    
+    // 사용자 설정 기준으로 내용 자동 생성
+    private String generateAutoDescription(VitalSigns vitalSigns, String alertType, MonitoringSettings settings) {
+        String abnormalValues = VitalSignsThreshold.getAbnormalValues(vitalSigns, settings);
+        return generateDescriptionContent(vitalSigns, alertType, abnormalValues);
+    }
+    
+    // 공통 설명 생성 로직
+    private String generateDescriptionContent(VitalSigns vitalSigns, String alertType, String abnormalValues) {
         String seniorName = vitalSigns.getSenior().getSeniorName();
         String measurementTime = vitalSigns.getMeasurementTime().toString();
 
@@ -190,7 +206,9 @@ public class AlertsService {
 
         // 정상 범위가 아닌 경우에만 알림 생성
         if (!vitalSigns.isNormal()) {
-            String alertType = VitalSignsThreshold.determineAlertType(vitalSigns);
+            // 사용자 설정 적용
+            MonitoringSettings settings = monitoringSettingsService.getSettingsEntity(vitalSigns.getSenior().getGuardian());
+            String alertType = VitalSignsThreshold.determineAlertType(vitalSigns, settings);
 
             UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             CustomUserDetails currentUser = (CustomUserDetails) userDetails;

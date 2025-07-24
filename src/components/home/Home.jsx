@@ -651,41 +651,53 @@ const Home = () => {
           <Paper
             sx={{
               width: '320px',
+              height: '750px', // ✅ 전체 높이 고정
               backgroundColor: '#ffffff',
-              border: theme => `1px solid ${theme.palette.divider}`,
+              border: (theme) => `1px solid ${theme.palette.divider}`,
               borderRadius: 2,
               padding: 2,
               display: 'flex',
               flexDirection: 'column',
+              justifyContent: 'space-between', // ✅ 달력과 날씨를 위/아래로 분리 배치
               boxShadow: 2,
               transition: 'all 0.3s ease-in-out',
+              overflow: 'hidden', // 혹시 넘칠 경우 대비
             }}
           >
+            {/* 제목 */}
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               📅 조회 날짜
             </Typography>
 
-            {/* 🎯 고정된 높이의 달력 래퍼 */}
+            {/* 본문 영역 - 달력과 날씨를 flex 공간으로 분리 */}
             <Box
               sx={{
-                height: '300px', // 달력 전체 공간 확보
-                overflow: 'hidden', // 내부가 늘어나더라도 외부에 영향 안 주게
-                marginBottom: 2,
+                flex: 1, // ✅ 이 영역만 유연하게 늘어남
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'flex-start',
+                overflow: 'hidden', // 내부 스크롤 방지
               }}
             >
-              <CalendarWidget
-                selectedDate={selectedDate}
-                onDateChange={handleDateChange}
-              />
+              {/* 달력 wrapper */}
+              <Box
+                sx={{
+                  flexShrink: 1, // ✅ 달력은 줄어들 수 있음
+                  overflow: 'hidden',
+                  marginBottom: 1.5, // 간격만 유연하게 줄어들게
+                }}
+              >
+                <CalendarWidget
+                  selectedDate={selectedDate}
+                  onDateChange={handleDateChange}
+                />
+              </Box>
+
+              {/* 날씨 위젯 */}
+              <Box sx={{ flexShrink: 0 }}>
+                <WeatherWidget selectedDate={selectedDate} />
+              </Box>
             </Box>
-
-            {/* 날씨 위젯 - 위치 고정 */}
-            <WeatherWidget selectedDate={selectedDate} />
           </Paper>
-
 
         </Box>
       </Paper>

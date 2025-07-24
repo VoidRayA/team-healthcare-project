@@ -1,12 +1,15 @@
 package com.example.backend.service.vital;
 
 import com.example.backend.DB.Guardians;
+import com.example.backend.DB.MonitoringSettings;
 import com.example.backend.DB.Seniors;
 import com.example.backend.DB.VitalSigns;
+import com.example.backend.DB.care.VitalSignsThreshold;
 import com.example.backend.dto.SeniorDto;
 import com.example.backend.dto.seviceDto.VitalSignsDto;
 import com.example.backend.repository.SeniorRepository;
 import com.example.backend.repository.VitalSignRepository;
+import com.example.backend.service.MonitoringSettingsService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,7 @@ public class VitalSignService {
 
     private final SeniorRepository seniorRepository;
     private final VitalSignRepository vitalSignRepository;
+    private final MonitoringSettingsService monitoringSettingsService;
 
     // 생성 서비스
     @Transactional
@@ -32,6 +36,9 @@ public class VitalSignService {
         // senior 조회
         Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId,guardian.getId())
                 .orElseThrow(() -> new EntityNotFoundException("해당 노인을 찾을수 없습니다"));
+        // 사용자 모니터링 설정 조회
+        MonitoringSettings settings = monitoringSettingsService.getSettingsEntity(guardian);
+        
         // 생체 기록 생성
         VitalSigns vitalSigns = VitalSigns.builder()
                 .senior(senior)
@@ -43,6 +50,10 @@ public class VitalSignService {
                 .bodyTemperature(dto.bodyTemperature())
                 .notes(dto.notes())
                 .build();
+        
+        // 사용자 설정 기준으로 정상 여부 계산
+        String alertType = VitalSignsThreshold.determineAlertType(vitalSigns, settings);
+        vitalSigns.setNormal("INFO".equals(alertType));
 
         senior.addVitalSign(vitalSigns);
 
@@ -116,6 +127,9 @@ public class VitalSignService {
                 .findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("해당 생체기록을 찾을 수 없습니다."));
 
+        // 사용자 모니터링 설정 조회
+        MonitoringSettings settings = monitoringSettingsService.getSettingsEntity(guardian);
+        
         // 수정 로직 (필요한 필드만 업데이트)
         if (updateDto.measurementTime() != null) {
             vitalSign.setMeasurementTime(updateDto.measurementTime());
@@ -138,6 +152,10 @@ public class VitalSignService {
         if (updateDto.notes() != null) {
             vitalSign.setNotes(updateDto.notes());
         }
+        
+        // 사용자 설정 기준으로 정상 여부 재계산
+        String alertType = VitalSignsThreshold.determineAlertType(vitalSign, settings);
+        vitalSign.setNormal("INFO".equals(alertType));
 
         seniorRepository.save(senior);
 

@@ -191,15 +191,21 @@ const VitalSignsChart = ({
               />
             </Box>
 
-            {/* 최신 측정값 */}
-            <Grid container spacing={2}>
-              {/* 혈압 */}
-              <Grid item xs={6}>
+            {/* 최신 측정값 - 2x2 박스 배치 */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* 첫 번째 줄 - 혈압, 심박수 */}
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                {/* 혈압 */}
                 <Paper sx={{ 
                   p: 2, 
                   textAlign: 'center',
                   backgroundColor: '#f8f9fa',
-                  border: '1px solid #e9ecef'
+                  border: '1px solid #e9ecef',
+                  height: '120px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  flex: 1
                 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     🩸 혈압
@@ -211,15 +217,18 @@ const VitalSignsChart = ({
                     mmHg
                   </Typography>
                 </Paper>
-              </Grid>
 
-              {/* 심박수 */}
-              <Grid item xs={6}>
+                {/* 심박수 */}
                 <Paper sx={{ 
                   p: 2, 
                   textAlign: 'center',
                   backgroundColor: '#f8f9fa',
-                  border: '1px solid #e9ecef'
+                  border: '1px solid #e9ecef',
+                  height: '120px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  flex: 1
                 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     💓 심박수
@@ -231,15 +240,21 @@ const VitalSignsChart = ({
                     bpm
                   </Typography>
                 </Paper>
-              </Grid>
+              </Box>
 
-              {/* 체온 */}
-              <Grid item xs={6}>
+              {/* 두 번째 줄 - 체온, 혈당 */}
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                {/* 체온 */}
                 <Paper sx={{ 
                   p: 2, 
                   textAlign: 'center',
                   backgroundColor: '#f8f9fa',
-                  border: '1px solid #e9ecef'
+                  border: '1px solid #e9ecef',
+                  height: '120px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  flex: 1
                 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     🌡️ 체온
@@ -251,15 +266,18 @@ const VitalSignsChart = ({
                     °C
                   </Typography>
                 </Paper>
-              </Grid>
 
-              {/* 혈당 */}
-              <Grid item xs={6}>
+                {/* 혈당 */}
                 <Paper sx={{ 
                   p: 2, 
                   textAlign: 'center',
                   backgroundColor: '#f8f9fa',
-                  border: '1px solid #e9ecef'
+                  border: '1px solid #e9ecef',
+                  height: '120px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  flex: 1
                 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     🍯 혈당
@@ -271,8 +289,8 @@ const VitalSignsChart = ({
                     mg/dL
                   </Typography>
                 </Paper>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
 
             {/* 측정 시간 및 통계 */}
             <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>

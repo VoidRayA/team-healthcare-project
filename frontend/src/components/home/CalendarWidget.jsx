@@ -1,15 +1,10 @@
-import React from 'react';
 import { Box } from '@mui/material';
 import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css'; // 필수 CSS import
+import 'react-calendar/dist/Calendar.css';
 
 const CalendarWidget = ({ selectedDate, onDateChange }) => {
   const handleDateChange = (date) => {
     onDateChange(date);
-  };
-
-  const handleActiveStartDateChange = ({ activeStartDate }) => {
-    // 월 변경 시에도 자동으로 높이가 조정됩니다 (별도 높이 계산 불필요)
   };
 
   return (
@@ -30,9 +25,14 @@ const CalendarWidget = ({ selectedDate, onDateChange }) => {
           backgroundColor: 'transparent',
         },
 
+        '& .react-calendar__navigation': {
+          marginBottom: '8px', // 네비게이션과 요일 사이 간격
+          height: 'auto',
+        },
+
         '& .react-calendar__navigation button': {
           minWidth: '32px',
-          height: '44px',
+          height: '30px',
           fontSize: '16px',
           fontWeight: 'bold',
           color: theme => theme.palette.primary.main,
@@ -44,6 +44,18 @@ const CalendarWidget = ({ selectedDate, onDateChange }) => {
             backgroundColor: theme => theme.palette.primary.main,
             color: 'white',
           },
+        },
+
+        '& .react-calendar__month-view__weekdays': {
+          marginBottom: '4px', // 요일과 날짜 사이 간격
+        },
+
+        '& .react-calendar__month-view__weekdays__weekday': {
+          padding: '4px 0', // 요일 항목의 패딩
+          fontSize: '0.75rem',
+          fontWeight: 'bold',
+          color: theme => theme.palette.text.secondary,
+          textTransform: 'uppercase',
         },
 
         '& .react-calendar__tile': {
@@ -74,7 +86,6 @@ const CalendarWidget = ({ selectedDate, onDateChange }) => {
         value={selectedDate}
         locale="ko-KR"
         formatDay={(locale, date) => date.getDate().toString()}
-        onActiveStartDateChange={handleActiveStartDateChange}
       />
     </Box>
   );

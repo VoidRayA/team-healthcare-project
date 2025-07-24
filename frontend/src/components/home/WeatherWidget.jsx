@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, IconButton } from '@mui/material';
+import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { getWeatherInfo } from '../../utils/weatherAPI';
 
 // 밤 아이콘 코드 끝 'n'을 낮 'd'로 바꾸는 함수
@@ -9,6 +10,7 @@ const convertNightToDayIcon = (icon) => {
 };
 
 const WeatherWidget = () => {
+  const [currentDayIndex, setCurrentDayIndex] = useState(0); // 슬라이드 인덱스
   const [weather, setWeather] = useState({
     temperature: '로딩 중...',
     condition: '로딩 중...',
@@ -22,6 +24,51 @@ const WeatherWidget = () => {
 
   const today = new Date();
   const formattedDate = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+
+  // 슬라이드 내비게이션 함수
+  const handlePrevDay = () => {
+    if (currentDayIndex > 0) {
+      setCurrentDayIndex(currentDayIndex - 1);
+    }
+  };
+
+  const handleNextDay = () => {
+    if (currentDayIndex < weather.weeklyForecast.length) {  // -1 제거로 4일 모두 보이게
+      setCurrentDayIndex(currentDayIndex + 1);
+    }
+  };
+
+  // 현재 보여줄 날씨 데이터 선택
+  const getCurrentWeatherData = () => {
+    if (currentDayIndex === 0) {
+      // 오늘 날씨
+      return {
+        day: '오늘',
+        temperature: weather.temperature, // 이미 °C 포함
+        maxTemp: weather.maxTemp?.replace('°C', ''), // °C 제거
+        minTemp: weather.minTemp?.replace('°C', ''), // °C 제거
+        icon: weather.icon,
+        condition: weather.condition,
+        humidity: weather.humidity,
+        isToday: true
+      };
+    } else {
+      // 예보 날씨
+      const forecast = weather.weeklyForecast[currentDayIndex - 1];
+      return {
+        day: forecast?.day || '날짜',
+        temperature: `${forecast?.maxTemp || '-'}°C`, // 예보는 최고온도 표시
+        maxTemp: forecast?.maxTemp || '-', // 이미 숫자만
+        minTemp: forecast?.minTemp || '-', // 이미 숫자만
+        icon: forecast?.icon,
+        condition: forecast?.condition || '-',
+        humidity: forecast?.humidity || '70%',
+        isToday: false
+      };
+    }
+  };
+
+  const currentData = getCurrentWeatherData();
 
   useEffect(() => {
     const loadWeatherData = async () => {
@@ -69,6 +116,49 @@ const WeatherWidget = () => {
           minHeight: 0
         }}
       >
+        {/* 하단 내비게이션 */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <IconButton 
+            onClick={handlePrevDay}
+            disabled={currentDayIndex === 0}
+            size="small"
+            sx={{ 
+              '&:disabled': { 
+                color: '#ccc' 
+              },
+              color: '#1976d2'
+            }}
+          >
+            <ChevronLeft />
+          </IconButton>
+          
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              fontWeight: 'bold',
+              color: '#1976d2',
+              minWidth: '80px',
+              textAlign: 'center'
+            }}
+          >
+            {currentData.day}
+          </Typography>
+          
+          <IconButton 
+            onClick={handleNextDay}
+            disabled={currentDayIndex >= weather.weeklyForecast.length}  // 예보 데이터 끝까지
+            size="small"
+            sx={{ 
+              '&:disabled': { 
+                color: '#ccc' 
+              },
+              color: '#1976d2'
+            }}
+          >
+            <ChevronRight />
+          </IconButton>
+        </Box>
+
         {/* 위치 정보 */}
         <Box sx={{ textAlign: 'center', mb: 0.2 }}>
           <Typography
@@ -88,13 +178,14 @@ const WeatherWidget = () => {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: 3.125,
-            mb: 1
+            justifyContent: 'space-between',  // 균등하게 배치
+            gap: 2,  // 간격 줄임
+            mb: 1,
+            px: 1  // 좌우 패딩 추가
           }}
         >
           {/* 온도 정보 */}
-          <Box sx={{ textAlign: 'center', flex: 1.5 }}>
+          <Box sx={{ textAlign: 'center', flex: 1.2 }}>  {/* textAlign: center로 복구, flex 비율 약간 조정 */}
             <Typography
               variant="h3"
               sx={{
@@ -104,9 +195,9 @@ const WeatherWidget = () => {
                 mb: 1
               }}
             >
-              {weather.temperature}
+              {currentData.temperature}
             </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.625 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 0.3 }}>  {/* alignItems: center로 가운데 정렬 */}
               <Typography
                 variant="body2"
                 sx={{
@@ -115,7 +206,7 @@ const WeatherWidget = () => {
                   color: '#d32f2f'
                 }}
               >
-                최고 {weather.maxTemp}°
+                최고 {currentData.maxTemp}°
               </Typography>
               <Typography
                 variant="body2"
@@ -124,14 +215,14 @@ const WeatherWidget = () => {
                   color: '#1976d2'
                 }}
               >
-                최저 {weather.minTemp}°
+                최저 {currentData.minTemp}°
               </Typography>
             </Box>
           </Box>
 
           {/* 아이콘 + 상태 + 습도 */}
           <Box sx={{ textAlign: 'center', flex: 1 }}>
-            {weather.icon && (
+            {currentData.icon && (
               <Box
                 sx={{
                   width: 70,
@@ -147,8 +238,8 @@ const WeatherWidget = () => {
                 }}
               >
                 <img
-                  src={`https://openweathermap.org/img/wn/${weather.icon}@2x.png`}
-                  alt={weather.condition}
+                  src={`https://openweathermap.org/img/wn/${currentData.isToday ? currentData.icon : convertNightToDayIcon(currentData.icon)}@2x.png`}
+                  alt={currentData.condition}
                   onError={(e) => console.error('아이콘 로드 실패:', e.target.src)}
                   style={{
                     width: '50px',
@@ -158,123 +249,52 @@ const WeatherWidget = () => {
                 />
               </Box>
             )}            
+            
+            {/* 날씨 상태 텍스트 */}
             <Typography
               variant="caption"
               sx={{
                 color: '#666',
-                fontSize: '0.9rem'
+                fontSize: '1.25rem',
+                mt: 0.5,
+                textAlign: 'center',
+                lineHeight: 1.2,
+                display: 'block'  // 명시적 블록 요소
               }}
             >
-              습도: {weather.humidity}
+              {currentData.condition || '맑음'}
             </Typography>
+            
+            {/* 습도 정보 - 오늘만 표시 */}
+            {currentData.isToday ? (
+              <Typography
+                variant="caption"
+                sx={{
+                  color: '#666',
+                  fontSize: '0.8rem',
+                  mt: 0.8,  // gap 증가
+                  textAlign: 'center',
+                  display: 'block'  // 명시적 블록 요소
+                }}
+              >
+                습도: {currentData.humidity}
+              </Typography>
+            ) : (
+              <Typography
+                variant="caption"
+                sx={{
+                  color: '#999',
+                  fontSize: '0.8rem',
+                  mt: 0.8,  // gap 증가                  
+                  textAlign: 'center',
+                  display: 'block'  // 명시적 블록 요소
+                }}
+              >
+                습도: 오늘만 제공
+              </Typography>
+            )}
           </Box>
         </Box>
-
-        {/* 4일간 예보 */}
-        {weather.weeklyForecast && weather.weeklyForecast.length > 0 && (
-          <Box
-            sx={{
-              pt: 2,
-              borderTop: (theme) => `1px solid ${theme.palette.divider}`
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                color: '#666',
-                mb: 1.5,
-                fontWeight: 'bold',
-                textAlign: 'center',
-                fontSize: '1rem'
-              }}
-            >
-              4일간 예보
-            </Typography>
-
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: 1
-              }}
-            >
-              {weather.weeklyForecast.map((forecast, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    padding: 1,
-                    backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'transparent',
-                    borderRadius: 1
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: '0.75rem',
-                      mb: 0.5
-                    }}
-                  >
-                    {forecast.day}
-                  </Typography>
-
-                  <Box
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      backgroundColor: 'white',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                      border: (theme) => `1px solid ${theme.palette.divider}`,
-                      margin: '0 auto 4px auto'
-                    }}
-                  >
-                    <img
-                      src={`https://openweathermap.org/img/wn/${convertNightToDayIcon(
-                        forecast.icon
-                      )}@2x.png`}
-                      alt={forecast.condition}
-                      title={forecast.condition}
-                      onError={(e) => console.error('예보 아이콘 로드 실패:', e.target.src)}
-                      style={{
-                        width: '24px',
-                        height: '24px',
-                        objectFit: 'contain'
-                      }}
-                    />
-                  </Box>
-
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      fontWeight: 'bold',
-                      color: '#d32f2f',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    {forecast.maxTemp}°
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: '#1976d2',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    {forecast.minTemp}°
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        )}
 
         {/* 출처 표시 */}
         <Box

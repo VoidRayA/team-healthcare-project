@@ -439,12 +439,17 @@ export const getSeniorsWithPagination = async (page = 0, size = 10, sort = 'crea
 };
 
 /**
- * 모든 Senior 목록 조회
+ * 모든 Senior 목록 조회 (크기 증가)
+ * @param {number} size - 한 번에 가져올 시니어 수 (기본값: 100)
  * @returns {Promise} Senior 목록 데이터
  */
-export const getAllSeniors = async () => {
+export const getAllSeniors = async (size = 100) => {
   try {
-    const response = await apiClient.get('/api/seniors');
+    // 파라미터로 더 많은 데이터 요청
+    const response = await apiClient.get('/api/seniors', {
+      params: { size }
+    });
+    console.log('📊 getAllSeniors 요청 크기:', size, '응답:', response.data);
     return response.data;
   } catch (error) {
     console.error('전체 Senior 목록 조회 실패:', error);
@@ -742,6 +747,128 @@ export const getEmergencyRooms = async (location) => {
     }
   } catch (error) {
     console.error('응급실 검색 실패:', error);
+    throw error;
+  }
+};
+
+// =================================================================
+// UserSetting 관련 API 함수들 (바이탈 설정)
+// =================================================================
+
+/**
+ * 바이탈 사인 설정을 Map 형태로 조회
+ * @returns {Promise} 바이탈 설정 Map (key-value)
+ */
+export const getVitalSettings = async () => {
+  try {
+    const response = await apiClient.get('/api/user-settings/vital-config');
+    return response.data;
+  } catch (error) {
+    console.error('바이탈 설정 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 특정 카테고리의 사용자 설정 조회
+ * @param {string} category - 카테고리 (예: '설정')
+ * @returns {Promise} 사용자 설정 배열
+ */
+export const getUserSettingsByCategory = async (category) => {
+  try {
+    const response = await apiClient.get('/api/user-settings', {
+      params: { category }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('사용자 설정 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 사용자 설정 저장/수정
+ * @param {Object} settingData - 설정 데이터 { category, subCategory, values }
+ * @returns {Promise} 저장된 설정 데이터
+ */
+export const saveUserSetting = async (settingData) => {
+  try {
+    const response = await apiClient.post('/api/user-settings', settingData);
+    return response.data;
+  } catch (error) {
+    console.error('사용자 설정 저장 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 드롭다운 항목 조회
+ * @returns {Promise} 드롭다운 항목 배열
+ */
+export const getDropdownItems = async () => {
+  try {
+    const response = await apiClient.get('/api/user-settings/dropdown');
+    return response.data;
+  } catch (error) {
+    console.error('드롭다운 항목 조회 실패:', error);
+    throw error;
+  }
+};
+
+// =================================================================
+// 기준선 표시 설정 관련 API 함수들 (2025.07.24 신규 추가)
+// =================================================================
+
+/**
+ * 기준선 표시 설정 조회
+ * @returns {Promise} 기준선 표시 설정 오브젝트
+ */
+export const getThresholdDisplaySettings = async () => {
+  try {
+    const response = await getUserSettingsByCategory('그래프');  // 카테고리: '그래프'
+    
+    // 배열을 오브젝트로 변환
+    const thresholdSettings = {};
+    if (Array.isArray(response)) {
+      response.forEach(setting => {
+        // dropdown_기준표_ 로 시작하는 설정만 필터링
+        if (setting.subCategory.startsWith('dropdown_기준표_')) {
+          const cleanKey = setting.subCategory.replace('dropdown_기준표_', '');
+          thresholdSettings[cleanKey] = setting.values === 'true';
+        }
+      });
+    }
+    
+    console.log('📊 로드된 기준선 설정:', thresholdSettings);
+    return thresholdSettings;
+  } catch (error) {
+    console.error('기준선 표시 설정 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 기준선 표시 설정 저장
+ * @param {string} thresholdKey - 기준선 키 (bloodPressureAttentionMaxShow 등)
+ * @param {boolean} isVisible - 표시 여부
+ * @returns {Promise} 저장된 설정 데이터
+ */
+export const saveThresholdDisplaySetting = async (thresholdKey, isVisible) => {
+  try {
+    const settingData = {
+      category: '그래프',  // 카테고리: '그래프'
+      subCategory: `dropdown_기준표_${thresholdKey}`,  // 서브카테고리: 'dropdown_기준표_xxx'
+      values: isVisible.toString()
+    };
+    
+    console.log('💾 기준선 설정 저장 시도:', settingData);
+    
+    const response = await saveUserSetting(settingData);
+    console.log(`✅ 기준선 표시 설정 저장 성공: ${thresholdKey} = ${isVisible}`);
+    return response;
+  } catch (error) {
+    console.error('❌ 기준선 표시 설정 저장 실패:', error);
+    console.error('❌ 에러 상세:', error.response?.data || error.message);
     throw error;
   }
 };

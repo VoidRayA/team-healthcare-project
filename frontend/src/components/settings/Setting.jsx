@@ -73,7 +73,7 @@ const Setting = () => {
     guardianAlarm: true
   });
 
-  // 모니터링 설정 상태
+  // 바이탈 사인 설정 상태
   const [monitoringSettings, setMonitoringSettings] = useState({
     bloodPressure: {
       attentionMax: 180,
@@ -130,7 +130,7 @@ const Setting = () => {
         setCurrentTab(tabNumber);
         console.log('탭 이동:', settingTabs[tabNumber].label);
         
-        // 모니터링 설정 탭(1)으로 이동 시 알림 섹션으로 스크롤
+        // 바이탈 사인 설정 탭(1)으로 이동 시 알림 섹션으로 스크롤
         if (tabNumber === 1) {
           setTimeout(() => {
             const alertSection = document.getElementById('alert-settings-section');
@@ -176,7 +176,7 @@ const Setting = () => {
 
   const settingTabs = [
     { label: '알림', icon: NotificationsOutlined },
-    { label: '모니터링 설정', icon: MonitorHeartOutlined },
+    { label: '바이탈 사인 설정', icon: MonitorHeartOutlined },
     { label: '디바이스 연결', icon: DevicesOutlined },
     { label: '화면 / 접근성 설정', icon: AccessibilityOutlined },
     { label: '비상 연락 / 보호자', icon: ContactsOutlined }    
@@ -203,7 +203,7 @@ const Setting = () => {
     }));
   };
 
-  // 모니터링 설정 변경 핸들러 (TextField용)
+  // 바이탈 사인 설정 변경 핸들러 (TextField용)
   const handleMonitoringSettingChange = (category, field) => (event) => {
     const value = event.target.value;
     // 비어있지 않을 때만 숫자로 변환
@@ -218,7 +218,7 @@ const Setting = () => {
     }));
   };
 
-  // 모니터링 설정 초기화 (알림 설정 포함)
+  // 바이탈 사인 설정 초기화 (알림 설정 포함)
   const resetMonitoringSettings = () => {
     setMonitoringSettings({
       bloodPressure: {
@@ -426,11 +426,11 @@ const Setting = () => {
     </Box>
   );
 
-  // 모니터링 설정 탭 컨텐츠
+  // 바이탈 사인 설정 탭 컨텐츠
   const renderMonitoringSettings = () => (
     <Box sx={{ p: 3 }}>
       <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', color: '#000' }}>
-        모니터링 설정
+        바이탈 사인 설정
       </Typography>
       
       {/* 에러 및 성공 메시지 */}
@@ -831,7 +831,7 @@ const Setting = () => {
             // 커스텀 이벤트 발생으로 다른 컴포넌트에 알림
             window.dispatchEvent(new Event('monitoringSettingsChanged'));
             
-            setSuccess('모니터링 및 알림 설정이 모두 저장되었습니다.');
+            setSuccess('바이탈 사인 설정 및 알림 설정이 모두 저장되었습니다.');
             setTimeout(() => setSuccess(null), 3000);
           }}
         >
@@ -911,7 +911,7 @@ const Setting = () => {
         left: 0,
         top: 0,
         zIndex: 1000,
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
+        boxShadow: 10
       }}>
         {/* 사용자 정보 영역 */}
         <Box sx={{ 

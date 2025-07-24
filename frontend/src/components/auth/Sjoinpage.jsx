@@ -15,7 +15,11 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  Checkbox,
+  Select,
+  InputLabel,
+  MenuItem
 } from '@mui/material';
 import {
   DashboardOutlined,
@@ -61,7 +65,14 @@ const Sjoinpage = () => {
     emergencyContact: '',
     medicalConditions: '',
     medications: '',
-    specialNotes: ''
+    specialNotes: '',
+    deviceSettings: {
+      bloodPressureMonitor: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
+      thermometer: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
+      glucometer: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
+      pulseOximeter: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
+      wearableDevice: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' }
+    }
   });
   
   const [loading, setLoading] = useState(false);
@@ -104,7 +115,14 @@ const Sjoinpage = () => {
           emergencyContact: response.emergencyContact || '',
           medicalConditions: response.chronicDiseases || '',
           medications: response.medications || '',
-          specialNotes: response.notes || ''
+          specialNotes: response.notes || '',
+          deviceSettings: response.deviceSettings || {
+            bloodPressureMonitor: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
+            thermometer: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
+            glucometer: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
+            pulseOximeter: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
+            wearableDevice: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' }
+          }
         });
       }
       
@@ -126,6 +144,20 @@ const Sjoinpage = () => {
       [event.target.name]: event.target.value,
     });
     setError('');
+  };
+
+  // 기기 설정 뚀들러 함수
+  const handleDeviceChange = (deviceType, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      deviceSettings: {
+        ...prev.deviceSettings,
+        [deviceType]: {
+          ...prev.deviceSettings[deviceType],
+          [field]: value
+        }
+      }
+    }));
   };
 
   const validateForm = () => {
@@ -177,7 +209,8 @@ const Sjoinpage = () => {
         emergencyContact: formData.emergencyContact,
         chronicDiseases: formData.medicalConditions || null,
         medications: formData.medications || null,
-        notes: formData.specialNotes || null
+        notes: formData.specialNotes || null,
+        deviceSettings: formData.deviceSettings || null
       };
 
       console.log('Senior 등록/수정 데이터:', submitData);
@@ -207,7 +240,14 @@ const Sjoinpage = () => {
           emergencyContact: '',
           medicalConditions: '',
           medications: '',
-          specialNotes: ''
+          specialNotes: '',
+          deviceSettings: {
+            bloodPressureMonitor: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
+            thermometer: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
+            glucometer: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
+            pulseOximeter: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
+            wearableDevice: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' }
+          }
         });
       }
       
@@ -441,25 +481,27 @@ const Sjoinpage = () => {
         backgroundColor: '#ffffff',
         flex: 1,
         display: 'flex',
-        overflow: 'auto',
         margin: '1vw 1vw 1vw 80px',
         paddingLeft: '160px',
         minHeight: 'calc(100vh - 2vw)',
+        maxHeight: 'calc(100vh - 2vw)',
         boxSizing: 'border-box',
       }}>
         <Box sx={{
           flex: 1,
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
-          padding: '40px'
+          alignItems: 'flex-start',
+          padding: '40px',
+          overflow: 'auto'
         }}>
           <Box sx={{
             width: '100%',
             maxWidth: '900px',
             backgroundColor: 'transparent',
             padding: '40px',
-            position: 'relative'
+            position: 'relative',
+            minHeight: 'fit-content'
           }}>
             {/* 헤더 */}
             <Typography sx={{
@@ -858,6 +900,385 @@ const Sjoinpage = () => {
                     variant="outlined"
                     sx={textFieldSx}
                   />
+                </Box>
+              </Box>
+            </Box>
+
+            {/* 기기 연동 섹션 */}
+            <Box sx={{ height: '8px', backgroundColor: '#0869CC', margin: '20px 0' }} />
+            
+            <Typography sx={{
+              fontFamily: 'Pretendard',
+              fontWeight: 700,
+              fontSize: '24px',
+              color: '#000000',
+              textAlign: 'center',
+              marginBottom: '20px'
+            }}>
+              🔌 기기 연동 설정
+            </Typography>
+
+            <Box>
+              {/* 혈압계 */}
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                minHeight: '80px',
+                borderBottom: '1px solid #0869CC',
+                borderTop: '2px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  height: '100%',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000',
+                  minHeight: '80px'
+                }}>
+                  🩺 혈압계
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  backgroundColor: '#FFFFFF',
+                  padding: '16px 24px',
+                  minHeight: '80px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={formData.deviceSettings?.bloodPressureMonitor?.enabled || false}
+                        onChange={(e) => handleDeviceChange('bloodPressureMonitor', 'enabled', e.target.checked)}
+                      />
+                    }
+                    label="혈압계 연동 사용"
+                    sx={{ '& .MuiFormControlLabel-label': { fontFamily: 'Pretendard', fontWeight: 500, fontSize: '16px' } }}
+                  />
+                  {formData.deviceSettings?.bloodPressureMonitor?.enabled && (
+                    <Box sx={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                      <TextField
+                        placeholder="기기 모델명"
+                        value={formData.deviceSettings?.bloodPressureMonitor?.deviceModel || ''}
+                        onChange={(e) => handleDeviceChange('bloodPressureMonitor', 'deviceModel', e.target.value)}
+                        size="small"
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        placeholder="기기 ID"
+                        value={formData.deviceSettings?.bloodPressureMonitor?.deviceId || ''}
+                        onChange={(e) => handleDeviceChange('bloodPressureMonitor', 'deviceId', e.target.value)}
+                        size="small"
+                        sx={{ flex: 1 }}
+                      />
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <InputLabel>연결 방식</InputLabel>
+                        <Select
+                          value={formData.deviceSettings?.bloodPressureMonitor?.connectionType || 'bluetooth'}
+                          onChange={(e) => handleDeviceChange('bloodPressureMonitor', 'connectionType', e.target.value)}
+                          label="연결 방식"
+                        >
+                          <MenuItem value="bluetooth">블루투스</MenuItem>
+                          <MenuItem value="wifi">WiFi</MenuItem>
+                          <MenuItem value="usb">USB</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+
+              {/* 체온계 */}
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                minHeight: '80px',
+                borderBottom: '1px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000',
+                  minHeight: '80px'
+                }}>
+                  🌡️ 체온계
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  backgroundColor: '#FFFFFF',
+                  padding: '16px 24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={formData.deviceSettings?.thermometer?.enabled || false}
+                        onChange={(e) => handleDeviceChange('thermometer', 'enabled', e.target.checked)}
+                      />
+                    }
+                    label="체온계 연동 사용"
+                    sx={{ '& .MuiFormControlLabel-label': { fontFamily: 'Pretendard', fontWeight: 500, fontSize: '16px' } }}
+                  />
+                  {formData.deviceSettings?.thermometer?.enabled && (
+                    <Box sx={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                      <TextField
+                        placeholder="기기 모델명"
+                        value={formData.deviceSettings?.thermometer?.deviceModel || ''}
+                        onChange={(e) => handleDeviceChange('thermometer', 'deviceModel', e.target.value)}
+                        size="small"
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        placeholder="기기 ID"
+                        value={formData.deviceSettings?.thermometer?.deviceId || ''}
+                        onChange={(e) => handleDeviceChange('thermometer', 'deviceId', e.target.value)}
+                        size="small"
+                        sx={{ flex: 1 }}
+                      />
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <InputLabel>연결 방식</InputLabel>
+                        <Select
+                          value={formData.deviceSettings?.thermometer?.connectionType || 'bluetooth'}
+                          onChange={(e) => handleDeviceChange('thermometer', 'connectionType', e.target.value)}
+                          label="연결 방식"
+                        >
+                          <MenuItem value="bluetooth">블루투스</MenuItem>
+                          <MenuItem value="wifi">WiFi</MenuItem>
+                          <MenuItem value="usb">USB</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+
+              {/* 혈당계 */}
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                minHeight: '80px',
+                borderBottom: '1px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000',
+                  minHeight: '80px'
+                }}>
+                  🩸 혈당계
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  backgroundColor: '#FFFFFF',
+                  padding: '16px 24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={formData.deviceSettings?.glucometer?.enabled || false}
+                        onChange={(e) => handleDeviceChange('glucometer', 'enabled', e.target.checked)}
+                      />
+                    }
+                    label="혈당계 연동 사용"
+                    sx={{ '& .MuiFormControlLabel-label': { fontFamily: 'Pretendard', fontWeight: 500, fontSize: '16px' } }}
+                  />
+                  {formData.deviceSettings?.glucometer?.enabled && (
+                    <Box sx={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                      <TextField
+                        placeholder="기기 모델명"
+                        value={formData.deviceSettings?.glucometer?.deviceModel || ''}
+                        onChange={(e) => handleDeviceChange('glucometer', 'deviceModel', e.target.value)}
+                        size="small"
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        placeholder="기기 ID"
+                        value={formData.deviceSettings?.glucometer?.deviceId || ''}
+                        onChange={(e) => handleDeviceChange('glucometer', 'deviceId', e.target.value)}
+                        size="small"
+                        sx={{ flex: 1 }}
+                      />
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <InputLabel>연결 방식</InputLabel>
+                        <Select
+                          value={formData.deviceSettings?.glucometer?.connectionType || 'bluetooth'}
+                          onChange={(e) => handleDeviceChange('glucometer', 'connectionType', e.target.value)}
+                          label="연결 방식"
+                        >
+                          <MenuItem value="bluetooth">블루투스</MenuItem>
+                          <MenuItem value="wifi">WiFi</MenuItem>
+                          <MenuItem value="usb">USB</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+
+              {/* 산소포화도계 */}
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                minHeight: '80px',
+                borderBottom: '1px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000',
+                  minHeight: '80px'
+                }}>
+                  📊 산소포화도계
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  backgroundColor: '#FFFFFF',
+                  padding: '16px 24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={formData.deviceSettings?.pulseOximeter?.enabled || false}
+                        onChange={(e) => handleDeviceChange('pulseOximeter', 'enabled', e.target.checked)}
+                      />
+                    }
+                    label="산소포화도계 연동 사용"
+                    sx={{ '& .MuiFormControlLabel-label': { fontFamily: 'Pretendard', fontWeight: 500, fontSize: '16px' } }}
+                  />
+                  {formData.deviceSettings?.pulseOximeter?.enabled && (
+                    <Box sx={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                      <TextField
+                        placeholder="기기 모델명"
+                        value={formData.deviceSettings?.pulseOximeter?.deviceModel || ''}
+                        onChange={(e) => handleDeviceChange('pulseOximeter', 'deviceModel', e.target.value)}
+                        size="small"
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        placeholder="기기 ID"
+                        value={formData.deviceSettings?.pulseOximeter?.deviceId || ''}
+                        onChange={(e) => handleDeviceChange('pulseOximeter', 'deviceId', e.target.value)}
+                        size="small"
+                        sx={{ flex: 1 }}
+                      />
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <InputLabel>연결 방식</InputLabel>
+                        <Select
+                          value={formData.deviceSettings?.pulseOximeter?.connectionType || 'bluetooth'}
+                          onChange={(e) => handleDeviceChange('pulseOximeter', 'connectionType', e.target.value)}
+                          label="연결 방식"
+                        >
+                          <MenuItem value="bluetooth">블루투스</MenuItem>
+                          <MenuItem value="wifi">WiFi</MenuItem>
+                          <MenuItem value="usb">USB</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+
+              {/* 웨어러블 디바이스 */}
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                minHeight: '80px',
+                borderBottom: '1px solid #0869CC'
+              }}>
+                <Box sx={{
+                  width: '200px',
+                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: '#000000',
+                  minHeight: '80px'
+                }}>
+                  ⌚ 웨어러블
+                </Box>
+                <Box sx={{
+                  flex: 1,
+                  backgroundColor: '#FFFFFF',
+                  padding: '16px 24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={formData.deviceSettings?.wearableDevice?.enabled || false}
+                        onChange={(e) => handleDeviceChange('wearableDevice', 'enabled', e.target.checked)}
+                      />
+                    }
+                    label="웨어러블 디바이스 연동 사용"
+                    sx={{ '& .MuiFormControlLabel-label': { fontFamily: 'Pretendard', fontWeight: 500, fontSize: '16px' } }}
+                  />
+                  {formData.deviceSettings?.wearableDevice?.enabled && (
+                    <Box sx={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                      <TextField
+                        placeholder="기기 모델명"
+                        value={formData.deviceSettings?.wearableDevice?.deviceModel || ''}
+                        onChange={(e) => handleDeviceChange('wearableDevice', 'deviceModel', e.target.value)}
+                        size="small"
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        placeholder="기기 ID"
+                        value={formData.deviceSettings?.wearableDevice?.deviceId || ''}
+                        onChange={(e) => handleDeviceChange('wearableDevice', 'deviceId', e.target.value)}
+                        size="small"
+                        sx={{ flex: 1 }}
+                      />
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <InputLabel>연결 방식</InputLabel>
+                        <Select
+                          value={formData.deviceSettings?.wearableDevice?.connectionType || 'bluetooth'}
+                          onChange={(e) => handleDeviceChange('wearableDevice', 'connectionType', e.target.value)}
+                          label="연결 방식"
+                        >
+                          <MenuItem value="bluetooth">블루투스</MenuItem>
+                          <MenuItem value="wifi">WiFi</MenuItem>
+                          <MenuItem value="usb">USB</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  )}
                 </Box>
               </Box>
             </Box>

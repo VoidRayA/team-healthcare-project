@@ -301,7 +301,8 @@ const ProfileManagement = () => {
         left: 0,
         top: 0,
         zIndex: 1000,
-        elevation: 0
+        elevation: 0,
+        boxshadow: 10,
       }}>
         {/* 사용자 정보 영역 - Home.jsx와 동일하게 */}
         <Box sx={{ 

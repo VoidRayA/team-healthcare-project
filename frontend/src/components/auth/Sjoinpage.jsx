@@ -61,7 +61,8 @@ const Sjoinpage = () => {
     emergencyContact: '',
     medicalConditions: '',
     medications: '',
-    specialNotes: ''
+    specialNotes: '',
+
   });
   
   const [loading, setLoading] = useState(false);
@@ -104,7 +105,8 @@ const Sjoinpage = () => {
           emergencyContact: response.emergencyContact || '',
           medicalConditions: response.chronicDiseases || '',
           medications: response.medications || '',
-          specialNotes: response.notes || ''
+          specialNotes: response.notes || '',
+
         });
       }
       
@@ -127,6 +129,8 @@ const Sjoinpage = () => {
     });
     setError('');
   };
+
+
 
   const validateForm = () => {
     if (!formData.seniorName.trim()) {
@@ -441,25 +445,27 @@ const Sjoinpage = () => {
         backgroundColor: '#ffffff',
         flex: 1,
         display: 'flex',
-        overflow: 'auto',
         margin: '1vw 1vw 1vw 80px',
         paddingLeft: '160px',
         minHeight: 'calc(100vh - 2vw)',
+        maxHeight: 'calc(100vh - 2vw)',
         boxSizing: 'border-box',
       }}>
         <Box sx={{
           flex: 1,
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
-          padding: '40px'
+          alignItems: 'flex-start',
+          padding: '40px',
+          overflow: 'auto'
         }}>
           <Box sx={{
             width: '100%',
             maxWidth: '900px',
             backgroundColor: 'transparent',
             padding: '40px',
-            position: 'relative'
+            position: 'relative',
+            minHeight: 'fit-content'
           }}>
             {/* 헤더 */}
             <Typography sx={{
@@ -861,6 +867,8 @@ const Sjoinpage = () => {
                 </Box>
               </Box>
             </Box>
+
+
 
             {/* 버튼 영역 */}
             <Box sx={{

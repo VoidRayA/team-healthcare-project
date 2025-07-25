@@ -93,7 +93,7 @@ const Sidebar = ({
       left: 0,
       top: 0,
       zIndex: 1000,
-      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
+      boxShadow: 10
     }}>
       {/* 사용자 정보 영역 */}
       <Box sx={{ 

@@ -4,6 +4,7 @@ import com.example.backend.DB.Guardians;
 import com.example.backend.DB.RefreshToken;
 import com.example.backend.DB.Role;
 import com.example.backend.DB.Seniors;
+import com.example.backend.DB.UserSetting;
 import com.example.backend.config.JwtTokenProvider;
 import com.example.backend.dto.SeniorDto;
 import com.example.backend.dto.login.AuthResponseDto;
@@ -11,6 +12,7 @@ import com.example.backend.dto.login.LoginRequestDto;
 import com.example.backend.dto.login.RegisterRequestDto;
 import com.example.backend.repository.GuardianRepository;
 import com.example.backend.repository.RefreshTokenRepository;
+import com.example.backend.service.UserSettingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -45,6 +47,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final UserSettingService userSettingService;
 
     /**
      * 회원가입 API
@@ -81,6 +84,10 @@ public class AuthController {
 
             // 데이터베이스에 저장
             Guardians savedGuardian = guardianRepository.save(newGuardian);
+            
+            // 신규 Guardian에 대한 기본 바이탈 사인 설정 생성
+            createDefaultVitalSettings(savedGuardian.getId());
+            log.info("기본 바이탈 사인 설정 생성 완료: {}", savedGuardian.getLoginId());
 
             // 응답 데이터 준비
             Map<String, Object> response = new HashMap<>();
@@ -411,5 +418,62 @@ public class AuthController {
         // 헤더에서 IP를 찾지 못한 경우 기본 메서드 사용
         String remoteAddr = request.getRemoteAddr();
         return remoteAddr != null ? remoteAddr : "Unknown";
+    }
+    
+    /**
+     * 신규 Guardian에 대한 기본 바이탈 사인 설정 생성
+     * @param guardianId Guardian ID
+     */
+    private void createDefaultVitalSettings(Integer guardianId) {
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            
+            // 혈압 기본 설정
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "bloodPressureAttentionMin", "90", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "bloodPressureAttentionMax", "180", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "bloodPressureCautionMin", "100", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "bloodPressureCautionMax", "140", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "diastolicAttentionMin", "60", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "diastolicAttentionMax", "110", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "diastolicCautionMin", "65", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "diastolicCautionMax", "90", now));
+            
+            // 심박수 기본 설정
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "heartRateAttentionMin", "50", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "heartRateAttentionMax", "100", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "heartRateCautionMin", "60", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "heartRateCautionMax", "90", now));
+            
+            // 체온 기본 설정
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "bodyTemperatureAttentionMin", "35.5", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "bodyTemperatureAttentionMax", "38.0", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "bodyTemperatureCautionMin", "36.0", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "bodyTemperatureCautionMax", "37.5", now));
+            
+            // 혈당 기본 설정
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "bloodSugarAttentionMin", "70", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "bloodSugarAttentionMax", "250", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "bloodSugarCautionMin", "80", now));
+            userSettingService.saveSetting(createUserSetting(guardianId, "설정", "bloodSugarCautionMax", "180", now));
+            
+            log.info("기본 바이탈 사인 설정 생성 완료 - Guardian ID: {}", guardianId);
+            
+        } catch (Exception e) {
+            log.error("기본 바이탈 사인 설정 생성 실패 - Guardian ID: {}", guardianId, e);
+        }
+    }
+    
+    /**
+     * UserSetting 엔티티 생성 헬퍼 메서드
+     */
+    private UserSetting createUserSetting(Integer guardianId, String category, String subCategory, String values, LocalDateTime now) {
+        UserSetting setting = new UserSetting();
+        setting.setGuardianId(guardianId.longValue());
+        setting.setCategory(category);
+        setting.setSubCategory(subCategory);
+        setting.setValues(values);
+        setting.setCreatedAt(now);
+        setting.setUpdatedAt(now);
+        return setting;
     }
 }

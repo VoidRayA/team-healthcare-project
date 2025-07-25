@@ -42,6 +42,14 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { getUserInfo, clearAuthData, getAuthToken } from '../../utils/auth';
 
+// 한국 시간 기준 날짜 문자열 변환 함수
+const getKoreanDateString = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const Daily = () => {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('일정 관리');
@@ -67,11 +75,18 @@ const Daily = () => {
   const [selectedSenior, setSelectedSenior] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
+  const [activitiesLoading, setActivitiesLoading] = useState(false); // 일정 로딩 상태 추가
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   // const [showPasswordModal, setShowPasswordModal] = useState(false); // ProfileManagement에서만 처리
   const [showSeniorSelectModal, setShowSeniorSelectModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  
+  // 페이지네이션 상태 추가
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const pageSize = 10; // 페이지당 항목 수
   
   // 정렬 관련 상태 - 각 테이블별로 분리
   const [seniorSortColumn, setSeniorSortColumn] = useState('');
@@ -82,6 +97,10 @@ const Daily = () => {
   // 드롭다운 관련 상태
   const [dropdownItems, setDropdownItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState({});
+  
+  // 수정 관련 상태 추가
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingActivity, setEditingActivity] = useState(null);
   
   // 폼 데이터 (기존 체크박스용)
   const [formData, setFormData] = useState({
@@ -159,10 +178,11 @@ const Daily = () => {
     // 정렬이 필요한 경우만 정렬 수행
     const sorted = seniorSortColumn ? sortSeniors(seniors, seniorSortColumn, seniorSortDirection) : [...seniors];
     
-    // 빈 행 추가
-    const displayed = [...sorted];    
+    // 현재 페이지의 데이터만 사용 (이미 API에서 페이지네이션되어 온 데이터)
+    const displayed = [...sorted];
     
-    while (displayed.length < 10) {
+    // 현재 페이지에서 10개가 안되면 빈 행 추가 (마지막 페이지에서만)
+    while (displayed.length < pageSize) {
       displayed.push({ 
         id: `empty-${displayed.length}`, 
         isEmpty: true,
@@ -178,13 +198,12 @@ const Daily = () => {
     }
     
     return displayed;
-  }, [seniors, seniorSortColumn, seniorSortDirection, sortSeniors]);
+  }, [seniors, seniorSortColumn, seniorSortDirection, sortSeniors, pageSize]);
 
   // 일정 관리 데이터 로드 함수
   const fetchDailyActivities = async (seniorId, date) => {
     try {
-      // 로딩 상태를 설정하지 않음으로써 깜박임 방지
-      // setActivitiesLoading(true); // 제거
+      setActivitiesLoading(true); // 일정 로딩 시작
       const token = getAuthToken();
       
       if (!seniorId || !date) {
@@ -193,41 +212,11 @@ const Daily = () => {
         return;
       }
 
-      const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+      const dateString = getKoreanDateString(date); // 한국 시간 기준
       
       if (!token) {
-        console.log('JWT 토큰이 없습니다. 더미 데이터를 사용합니다.');
-        // 더미 일정 데이터
-        const dummyActivities = [
-          {
-            id: 1,
-            senior_id: seniorId,
-            activity_date: dateString,
-            activity_category: '식사',
-            daily_notes: '아침 식사 완료',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: 2,
-            senior_id: seniorId,
-            activity_date: dateString,
-            activity_category: '운동',
-            daily_notes: '산책 30분',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: 3,
-            senior_id: seniorId,
-            activity_date: dateString,
-            activity_category: '복약',
-            daily_notes: '혈압약 복용',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ];
-        setDailyActivities(dummyActivities);
+        console.log('JWT 토큰이 없습니다.');
+        setDailyActivities([]);
         return;
       }
 
@@ -243,13 +232,47 @@ const Daily = () => {
       if (response.ok) {
         const data = await response.json();
         console.log('일정 데이터 로드 성공:', data);
+        console.log('데이터 타입:', typeof data);
+        console.log('데이터 구조:', Object.keys(data));
+        console.log('전체 데이터 JSON:', JSON.stringify(data, null, 2));
         
         // API 응답이 배열인지 객체인지에 따라 처리
-        const activitiesArray = Array.isArray(data) ? data : (data.content || data.activities || []);
+        let activitiesArray = [];
+        
+        if (Array.isArray(data)) {
+          console.log('데이터가 배열입니다.');
+          activitiesArray = data;
+        } else if (data && data.dailyActivities && Array.isArray(data.dailyActivities)) {
+          console.log('데이터가 dailyActivities 구조입니다.');
+          // 새로운 SeniorDailyDto 구조에서 dailyActivities 추출
+          activitiesArray = data.dailyActivities;
+        } else if (data && data.seniors && Array.isArray(data.seniors)) {
+          console.log('데이터가 seniors 구조입니다.');
+          // SeniorDailyListDto 구조에서 dailyActivities 추출
+          const firstSenior = data.seniors[0];
+          if (firstSenior && firstSenior.dailyActivities) {
+            activitiesArray = firstSenior.dailyActivities;
+          }
+        } else if (data && data.seniorDtos && Array.isArray(data.seniorDtos)) {
+          console.log('데이터가 seniorDtos 구조입니다.');
+          // 기존 seniorDtos 구조에서 dailyActivities 추출
+          const firstSenior = data.seniorDtos[0];
+          if (firstSenior && firstSenior.dailyActivities) {
+            activitiesArray = firstSenior.dailyActivities;
+          }
+        } else if (data && data.content) {
+          console.log('데이터가 content 구조입니다.');
+          activitiesArray = data.content;
+        } else if (data && data.activities) {
+          console.log('데이터가 activities 구조입니다.');
+          activitiesArray = data.activities;
+        }
+        
+        console.log('추출된 활동 배열:', activitiesArray);
+        console.log('활동 배열 개수:', activitiesArray.length);
         setDailyActivities(activitiesArray);
       } else {
         console.error('일정 데이터 로드 실패:', response.status);
-        // 실패 시 빈 배열
         setDailyActivities([]);
       }
       
@@ -258,7 +281,7 @@ const Daily = () => {
       setError('일정 데이터를 불러오는데 실패했습니다.');
       setDailyActivities([]);
     } finally {
-      // setActivitiesLoading(false); // 제거
+      setActivitiesLoading(false); // 일정 로딩 종료
     }
   };
 
@@ -271,6 +294,33 @@ const Daily = () => {
       setDailyActivities([]);
     }
   }, [selectedSenior, selectedDate]);
+  
+  // 날짜가 변경될 때 수정 모드 초기화
+  useEffect(() => {
+    if (isEditing) {
+      console.log('날짜 변경으로 인한 수정 모드 초기화');
+      
+      // 수정 모드 초기화
+      setIsEditing(false);
+      setEditingActivity(null);
+      
+      // 입력 필드 초기화
+      setSelectedItems(prev => {
+        const reset = {};
+        Object.keys(prev).forEach(key => {
+          reset[key] = '';
+        });
+        return reset;
+      });
+      
+      setFormData(prev => ({
+        ...prev,
+        specialNotes: ''
+      }));
+      
+      console.log('날짜 변경 초기화 완료');
+    }
+  }, [selectedDate]);
 
   // 일정 관리 정보 표시
   const displayedDailyActivities = useMemo(() => {
@@ -341,29 +391,22 @@ const Daily = () => {
   };
 
   // 보호 대상자 목록 로드
-  const loadSeniors = async () => {
+  const loadSeniors = async (page = 1, size = pageSize) => {
     try {
+      setLoading(true);
       const token = getAuthToken();
       
       if (!token) {
-        console.log('JWT 토큰이 없습니다. 더미 데이터를 사용합니다.');
-        // 더미 데이터
-        const dummySeniors = [
-          { id: 1, seniorName: '김할머니', age: 78 },
-          { id: 2, seniorName: '이할아버지', age: 82 },
-          { id: 3, seniorName: '박할머니', age: 75 },
-          { id: 4, seniorName: '최할아버지', age: 80 },
-          { id: 5, seniorName: '정할머니', age: 77 }
-        ];
-        setSeniors(dummySeniors);
-        if (dummySeniors.length > 0) {
-          setSelectedSenior(dummySeniors[0]); // 첫 번째 Senior를 기본 선택
-        }
+        console.log('JWT 토큰이 없습니다.');
+        setSeniors([]);
+        setSelectedSenior(null);
+        setTotalPages(1);
+        setTotalElements(0);
         return;
       }
 
-      // 실제 API 호출
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/seniors`, {
+      // 실제 API 호출 (페이지네이션 파라미터 추가)
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/seniors?page=${page - 1}&size=${size}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -373,37 +416,64 @@ const Daily = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('보호 대상자 목록 로드 성공:', data);
         
-        // API 응답이 {content: []} 형태인 경우 처리
-        const seniorsArray = data.content || data || [];
-        
-        setSeniors(seniorsArray);
-        if (seniorsArray.length > 0) {
-          setSelectedSenior(seniorsArray[0]); // 첫 번째 Senior를 기본 선택
+        // Spring Boot 페이지네이션 응답 처리
+        if (data.content && Array.isArray(data.content)) {
+          // 페이지네이션 데이터가 있는 경우
+          setSeniors(data.content);
+          setCurrentPage(data.number + 1); // Spring은 0부터 시작
+          setTotalPages(data.totalPages);
+          setTotalElements(data.totalElements);
+          
+          console.log('페이지네이션 정보:', {
+            currentPage: data.number + 1,
+            totalPages: data.totalPages,
+            totalElements: data.totalElements,
+            size: data.size
+          });
+          
+          if (data.content.length > 0) {
+            setSelectedSenior(data.content[0]); // 모든 페이지에서 첫 번째 Senior를 자동 선택
+          } else {
+            setSelectedSenior(null);
+          }
+        } else if (Array.isArray(data)) {
+          // 단순 배열 응답인 경우 (페이지네이션 없음)
+          setSeniors(data);
+          setTotalPages(1);
+          setTotalElements(data.length);
+          setCurrentPage(1);
+          
+          if (data.length > 0) {
+            setSelectedSenior(data[0]);
+          } else {
+            setSelectedSenior(null);
+          }
+        } else {
+          setSeniors([]);
+          setSelectedSenior(null);
+          setTotalPages(1);
+          setTotalElements(0);
         }
       } else {
         console.error('Senior 데이터 로드 실패:', response.status);
-        // 실패 시 더미 데이터
-        const fallbackSeniors = [
-          { id: 1, seniorName: '김할머니', age: 78 },
-          { id: 2, seniorName: '이할아버지', age: 82 }
-        ];
-        setSeniors(fallbackSeniors);
-        if (fallbackSeniors.length > 0) {
-          setSelectedSenior(fallbackSeniors[0]);
-        }
+        setSeniors([]);
+        setSelectedSenior(null);
+        setTotalPages(1);
+        setTotalElements(0);
+        setError('보호 대상자 목록을 불러오는데 실패했습니다.');
       }
       
     } catch (error) {
       console.error('보호 대상자 목록 로드 오류:', error);
-      // 오류 시 더미 데이터
-      const errorFallback = [
-        { id: 1, seniorName: '김할머니', age: 78 }
-      ];
-      setSeniors(errorFallback);
-      if (errorFallback.length > 0) {
-        setSelectedSenior(errorFallback[0]);
-      }
+      setSeniors([]);
+      setSelectedSenior(null);
+      setTotalPages(1);
+      setTotalElements(0);
+      setError('보호 대상자 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -414,18 +484,9 @@ const Daily = () => {
       
       const token = getAuthToken();
       if (!token) {
-        console.log('JWT 토큰이 없습니다. 더미 데이터를 사용합니다.');
-        // 토큰이 없을 때 더미 데이터
-        const dummyData = [
-          '식사횟수', '운동시간', '복약여부', '건강상태', '활동수준'
-        ];
-        setDropdownItems(dummyData);
-        
-        const initialSelected = {};
-        dummyData.forEach(itemValue => {
-          initialSelected[itemValue] = '';
-        });
-        setSelectedItems(initialSelected);
+        console.log('JWT 토큰이 없습니다.');
+        setDropdownItems([]);
+        setSelectedItems({});
         return;
       }
 
@@ -455,33 +516,16 @@ const Daily = () => {
         setSelectedItems(initialSelected);
       } else {
         console.error('API 응답 오류:', response.status, response.statusText);
-        throw new Error(`API 오류: ${response.status}`);
+        setError('드롭다운 데이터를 불러오는데 실패했습니다.');
+        setDropdownItems([]);
+        setSelectedItems({});
       }
       
     } catch (error) {
       console.error('드롭다운 데이터 불러오기 실패:', error);
-      setError('드롭다운 데이터를 불러오는데 실패했습니다. 더미 데이터를 사용합니다.');
-      
-      // 오류 시 더미 데이터로 폴백
-      const fallbackData = [
-        {
-          id: 1,
-          subCategory: '식사횟수',
-          values: '["1회", "2회", "3회", "4회", "5회"]'
-        }
-      ];
-      setDropdownItems(fallbackData);
-      
-      const initialSelected = {};
-      fallbackData.forEach(item => {
-        try {
-          const values = JSON.parse(item.values);
-          initialSelected[item.subCategory] = values[0];
-        } catch (e) {
-          console.error('JSON 파싱 오류:', e);
-        }
-      });
-      setSelectedItems(initialSelected);
+      setError('드롭다운 데이터를 불러오는데 실패했습니다.');
+      setDropdownItems([]);
+      setSelectedItems({});
     } finally {
       setLoading(false);
     }
@@ -514,52 +558,156 @@ const Daily = () => {
   // 저장 핸들러
   const handleSave = async () => {
     try {
+      setLoading(true);
       const token = getAuthToken();
       
-      const saveData = {
-        selectedItems,
-        date: new Date().toISOString().split('T')[0], // YYYY-MM-DD 형식
-        formData
-      };
-      
-      console.log('저장할 데이터:', saveData);
-      
       if (!token) {
-        console.log('JWT 토큰이 없습니다. 로컬 저장만 수행합니다.');
-        setSuccess('활동 기록이 저장되었습니다. (로컬)');
+        setError('로그인이 필요합니다.');
         return;
       }
 
-      // 실제 API 호출
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/daily-activities/save`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(saveData)
-      });
+      if (!selectedSenior?.id) {
+        setError('보호 대상자를 선택해주세요.');
+        return;
+      }
+
+      // 선택된 항목 중 실제 값이 있는 것만 저장
+      const validSelectedItems = Object.entries(selectedItems)
+        .filter(([key, value]) => value && value.trim() !== '')
+        .reduce((acc, [key, value]) => {
+          acc[key] = value;
+          return acc;
+        }, {});
+
+      const saveData = {
+        seniorId: selectedSenior.id,
+        activityCategory: Object.values(validSelectedItems)[0] || '', // 선택된 카테고리
+        dailyNotes: formData.specialNotes || '', // 실제 입력한 특이사항
+        date: getKoreanDateString(selectedDate), // 한국 시간 기준
+      };
+      
+      console.log('저장할 데이터:', saveData);
+      console.log('수정 모드:', isEditing);
+      console.log('수정대상 ID:', editingActivity?.id);
+
+      let response;
+      
+      if (isEditing && editingActivity?.id) {
+        // 수정 모드: PUT 요청
+        response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/daily-activities/${editingActivity.id}/update`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(saveData)
+        });
+      } else {
+        // 새로 생성 모드: POST 요청
+        response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/daily-activities/save`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(saveData)
+        });
+      }
 
       if (response.ok) {
         const result = await response.json();
         console.log('저장 성공:', result);
         setSuccess('활동 기록이 저장되었습니다.');
+        
+        // 저장 후 입력 필드 초기화
+        setSelectedItems(prev => {
+          const reset = {};
+          Object.keys(prev).forEach(key => {
+            reset[key] = ''; // 모든 드롭다운 선택 초기화
+          });
+          return reset;
+        });
+        
+        setFormData(prev => ({
+          ...prev,
+          specialNotes: '' // 특이사항 입력 초기화
+        }));
+        
+        console.log('입력 필드 초기화 완료');
+        
+        // 수정 모드 초기화
+        setIsEditing(false);
+        setEditingActivity(null);
+        
+        console.log('수정 모드 초기화 완료');
+        
+        // 저장 후 일정 데이터 새로고침
+        if (selectedSenior?.id && selectedDate) {
+          fetchDailyActivities(selectedSenior.id, selectedDate);
+        }
       } else {
         console.error('저장 API 오류:', response.status, response.statusText);
-        throw new Error(`저장 실패: ${response.status}`);
+        setError('저장에 실패했습니다.');
       }
       
     } catch (error) {
       console.error('저장 오류:', error);
       setError('저장에 실패했습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 대상자 선택 핸들러
+  // 활동 클릭 핸들러 (수정용)
+  const handleActivityClick = (activity) => {
+    if (activity.isEmpty) return;
+    
+    console.log('수정할 활동 선택:', activity);
+    console.log('현재 드롭다운 항목들:', dropdownItems);
+    
+    // 수정 모드로 전환
+    setIsEditing(true);
+    setEditingActivity(activity);
+    
+    // 드롭다운에 해당 카테고리 설정 (첫 번째 드롭다운에 선택된 카테고리 설정)
+    if (dropdownItems && dropdownItems.length > 0) {
+      const newSelectedItems = {};
+      // 모든 드롭다운 항목을 초기화하고, 첫 번째에만 선택된 카테고리 설정
+      dropdownItems.forEach((item, index) => {
+        if (index === 0) {
+          // 첫 번째 드롭다운에 선택된 카테고리 설정
+          newSelectedItems[item] = activity.activityCategory || '';
+        } else {
+          newSelectedItems[item] = '';
+        }
+      });
+      
+      console.log('설정된 드롭다운 값들:', newSelectedItems);
+      setSelectedItems(newSelectedItems);
+    }
+    
+    // 특이사항 입력 필드에 내용 설정
+    setFormData(prev => ({
+      ...prev,
+      specialNotes: activity.dailyNotes || ''
+    }));
+    
+    console.log('수정 모드 활성화:', {
+      category: activity.activityCategory,
+      notes: activity.dailyNotes
+    });
+  };
   const handleSeniorSelect = (senior) => {
     setSelectedSenior(senior);
     setShowSeniorSelectModal(false);
     console.log('선택된 대상자:', senior);
+  };
+  
+  // 페이지 변경 핸들러
+  const handlePageChange = (event, page) => {
+    console.log('Page changed to:', page);
+    setCurrentPage(page);
+    loadSeniors(page, pageSize);
   };
   
   // 카테고리 업데이트 핸들러
@@ -765,14 +913,12 @@ const Daily = () => {
               flexDirection: 'column',
               gap: '20px'
             }}>
-
               <Box sx={{
-                width: '320px',
-                height: '270px', // CalendarWidget 기본 높이
+                width: '100%',
                 marginBottom: '20px',
                 border: '1px solid #e0e0e0',
-                borderRadius: '10px', // 1.25 * 8 = 10px
-                padding: '12px', // 1.5 * 8 = 12px
+                borderRadius: '10px',
+                padding: '12px',
                 backgroundColor: '#f8f9fa',
                 overflow: 'hidden',
                 boxSizing: 'border-box',
@@ -958,45 +1104,82 @@ const Daily = () => {
                   + 항목 관리
                 </Typography>
 
-                <Button
-                  onClick={handleSave}
-                  sx={{
-                    backgroundColor: '#00458B',
-                    color: 'white',
-                    fontFamily: 'Pretendard',
-                    fontSize: '14px',
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    '&:hover': {
-                      backgroundColor: '#003366'
-                    }
-                  }}
-                >
-                  저장
-                </Button>
+                <Box sx={{ display: 'flex', gap: '10px' }}>
+                  {isEditing && (
+                    <Button
+                      onClick={() => {
+                        setIsEditing(false);
+                        setEditingActivity(null);
+                        setSelectedItems(prev => {
+                          const reset = {};
+                          Object.keys(prev).forEach(key => {
+                            reset[key] = '';
+                          });
+                          return reset;
+                        });
+                        setFormData(prev => ({
+                          ...prev,
+                          specialNotes: ''
+                        }));
+                      }}
+                      sx={{
+                        backgroundColor: '#757575',
+                        color: 'white',
+                        fontFamily: 'Pretendard',
+                        fontSize: '14px',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        '&:hover': {
+                          backgroundColor: '#616161'
+                        }
+                      }}
+                    >
+                      취소
+                    </Button>
+                  )}
+
+                  <Button
+                    onClick={handleSave}
+                    sx={{
+                      backgroundColor: isEditing ? '#FF9800' : '#00458B',
+                      color: 'white',
+                      fontFamily: 'Pretendard',
+                      fontSize: '14px',
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      '&:hover': {
+                        backgroundColor: isEditing ? '#F57C00' : '#003366'
+                      }
+                    }}
+                  >
+                    {isEditing ? '수정' : '저장'}
+                  </Button>
+                </Box>
               </Box>
 
               {/* 드롭다운 */}
-              <Box>
-                <FormControl fullWidth>
-                  <Select
-                    value={selectedItems[dropdownItems[0]] || ''}
-                    onChange={(e) => handleItemChange(dropdownItems[0], e.target.value)}
-                    displayEmpty
-                    sx={{
-                      fontFamily: 'Pretendard',
-                      fontSize: '14px'
-                    }}
-                  >
-                    <MenuItem value="">선택하세요</MenuItem>
-                    {dropdownItems.map((itemValue, index) => (
-                      <MenuItem key={index} value={itemValue}>
-                        {itemValue}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
+              {dropdownItems && dropdownItems.length > 0 && (
+                <Box>
+                  <FormControl fullWidth>
+                    <Select
+                      value={selectedItems[dropdownItems[0]] || ''}
+                      onChange={(e) => handleItemChange(dropdownItems[0], e.target.value)}
+                      displayEmpty
+                      sx={{
+                        fontFamily: 'Pretendard',
+                        fontSize: '14px'
+                      }}
+                    >
+                      <MenuItem value="">선택하세요</MenuItem>
+                      {dropdownItems.map((itemValue, index) => (
+                        <MenuItem key={index} value={itemValue}>
+                          {itemValue}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+              )}
 
               {/* 일일 특이사항 */}
               <Box sx={{ flex: 1 }}>
@@ -1028,14 +1211,15 @@ const Daily = () => {
             </Paper>
           </Box>
 
-          {/* 하단 영역: 보호 대상자 목록 */}
+          {/* 하단 영역: 보호 대상자 목록 + 일정 관리 목록 */}
           <Box sx={{
             display: 'flex',
             flexDirection: 'row',
             gap: '15px'
           }}>
+            {/* 보호 대상자 목록 */}
             <Box sx={{
-              width: '48%'
+              width: '30%'
             }}>
               <Typography variant="h6" sx={{
                 fontFamily: 'Pretendard',
@@ -1057,15 +1241,9 @@ const Daily = () => {
                       borderRadius: '0',
                       border: '2px solid #1976d2',
                       boxShadow: 'none',
-                      height: {
-                        xs: '180px', // 소형 화면
-                        sm: '200px', // 중형 화면
-                        md: '220px', // 대형 화면
-                        lg: '224px'  // 현재 사이즈
-                      },
-                      overflow: 'auto', // 반응형에서는 스크롤 필요
-                      maxHeight: '224px', // 최대 높이 제한
-                      // 스크롤바 스타일링
+                      height: '224px',
+                      overflow: 'auto',
+                      maxHeight: '224px',
                       '&::-webkit-scrollbar': {
                         width: '8px',
                       },
@@ -1087,7 +1265,7 @@ const Daily = () => {
                         top: 0,
                         zIndex: 100,
                         '& .MuiTableCell-root': {
-                          backgroundColor: 'rgba(51, 153, 255, 1)', // 반투명도 제거 (0.3 → 1)
+                          backgroundColor: 'rgba(51, 153, 255, 1)',
                           borderBottom: '2px solid #1976d2',
                           fontFamily: 'Pretendard',
                           fontWeight: 700,
@@ -1098,14 +1276,14 @@ const Daily = () => {
                           height: '24px',
                           cursor: 'pointer',
                           userSelect: 'none',
-                          backdropFilter: 'none', // 블러 효과 제거
+                          backdropFilter: 'none',
                           '&:hover': {
-                            backgroundColor: 'rgba(51, 153, 255, 1)' // 호버 시에도 불투명하게 유지
+                            backgroundColor: 'rgba(51, 153, 255, 1)'
                           }
                         }
                       }}>
                         <TableRow>
-                          <TableCell>
+                          <TableCell sx={{ width: '25%', minWidth: '80px', maxWidth: '120px' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                               <TableSortLabel
                                 active={seniorSortColumn === 'seniorName'}
@@ -1124,7 +1302,7 @@ const Daily = () => {
                               </TableSortLabel>
                             </Box>
                           </TableCell>
-                          <TableCell>
+                          <TableCell sx={{ width: '20%', minWidth: '60px', maxWidth: '80px' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                               <TableSortLabel
                                 active={seniorSortColumn === 'age'}
@@ -1143,7 +1321,7 @@ const Daily = () => {
                               </TableSortLabel>
                             </Box>
                           </TableCell>
-                          <TableCell>
+                          <TableCell sx={{ width: '35%', minWidth: '100px', maxWidth: '140px' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                               <TableSortLabel
                                 active={seniorSortColumn === 'phoneNumber'}
@@ -1162,7 +1340,7 @@ const Daily = () => {
                               </TableSortLabel>
                             </Box>
                           </TableCell>                        
-                          <TableCell>상태</TableCell>
+                          <TableCell sx={{ width: '20%', minWidth: '60px', maxWidth: '80px' }}>상태</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody sx={{
@@ -1193,8 +1371,8 @@ const Daily = () => {
                           fontSize: '12px',
                           color: '#333',
                           textAlign: 'center',
-                          padding: '6px 4px', // 패딩 증가
-                          height: '28px', // 높이 증가
+                          padding: '6px 4px',
+                          height: '28px',
                           transition: 'all 0.15s ease'
                         }
                       }}>
@@ -1206,8 +1384,8 @@ const Daily = () => {
                             sx={{
                               backgroundColor: selectedSenior && selectedSenior.id === senior.id ? '#bbdefb !important' : 'inherit',
                               cursor: senior.isEmpty ? 'default' : 'pointer',
-                              transition: 'none', // 트랜지션 비활성화로 스크롤 이슈 방지
-                              willChange: 'auto', // willChange 제거
+                              transition: 'none',
+                              willChange: 'auto',
                               '& .MuiTableCell-root': {
                                 userSelect: senior.isEmpty ? 'none' : 'auto',
                                 pointerEvents: senior.isEmpty ? 'none' : 'auto'
@@ -1219,15 +1397,40 @@ const Daily = () => {
                               }
                             }}
                           >
-                            <TableCell>{senior.seniorName}</TableCell>
-                            <TableCell>{senior.age ? `${senior.age}세` : (senior.isEmpty ? '' : '-')}</TableCell>
-                            <TableCell>{senior.phoneNumber || (senior.isEmpty ? '' : '-')}</TableCell>
-                            <TableCell 
-                              sx={{
-                                color: selectedSenior && selectedSenior.id === senior.id ? '#1976d2' : '#666',
-                                fontWeight: selectedSenior && selectedSenior.id === senior.id ? 'bold' : 'normal'
-                              }}
-                            >
+                            <TableCell sx={{ 
+                              width: '25%', 
+                              minWidth: '80px', 
+                              maxWidth: '120px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {senior.seniorName}
+                            </TableCell>
+                            <TableCell sx={{ 
+                              width: '20%', 
+                              minWidth: '60px', 
+                              maxWidth: '80px'
+                            }}>
+                              {senior.age ? `${senior.age}세` : (senior.isEmpty ? '' : '-')}
+                            </TableCell>
+                            <TableCell sx={{ 
+                              width: '35%', 
+                              minWidth: '100px', 
+                              maxWidth: '140px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {senior.phoneNumber || (senior.isEmpty ? '' : '-')}
+                            </TableCell>
+                            <TableCell sx={{
+                              width: '20%',
+                              minWidth: '60px',
+                              maxWidth: '80px',
+                              color: selectedSenior && selectedSenior.id === senior.id ? '#1976d2' : '#666',
+                              fontWeight: selectedSenior && selectedSenior.id === senior.id ? 'bold' : 'normal'
+                            }}>
                               {senior.isEmpty ? '' : (
                                 selectedSenior && selectedSenior.id === senior.id ? (
                                   <CheckCircle sx={{ color: '#1976d2', fontSize: '20px' }} />
@@ -1252,12 +1455,13 @@ const Daily = () => {
                     gap: '8px'
                   }}>
                     <Pagination 
-                      count={1}
-                      page={1}
-                      onChange={(event, page) => console.log('Page changed to:', page)}
+                      count={totalPages}
+                      page={currentPage}
+                      onChange={handlePageChange}
                       color="primary"
                       showFirstButton 
                       showLastButton
+                      disabled={loading}
                     />
                   </Box>
                 </>
@@ -1268,11 +1472,13 @@ const Daily = () => {
                     color: '#666666',
                     fontSize: '16px'
                   }}>
-                    {selectedSenior ? `${selectedDate.toLocaleDateString('ko-KR')}에 등록된 일정이 없습니다.` : '보호 대상자를 선택해주세요.'}
+                    등록된 보호 대상자가 없습니다.
                   </Typography>
-                  </Paper>
+                </Paper>
               )}
             </Box>
+
+              {/* 일정 관리 목록 */}
             <Box sx={{ flex: 1 }}>
               <Typography variant="h6" sx={{
                 fontFamily: 'Pretendard',
@@ -1284,22 +1490,65 @@ const Daily = () => {
                 일정 관리 목록
               </Typography>
               
-              {(dailyActivities && dailyActivities.length > 0) || selectedSenior ? (
-                <>
+              {/* 로딩 상태 표시 */}
+              {!selectedSenior ? (
+                <Box>
                   <TableContainer component={Paper} sx={{
                     backgroundColor: '#ffffff',
                     borderRadius: '0',
                     border: '2px solid #1976d2',
                     boxShadow: 'none',
-                    height: {
-                      xs: '180px', // 소형 화면
-                      sm: '200px', // 중형 화면
-                      md: '220px', // 대형 화면
-                      lg: '224px'  // 현재 사이즈
-                    },
-                    overflow: 'auto', // 반응형에서는 스크롤 필요
-                    maxHeight: '224px', // 최대 높이 제한
-                    // 스크롤바 스타일링 추가
+                    height: '224px',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Typography sx={{
+                      fontFamily: 'Pretendard',
+                      color: '#666666',
+                      fontSize: '16px'
+                    }}>
+                      보호 대상자를 선택해주세요.
+                    </Typography>
+                  </TableContainer>
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    marginTop: '15px',
+                    padding: '10px 0',
+                    gap: '8px'
+                  }}>
+                    <Typography sx={{
+                      fontFamily: 'Pretendard',
+                      fontSize: '12px',
+                      color: '#999'
+                    }}>
+                      대상자를 선택해주세요.
+                    </Typography>
+                    <Pagination 
+                      count={1}
+                      page={1}
+                      onChange={(event, page) => console.log('Activity page changed to:', page)}
+                      color="primary"
+                      showFirstButton 
+                      showLastButton
+                      disabled={true}
+                    />
+                  </Box>
+                </Box>
+              ) : (
+                <>
+                  {/* 일정 관리 목록 항상 표시 */}
+                  <TableContainer component={Paper} sx={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '0',
+                    border: '2px solid #1976d2',
+                    boxShadow: 'none',
+                    height: '224px',
+                    overflow: 'auto',
+                    maxHeight: '224px',
                     '&::-webkit-scrollbar': {
                       width: '8px',
                     },
@@ -1315,135 +1564,172 @@ const Daily = () => {
                       }
                     }
                   }}>
-                    <Table stickyHeader>
-                      <TableHead sx={{
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 100,
-                        '& .MuiTableCell-root': {
-                          backgroundColor: 'rgba(51, 153, 255, 1)', // 반투명도 제거 (0.3 → 1)
-                          borderBottom: '2px solid #1976d2',
-                          fontFamily: 'Pretendard',
-                          fontWeight: 700,
-                          fontSize: '14px',
-                          color: '#000',
-                          textAlign: 'center',
-                          padding: '6px 4px',
-                          height: '24px',
-                          cursor: 'pointer',
-                          userSelect: 'none',
-                          backdropFilter: 'none', // 블러 효과 제거
-                          '&:hover': {
-                            backgroundColor: 'rgba(51, 153, 255, 1)' // 호버 시에도 불투명하게 유지
-                          }
-                        }
-                      }}>
-                        <TableRow>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                              <TableSortLabel
-                                active={activitySortColumn === 'activity_category'}
-                                direction={activitySortColumn === 'activity_category' ? activitySortDirection : 'asc'}
-                                onClick={() => handleActivityHeaderClick('activity_category')}
-                                sx={{
-                                  '& .MuiTableSortLabel-icon': {
-                                    display: 'none'
-                                  },
-                                  '&:hover': {
-                                    color: '#1976d2'
-                                  }
-                                }}
-                              >
-                                항목
-                              </TableSortLabel>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                              <TableSortLabel
-                                active={activitySortColumn === 'daily_notes'}
-                                direction={activitySortColumn === 'daily_notes' ? activitySortDirection : 'asc'}
-                                onClick={() => handleActivityHeaderClick('daily_notes')}
-                                sx={{
-                                  '& .MuiTableSortLabel-icon': {
-                                    display: 'none'
-                                  },
-                                  '&:hover': {
-                                    color: '#1976d2'
-                                  }
-                                }}
-                              >
-                                특이사항
-                              </TableSortLabel>
-                            </Box>
-                          </TableCell>                
-                        </TableRow>
-                      </TableHead>
-                      <TableBody sx={{
-                        '& .MuiTableRow-root': {
-                          transition: 'background-color 0.15s ease',
-                          '&:nth-of-type(even)': {
-                            backgroundColor: '#f8f9fa'
-                          },
-                          '&.data-row:hover': {
-                            backgroundColor: '#e3f2fd',
-                            cursor: 'pointer'
-                          },
-                          '&.data-row.selected': {
-                            backgroundColor: '#bbdefb !important',
-                            '&:hover': {
-                              backgroundColor: '#90caf9 !important'
-                            }
-                          },
-                          '&:last-child': {
-                            '& .MuiTableCell-root': {
-                              borderBottom: 'none'
-                            }
-                          }
-                        },
-                        '& .MuiTableCell-root': {
-                          borderBottom: '1px solid #1976d2',
-                          fontFamily: 'Pretendard',
-                          fontSize: '12px',
-                          color: '#333',
-                          textAlign: 'center',
-                          padding: '6px 4px', // 패딩 증가
-                          height: '28px', // 높이 증가
-                          transition: 'all 0.15s ease'
-                        }
-                      }}>
-                        {displayedDailyActivities.map((activity) => (
-                          <TableRow 
-                            key={activity.id}
-                            className={activity.isEmpty ? "" : "data-row"}
+                <Table stickyHeader>
+                  <TableHead sx={{
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 100,
+                    '& .MuiTableCell-root': {
+                      backgroundColor: 'rgba(51, 153, 255, 1)',
+                      borderBottom: '2px solid #1976d2',
+                      fontFamily: 'Pretendard',
+                      fontWeight: 700,
+                      fontSize: '14px',
+                      color: '#000',
+                      textAlign: 'center',
+                      padding: '6px 4px',
+                      height: '24px',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      backdropFilter: 'none',
+                      '&:hover': {
+                        backgroundColor: 'rgba(51, 153, 255, 1)'
+                      }
+                    }
+                  }}>
+                    <TableRow>
+                      <TableCell sx={{ width: '25%' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                          <TableSortLabel
+                            active={activitySortColumn === 'activity_category'}
+                            direction={activitySortColumn === 'activity_category' ? activitySortDirection : 'asc'}
+                            onClick={() => handleActivityHeaderClick('activity_category')}
                             sx={{
-                              cursor: activity.isEmpty ? 'default' : 'pointer',
-                              '& .MuiTableCell-root': {
-                                userSelect: activity.isEmpty ? 'none' : 'auto',
-                                pointerEvents: activity.isEmpty ? 'none' : 'auto'
+                              '& .MuiTableSortLabel-icon': {
+                                display: 'none'
                               },
                               '&:hover': {
-                                backgroundColor: activity.isEmpty ? 'inherit' : '#e3f2fd'
+                                color: '#1976d2'
                               }
                             }}
                           >
-                            <TableCell>{activity.activity_category || (activity.isEmpty ? '' : '-')}</TableCell>
+                            항목
+                          </TableSortLabel>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ width: '75%' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                          <TableSortLabel
+                            active={activitySortColumn === 'daily_notes'}
+                            direction={activitySortColumn === 'daily_notes' ? activitySortDirection : 'asc'}
+                            onClick={() => handleActivityHeaderClick('daily_notes')}
+                            sx={{
+                              '& .MuiTableSortLabel-icon': {
+                                display: 'none'
+                              },
+                              '&:hover': {
+                                color: '#1976d2'
+                              }
+                            }}
+                          >
+                            특이사항
+                          </TableSortLabel>
+                        </Box>
+                      </TableCell>                
+                    </TableRow>
+                  </TableHead>
+                  <TableBody sx={{
+                    '& .MuiTableRow-root': {
+                      transition: 'background-color 0.15s ease',
+                      '&:nth-of-type(even)': {
+                        backgroundColor: '#f8f9fa'
+                      },
+                      '&.data-row:hover': {
+                        backgroundColor: '#e3f2fd',
+                        cursor: 'pointer'
+                      },
+                      '&.data-row.selected': {
+                        backgroundColor: '#bbdefb !important',
+                        '&:hover': {
+                          backgroundColor: '#90caf9 !important'
+                        }
+                      },
+                      '&:last-child': {
+                        '& .MuiTableCell-root': {
+                          borderBottom: 'none'
+                        }
+                      }
+                    },
+                    '& .MuiTableCell-root': {
+                      borderBottom: '1px solid #1976d2',
+                      fontFamily: 'Pretendard',
+                      fontSize: '12px',
+                      color: '#333',
+                      textAlign: 'center',
+                      padding: '6px 4px',
+                      height: '28px',
+                      transition: 'all 0.15s ease'
+                    }
+                  }}>
+                    {displayedDailyActivities.map((activity) => (
+                      <TableRow 
+                        key={activity.id}
+                        className={activity.isEmpty ? "" : "data-row"}
+                        onClick={() => handleActivityClick(activity)}
+                        sx={{
+                          cursor: activity.isEmpty ? 'default' : 'pointer',
+                          '& .MuiTableCell-root': {
+                            userSelect: activity.isEmpty ? 'none' : 'auto',
+                            pointerEvents: activity.isEmpty ? 'none' : 'auto'
+                          },
+                          '&:hover': {
+                            backgroundColor: activity.isEmpty ? 'inherit' : '#e3f2fd'
+                          },
+                          backgroundColor: isEditing && editingActivity?.id === activity.id ? '#fff3e0' : 'inherit'
+                        }}
+                      >
+                        {/* 로딩 상태 */}
+                        {activitiesLoading && activity.id === 'empty-0' ? (
+                          <TableCell colSpan={2} sx={{
+                            textAlign: 'center',
+                            padding: '40px',
+                            color: '#1976d2',
+                            fontStyle: 'italic'
+                          }}>
+                            일정 데이터를 불러오는 중...
+                          </TableCell>
+                        /* 데이터가 없는 경우 */
+                        ) : selectedSenior && !activitiesLoading && dailyActivities.length === 0 && activity.id === 'empty-0' ? (
+                          <TableCell colSpan={2} sx={{
+                            textAlign: 'center',
+                            padding: '40px',
+                            color: '#999',
+                            fontStyle: 'italic'
+                          }}>
+                            {selectedDate.toLocaleDateString('ko-KR')} 일정 데이터가 없습니다.
+                          </TableCell>
+                        /* 일반 데이터 표시 */
+                        ) : (
+                          <>
                             <TableCell 
                               sx={{
-                                maxWidth: '200px',
+                                width: '25%',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap'
                               }}
-                              title={activity.daily_notes} // 전체 텍스트를 툴팁으로 표시
+                              title={activity.activityCategory || ''}
                             >
-                              {activity.daily_notes || (activity.isEmpty ? '' : '-')}
+                              {activity.activityCategory || (activity.isEmpty ? '' : '-')}
                             </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                            <TableCell 
+                              sx={{
+                                width: '75%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                              title={activity.dailyNotes || ''}
+                            >
+                              {activity.dailyNotes || (activity.isEmpty ? '' : '-')}
+                            </TableCell>
+                          </>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
 
                   {/* 페이지네이션 */}
                   <Box sx={{
@@ -1453,27 +1739,18 @@ const Daily = () => {
                     marginTop: '15px',
                     padding: '10px 0',
                     gap: '8px'
-                  }}>
+                  }}>                    
                     <Pagination 
                       count={1}
                       page={1}
-                      onChange={(event, page) => console.log('Page changed to:', page)}
+                      onChange={(event, page) => console.log('Activity page changed to:', page)}
                       color="primary"
                       showFirstButton 
                       showLastButton
+                      disabled={activitiesLoading}
                     />
                   </Box>
                 </>
-              ) : (
-                <Paper sx={{ p: 4, textAlign: 'center', border: '2px solid #1976d2' }}>
-                  <Typography sx={{
-                    fontFamily: 'Pretendard',
-                    color: '#666666',
-                    fontSize: '16px'
-                  }}>
-                    등록된 보호 대상자가 없습니다.
-                  </Typography>
-                  </Paper>
               )}
             </Box>
           </Box>

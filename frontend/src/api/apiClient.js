@@ -18,6 +18,25 @@ export const getVitalSigns = async (seniorId) => {
 };
 
 /**
+ * 드롭다운 항목 사용 여부 체크
+ * @param {number} itemId - 체크할 항목 ID
+ * @returns {Promise} 사용 여부 체크 결과
+ */
+export const checkItemUsage = async (itemId) => {
+  try {
+    console.log('🔍 항목 사용 여부 체크 시도:', itemId);
+    
+    const response = await apiClient.get(`/api/user-settings/dropdown-item/${itemId}/usage-check`);
+    
+    console.log('✅ 항목 사용 여부 체크 결과:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ 항목 사용 여부 체크 실패:', error);
+    throw error;
+  }
+};
+
+/**
  * 특정 날짜의 생체 기록 조회
  * @param {number} seniorId - Senior ID
  * @param {string} date - 날짜 (YYYY-MM-DD 형식)
@@ -439,12 +458,17 @@ export const getSeniorsWithPagination = async (page = 0, size = 10, sort = 'crea
 };
 
 /**
- * 모든 Senior 목록 조회
+ * 모든 Senior 목록 조회 (크기 증가)
+ * @param {number} size - 한 번에 가져올 시니어 수 (기본값: 100)
  * @returns {Promise} Senior 목록 데이터
  */
-export const getAllSeniors = async () => {
+export const getAllSeniors = async (size = 100) => {
   try {
-    const response = await apiClient.get('/api/seniors');
+    // 파라미터로 더 많은 데이터 요청
+    const response = await apiClient.get('/api/seniors', {
+      params: { size }
+    });
+    console.log('📊 getAllSeniors 요청 크기:', size, '응답:', response.data);
     return response.data;
   } catch (error) {
     console.error('전체 Senior 목록 조회 실패:', error);
@@ -742,6 +766,219 @@ export const getEmergencyRooms = async (location) => {
     }
   } catch (error) {
     console.error('응급실 검색 실패:', error);
+    throw error;
+  }
+};
+
+// =================================================================
+// UserSetting 관련 API 함수들 (바이탈 설정)
+// =================================================================
+
+/**
+ * 바이탈 사인 설정을 Map 형태로 조회
+ * @returns {Promise} 바이탈 설정 Map (key-value)
+ */
+export const getVitalSettings = async () => {
+  try {
+    const response = await apiClient.get('/api/user-settings/vital-config');
+    return response.data;
+  } catch (error) {
+    console.error('바이탈 설정 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 특정 카테고리의 사용자 설정 조회
+ * @param {string} category - 카테고리 (예: '설정')
+ * @returns {Promise} 사용자 설정 배열
+ */
+export const getUserSettingsByCategory = async (category) => {
+  try {
+    const response = await apiClient.get('/api/user-settings', {
+      params: { category }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('사용자 설정 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 사용자 설정 저장/수정
+ * @param {Object} settingData - 설정 데이터 { category, subCategory, values }
+ * @returns {Promise} 저장된 설정 데이터
+ */
+export const saveUserSetting = async (settingData) => {
+  try {
+    // guardianId가 없으면 인증 정보에서 가져오기
+    if (!settingData.guardianId) {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      settingData.guardianId = userInfo.id || 37; // 기본값 37
+    }
+    
+    const response = await apiClient.post('/api/monitoring-settings/user-settings', settingData);
+    return response.data;
+  } catch (error) {
+    console.error('사용자 설정 저장 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 드롭다운 항목 조회
+ * @returns {Promise} 드롭다운 항목 배열
+ */
+export const getDropdownItems = async () => {
+  try {
+    const response = await apiClient.get('/api/user-settings/dropdown');
+    return response.data;
+  } catch (error) {
+    console.error('드롭다운 항목 조회 실패:', error);
+    throw error;
+  }
+};
+
+// =================================================================
+// 기준선 표시 설정 관련 API 함수들 (2025.07.24 신규 추가)
+// =================================================================
+
+/**
+ * 기준선 표시 설정 조회
+ * @returns {Promise} 기준선 표시 설정 오브젝트
+ */
+export const getThresholdDisplaySettings = async () => {
+  try {
+    const response = await getUserSettingsByCategory('그래프');  // 카테고리: '그래프'
+    
+    // 배열을 오브젝트로 변환
+    const thresholdSettings = {};
+    if (Array.isArray(response)) {
+      response.forEach(setting => {
+        // dropdown_threshold_ 로 시작하는 설정만 필터링
+        if (setting.subCategory.startsWith('dropdown_threshold_')) {
+          const cleanKey = setting.subCategory.replace('dropdown_threshold_', '');
+          thresholdSettings[cleanKey] = setting.values === 'true';
+        }
+      });
+    }
+    
+    console.log('📊 로드된 기준선 설정:', thresholdSettings);
+    return thresholdSettings;
+  } catch (error) {
+    console.error('기준선 표시 설정 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 기준선 표시 설정 저장
+ * @param {string} thresholdKey - 기준선 키 (bloodPressureAttentionMaxShow 등)
+ * @param {boolean} isVisible - 표시 여부
+ * @returns {Promise} 저장된 설정 데이터
+ */
+export const saveThresholdDisplaySetting = async (thresholdKey, isVisible) => {
+  try {
+    const settingData = {
+      category: '그래프',  // 카테고리: '그래프'
+      subCategory: `dropdown_threshold_${thresholdKey}`,  // 서브카테고리: 'dropdown_threshold_xxx'
+      values: isVisible.toString()
+    };
+    
+    console.log('💾 기준선 설정 저장 시도:', settingData);
+    
+    const response = await saveUserSetting(settingData);
+    console.log(`✅ 기준선 표시 설정 저장 성공: ${thresholdKey} = ${isVisible}`);
+    return response;
+  } catch (error) {
+    console.error('❌ 기준선 표시 설정 저장 실패:', error);
+    console.error('❌ 에러 상세:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// =================================================================
+// Chart Legend Settings 관련 API 함수들 (2025.07.25 신규 추가) - 이동됨
+// =================================================================
+
+/**
+ * 차트 범례 설정 조회
+ * @param {number} guardianId - Guardian ID
+ * @param {string} chartType - 차트 타입 (기본값: 'vital_detail')
+ * @returns {Promise<Object>} 범례 설정 데이터
+ */
+export const getMainChartLegendSettings = async (guardianId, chartType = 'vital_detail') => {
+  try {
+    // guardianId가 전달되지 않았다면 JWT에서 추출
+    if (!guardianId) {
+      const token = getAuthToken();
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        guardianId = payload.guardianId || payload.guardian_id || payload.id;
+        
+        if (!guardianId && payload.sub) {
+          console.warn('⚠️ JWT에 guardianId가 없음. 사용자 이름:', payload.sub);
+          throw new Error('JWT에 guardianId가 포함되지 않았습니다. 다시 로그인해주세요.');
+        }
+      }
+      
+      if (!guardianId) {
+        console.error('❌ guardianId가 없음 - JWT payload:', payload);
+        throw new Error('JWT에서 guardianId를 추출할 수 없습니다. 다시 로그인해주세요.');
+      }
+    }
+    
+    const response = await apiClient.get(`/api/user-settings/chart-legend`, {
+      params: { guardianId, chartType }
+    });
+    return response.data.data || {}; // { "legend_systolic_bp": true, "legend_heart_rate": false, ... }
+  } catch (error) {
+    console.error('범례 설정 조회 실패:', error);
+    return {}; // 오류 시 빈 객체 반환
+  }
+};
+
+/**
+ * 차트 범례 설정 저장
+ * @param {string} datasetLabel - 데이터셋 라벨
+ * @param {boolean} isVisible - 가시성 여부
+ * @param {string} chartType - 차트 타입 (기본값: 'vital_detail')
+ * @returns {Promise} 저장 결과
+ */
+export const saveMainChartLegendSetting = async (datasetLabel, isVisible, chartType = 'vital_detail') => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('인증 토큰이 없습니다.');
+    }
+    
+    // JWT 토큰에서 payload 추출
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    console.log('🔑 JWT payload:', payload); // 디버깅
+    
+    // guardianId 추출 시도 - 임시로 고정값 사용
+    let guardianId = payload.guardianId || payload.guardian_id || payload.id;
+    
+    if (!guardianId) {
+      console.error('❌ JWT에 guardianId가 없음 - payload:', payload);
+      throw new Error('JWT에 guardianId가 포함되지 않았습니다. 다시 로그인해주세요.');
+    }
+    
+    const requestData = {
+      guardianId,
+      chartType,
+      datasetLabel,
+      isVisible
+    };
+    
+    console.log('📤 API 요청 데이터:', requestData); // 디버깅
+    
+    const response = await apiClient.post('/api/user-settings/chart-legend', requestData);
+    
+    return response.data;
+  } catch (error) {
+    console.error('범례 설정 저장 실패:', error);
     throw error;
   }
 };

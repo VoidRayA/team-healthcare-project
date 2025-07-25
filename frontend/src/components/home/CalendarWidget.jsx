@@ -79,6 +79,29 @@ const CalendarWidget = ({ selectedDate, onDateChange }) => {
           color: 'white !important',
           fontWeight: 'bold',
         },
+
+        '& .react-calendar__decade-view, & .react-calendar__century-view': {
+          '& .react-calendar__tile': {
+            height: '60px', // 년도 선택 타일 높이 제한
+            fontSize: '0.9rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }
+        },
+
+        '& .react-calendar__year-view': {
+          '& .react-calendar__tile': {
+            height: '50px', // 월 선택 타일 높이 제한
+            fontSize: '0.85rem'
+          }
+        },
+
+        '& .react-calendar__tile--now': {
+          backgroundColor: '#bbdefb !important',
+          color: 'white !important',
+          fontWeight: 'bold',
+        },
       }}
     >
       <Calendar

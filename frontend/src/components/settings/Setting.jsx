@@ -36,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import userImage from '../../images/user.png';
 import { getUserInfo, clearAuthData } from '../../utils/auth';
+import UserSettingService from '../../services/userSettingService';
 
 const Setting = () => {
   const navigate = useNavigate();
@@ -62,18 +63,12 @@ const Setting = () => {
 
   // 알림 설정 상태
   const [notificationSettings, setNotificationSettings] = useState({
-    medicationAlarm: {
-      enabled: true,
-      medicationType: '혈압약',
-      hour: '08',
-      minute: '00'
-    },
     healthCheckAlarm: true,
     weatherAlarm: true,
     guardianAlarm: true
   });
 
-  // 모니터링 설정 상태
+  // 바이탈 사인 설정 상태
   const [monitoringSettings, setMonitoringSettings] = useState({
     bloodPressure: {
       attentionMax: 180,
@@ -130,7 +125,7 @@ const Setting = () => {
         setCurrentTab(tabNumber);
         console.log('탭 이동:', settingTabs[tabNumber].label);
         
-        // 모니터링 설정 탭(1)으로 이동 시 알림 섹션으로 스크롤
+        // 바이탈 사인 설정 탭(1)으로 이동 시 알림 섹션으로 스크롤
         if (tabNumber === 1) {
           setTimeout(() => {
             const alertSection = document.getElementById('alert-settings-section');
@@ -148,15 +143,31 @@ const Setting = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    // LocalStorage에서 설정 불러오기 (백엔드 API 구현 전까지 임시)
-    const savedSettings = localStorage.getItem('monitoringSettings');
-    if (savedSettings) {
+    // 백엔드에서 바이탈 사인 설정 불러오기
+    const loadVitalSignSettings = async () => {
       try {
-        setMonitoringSettings(JSON.parse(savedSettings));
+        setLoading(true);
+        const userInfo = getUserInfo();
+        if (userInfo && userInfo.guardianId) {
+          const settings = await UserSettingService.getVitalSignSettings(userInfo.guardianId);
+          setMonitoringSettings(settings);
+          console.log('바이탈 사인 설정 로드 완료:', settings);
+        } else {
+          console.warn('guardianId가 없어 기본 설정을 사용합니다.');
+          const defaultSettings = UserSettingService.getDefaultVitalSignSettings();
+          setMonitoringSettings(defaultSettings);
+        }
       } catch (error) {
-        console.error('저장된 설정을 불러오는데 실패했습니다:', error);
+        console.error('바이탈 사인 설정 로드 실패:', error);
+        setError('설정을 불러오는데 실패했습니다. 기본 설정을 사용합니다.');
+        const defaultSettings = UserSettingService.getDefaultVitalSignSettings();
+        setMonitoringSettings(defaultSettings);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    loadVitalSignSettings();
   }, []);
 
   const handleLogout = () => {
@@ -176,7 +187,7 @@ const Setting = () => {
 
   const settingTabs = [
     { label: '알림', icon: NotificationsOutlined },
-    { label: '모니터링 설정', icon: MonitorHeartOutlined },
+    { label: '바이탈 사인 설정', icon: MonitorHeartOutlined },
     { label: '디바이스 연결', icon: DevicesOutlined },
     { label: '화면 / 접근성 설정', icon: AccessibilityOutlined },
     { label: '비상 연락 / 보호자', icon: ContactsOutlined }    
@@ -193,17 +204,7 @@ const Setting = () => {
     }));
   };
 
-  const handleMedicationSettingChange = (field) => (event) => {
-    setNotificationSettings(prev => ({
-      ...prev,
-      medicationAlarm: {
-        ...prev.medicationAlarm,
-        [field]: event.target.value
-      }
-    }));
-  };
-
-  // 모니터링 설정 변경 핸들러 (TextField용)
+  // 바이탈 사인 설정 변경 핸들러 (TextField용)
   const handleMonitoringSettingChange = (category, field) => (event) => {
     const value = event.target.value;
     // 비어있지 않을 때만 숫자로 변환
@@ -218,54 +219,40 @@ const Setting = () => {
     }));
   };
 
-  // 모니터링 설정 초기화 (알림 설정 포함)
-  const resetMonitoringSettings = () => {
-    setMonitoringSettings({
-      bloodPressure: {
-        attentionMax: 180,
-        attentionMin: 90,
-        cautionMax: 140,
-        cautionMin: 100,
-        diastolicAttentionMax: 110,
-        diastolicAttentionMin: 60,
-        diastolicCautionMax: 90,
-        diastolicCautionMin: 65
-      },
-      heartRate: {
-        attentionMax: 100,
-        attentionMin: 50,
-        cautionMax: 90,
-        cautionMin: 60
-      },
-      bodyTemperature: {
-        attentionMax: 38.0,
-        attentionMin: 35.5,
-        cautionMax: 37.5,
-        cautionMin: 36.0
-      },
-      bloodSugar: {
-        attentionMax: 250,
-        attentionMin: 70,
-        cautionMax: 180,
-        cautionMin: 80
-      },
-      // 알림 설정도 초기화
-      alertSettings: {
-        attentionRatioThreshold: 10,
-        cautionRatioThreshold: 30,
-        attentionCountThreshold: 3,
-        cautionCountThreshold: 5,
-        emergencyCountThreshold: 1,
-        useRatioThreshold: true,
-        useCountThreshold: true,
-        useEmergencyAlert: true
+  // 바이탈 사인 설정 초기화 (알림 설정 포함)
+  const resetMonitoringSettings = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // 기본값으로 리셋
+      const defaultSettings = UserSettingService.getDefaultVitalSignSettings();
+      setMonitoringSettings(defaultSettings);
+      
+      // 사용자가 있으면 백엔드에도 저장
+      const userInfo = getUserInfo();
+      if (userInfo && userInfo.guardianId) {
+        await UserSettingService.saveVitalSignSettings(userInfo.guardianId, defaultSettings);
+        console.log('기본 설정으로 초기화 완료');
       }
-    });
-    
-    // 기본값 리셋 시에도 이벤트 발생
-    setTimeout(() => {
-      window.dispatchEvent(new Event('monitoringSettingsChanged'));
-    }, 100);
+      
+      // localStorage에도 저장
+      localStorage.setItem('monitoringSettings', JSON.stringify(defaultSettings));
+      
+      // 기본값 리셋 시에도 이벤트 발생
+      setTimeout(() => {
+        window.dispatchEvent(new Event('monitoringSettingsChanged'));
+      }, 100);
+      
+      setSuccess('기본값으로 초기화되었습니다.');
+      setTimeout(() => setSuccess(null), 3000);
+      
+    } catch (error) {
+      console.error('초기화 실패:', error);
+      setError('초기화에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 알림 설정 변경 핸들러
@@ -288,66 +275,6 @@ const Setting = () => {
         알림
       </Typography>
       
-      {/* 약 복용 알림 */}
-      <Box sx={{ mb: 4, p: 3, border: '1px solid #D7D7D7', borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            약 복용 알림
-          </Typography>
-        </Box>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="body1">약 종류:</Typography>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <Select
-              value={notificationSettings.medicationAlarm.medicationType}
-              onChange={handleMedicationSettingChange('medicationType')}
-              sx={{ backgroundColor: 'white', border: '1px solid #00458B', borderRadius: 1 }}
-            >
-              <MenuItem value="혈압약">혈압약</MenuItem>
-              <MenuItem value="당뇨약">당뇨약</MenuItem>
-              <MenuItem value="심장약">심장약</MenuItem>
-              <MenuItem value="기타">기타</MenuItem>
-            </Select>
-          </FormControl>
-          
-          <Typography variant="body1">시간:</Typography>
-          <FormControl size="small" sx={{ minWidth: 70 }}>
-            <Select
-              value={notificationSettings.medicationAlarm.hour}
-              onChange={handleMedicationSettingChange('hour')}
-              sx={{ backgroundColor: 'white', border: '1px solid #00458B', borderRadius: 1 }}
-            >
-              {Array.from({ length: 24 }, (_, i) => (
-                <MenuItem key={i} value={i.toString().padStart(2, '0')}>
-                  {i.toString().padStart(2, '0')}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          
-          <Typography variant="body1">시</Typography>
-          
-          <FormControl size="small" sx={{ minWidth: 70 }}>
-            <Select
-              value={notificationSettings.medicationAlarm.minute}
-              onChange={handleMedicationSettingChange('minute')}
-              sx={{ backgroundColor: 'white', border: '1px solid #00458B', borderRadius: 1 }}
-            >
-              {['00', '15', '30', '45'].map((min) => (
-                <MenuItem key={min} value={min}>
-                  {min}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          
-          <Typography variant="body1">분</Typography>
-        </Box>
-      </Box>
-
-      <Divider sx={{ my: 3 }} />
-
       {/* 건강 체크 알림 */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2 }}>
         <Box>
@@ -426,11 +353,11 @@ const Setting = () => {
     </Box>
   );
 
-  // 모니터링 설정 탭 컨텐츠
+  // 바이탈 사인 설정 탭 컨텐츠
   const renderMonitoringSettings = () => (
     <Box sx={{ p: 3 }}>
       <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', color: '#000' }}>
-        모니터링 설정
+        바이탈 사인 설정
       </Typography>
       
       {/* 에러 및 성공 메시지 */}
@@ -453,15 +380,6 @@ const Setting = () => {
           초기 설정은 참고용입니다. 정확한 진단은 반드시 의료진과 상담 후 설정하세요.
         </Typography>
       </Box>
-
-      {/* 성공 메시지 */}
-      {success && (
-        <Box sx={{ mb: 3, p: 2, backgroundColor: '#d4edda', borderRadius: 2, border: '1px solid #c3e6cb' }}>
-          <Typography variant="body2" sx={{ color: '#155724', fontWeight: 'bold' }}>
-            ✓ {success}
-          </Typography>
-        </Box>
-      )}
 
       {/* 혈압 설정 */}
       <Box sx={{ mb: 4, p: 3, border: '1px solid #D7D7D7', borderRadius: 2 }}>
@@ -627,6 +545,128 @@ const Setting = () => {
                 onChange={handleMonitoringSettingChange('heartRate', 'cautionMax')}
                 sx={{ width: 80 }}
                 inputProps={{ min: 80, max: 120 }}
+              />
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* 체온 설정 */}
+      <Box sx={{ mb: 4, p: 3, border: '1px solid #D7D7D7', borderRadius: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3, display: 'flex', alignItems: 'center' }}>
+          🌡️ 체온 기준 (°C)
+        </Typography>
+        
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 3 }}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#ff9800' }}>
+              주의 수치
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bodyTemperature.attentionMin}
+                onChange={handleMonitoringSettingChange('bodyTemperature', 'attentionMin')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 34, max: 37, step: 0.1 }}
+              />
+              <Typography variant="body2">~</Typography>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bodyTemperature.attentionMax}
+                onChange={handleMonitoringSettingChange('bodyTemperature', 'attentionMax')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 37, max: 41, step: 0.1 }}
+              />
+            </Box>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#2196f3' }}>
+              관찰 수치
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bodyTemperature.cautionMin}
+                onChange={handleMonitoringSettingChange('bodyTemperature', 'cautionMin')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 35, max: 37, step: 0.1 }}
+              />
+              <Typography variant="body2">~</Typography>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bodyTemperature.cautionMax}
+                onChange={handleMonitoringSettingChange('bodyTemperature', 'cautionMax')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 37, max: 39, step: 0.1 }}
+              />
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* 혈당 설정 */}
+      <Box sx={{ mb: 4, p: 3, border: '1px solid #D7D7D7', borderRadius: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3, display: 'flex', alignItems: 'center' }}>
+          🩸 혈당 기준 (mg/dL)
+        </Typography>
+        
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 3 }}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#ff9800' }}>
+              주의 수치
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bloodSugar.attentionMin}
+                onChange={handleMonitoringSettingChange('bloodSugar', 'attentionMin')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 50, max: 100 }}
+              />
+              <Typography variant="body2">~</Typography>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bloodSugar.attentionMax}
+                onChange={handleMonitoringSettingChange('bloodSugar', 'attentionMax')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 200, max: 400 }}
+              />
+            </Box>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#2196f3' }}>
+              관찰 수치
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bloodSugar.cautionMin}
+                onChange={handleMonitoringSettingChange('bloodSugar', 'cautionMin')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 60, max: 100 }}
+              />
+              <Typography variant="body2">~</Typography>
+              <TextField
+                size="small"
+                type="number"
+                value={monitoringSettings.bloodSugar.cautionMax}
+                onChange={handleMonitoringSettingChange('bloodSugar', 'cautionMax')}
+                sx={{ width: 80 }}
+                inputProps={{ min: 140, max: 250 }}
               />
             </Box>
           </Box>
@@ -825,17 +865,47 @@ const Setting = () => {
         <Button
           variant="contained"
           sx={{ fontWeight: 'bold', backgroundColor: '#1976d2' }}
-          onClick={() => {
-            localStorage.setItem('monitoringSettings', JSON.stringify(monitoringSettings));
-            
-            // 커스텀 이벤트 발생으로 다른 컴포넌트에 알림
-            window.dispatchEvent(new Event('monitoringSettingsChanged'));
-            
-            setSuccess('모니터링 및 알림 설정이 모두 저장되었습니다.');
-            setTimeout(() => setSuccess(null), 3000);
+  // 바이탈 사인 설정 저장 버튼 클릭 이벤트
+          onClick={async () => {
+            try {
+              setLoading(true);
+              setError(null);
+              
+              const userInfo = getUserInfo();
+              console.log('사용자 정보:', userInfo);
+              
+              if (!userInfo || !userInfo.guardianId) {
+                throw new Error('사용자 정보를 찾을 수 없습니다.');
+              }
+
+              console.log('바이탈 사인 설정 저장 시작:', {
+                guardianId: userInfo.guardianId,
+                settings: monitoringSettings
+              });
+
+              // 백엔드 API 호출로 설정 저장
+              await UserSettingService.saveVitalSignSettings(userInfo.guardianId, monitoringSettings);
+              
+              // localStorage에도 백업 저장 (오프라인 대응)
+              localStorage.setItem('monitoringSettings', JSON.stringify(monitoringSettings));
+              
+              // 커스텀 이벤트 발생으로 다른 컴포넌트에 알림
+              window.dispatchEvent(new Event('monitoringSettingsChanged'));
+              
+              setSuccess('바이탈 사인 설정 및 알림 설정이 모두 저장되었습니다.');
+              setTimeout(() => setSuccess(null), 3000);
+              
+              console.log('바이탈 사인 설정 저장 완료:', monitoringSettings);
+            } catch (error) {
+              console.error('바이탈 사인 설정 저장 실패:', error);
+              setError(error.message || '설정 저장에 실패했습니다.');
+            } finally {
+              setLoading(false);
+            }
           }}
+          disabled={loading}
         >
-          설정 저장
+          {loading ? '저장 중...' : '설정 저장'}
         </Button>
       </Box>
     </Box>
@@ -911,7 +981,7 @@ const Setting = () => {
         left: 0,
         top: 0,
         zIndex: 1000,
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
+        boxShadow: 10
       }}>
         {/* 사용자 정보 영역 */}
         <Box sx={{ 

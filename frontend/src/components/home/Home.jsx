@@ -51,10 +51,6 @@ const Home = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [currentPosition, setCurrentPosition] = useState(null);
 
-  // 활동 관련 state
-  const [recentActivitiesData, setRecentActivitiesData] = useState([]);
-  const [activitiesLoading, setActivitiesLoading] = useState(false);
-
   // 최근 액션 관련 state
   const [recentActions, setRecentActions] = useState([
     { text: '회원정보 관리', lastUsed: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
@@ -116,10 +112,9 @@ const Home = () => {
       console.log('로드된 Senior 목록:', seniorsList);
       setSeniors(seniorsList);
       
-      // 테스트 할머니(ID 34) 우선 선택, 없으면 첫 번째 Senior 선택
+      // 첫 번째 Senior 자동 선택
       if (seniorsList.length > 0 && !selectedSenior) {
-        const testGrandma = seniorsList.find(senior => senior.id === 34);
-        const targetSenior = testGrandma || seniorsList[0];
+        const targetSenior = seniorsList[0];
         
         console.log('기본 선택된 Senior:', targetSenior);
         setSelectedSenior(targetSenior);
@@ -421,10 +416,8 @@ const Home = () => {
     console.log('📅 달력에서 선택된 날짜:', date);
     setSelectedDate(date);
     
-    await Promise.all([
-      loadSeniorDataForDate(date),
-      loadRecentActivitiesForDate(date)
-    ]);
+    // Senior 데이터만 로드 (일정 데이터는 RecentActivities에서 직접 처리)
+    await loadSeniorDataForDate(date);
   };
 
   // Senior 데이터 로드
@@ -448,61 +441,11 @@ const Home = () => {
     }
   };
 
-  // 최근 활동 데이터 로드
+  // 최근 활동 데이터 로드 - 제거됨 (RecentActivities에서 독립적으로 처리)
   const loadRecentActivitiesForDate = async (date) => {
-    try {
-      setActivitiesLoading(true);
-      
-      const dateString = getLocalDateString(date);
-      const seniorsResponse = await getSeniorsWithPagination(0, 100, 'createdAt,desc');
-      
-      const seniors = seniorsResponse.content || [];
-      if (seniors.length === 0) {
-        console.warn('관리하는 Senior가 없습니다.');
-        setRecentActivitiesData([]);
-        return;
-      }
-      
-      const firstSeniorId = seniors[0].id;
-      const activitiesResponse = await getSeniorDailyActivities(firstSeniorId);
-      
-      const seniorData = activitiesResponse?.seniors?.[0];
-      const allActivities = seniorData?.dailyActivities || [];
-      
-      const filteredActivities = allActivities.filter(activity => {
-        const activityDate = activity.activityDate;
-        if (activityDate) {
-          return activityDate === dateString;
-        }
-        return false;
-      });
-      
-      const formattedActivities = filteredActivities.slice(0, 10).map(activity => {
-        let status = 'success';
-        
-        if (activity.sleepQuality === 'bad' || activity.mealCount === 0) {
-          status = 'error';
-        }
-        else if (activity.sleepQuality === 'normal' || activity.mealCount === 1) {
-          status = 'warning';
-        }
-        
-        return {
-          time: activity.createdAt ? new Date(activity.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '--:--',
-          user: seniorData?.seniorName || '어르신',
-          activity: `식사 ${activity.mealCount || 0}회, 수면: ${activity.sleepQuality || '미기록'}, ${activity.dailyNotes || '상세내용없음'}`,
-          status: status
-        };
-      });
-      
-      setRecentActivitiesData(formattedActivities);
-      
-    } catch (error) {
-      console.error('Recent Activities 데이터 로드 오류:', error);
-      setRecentActivitiesData([]);
-    } finally {
-      setActivitiesLoading(false);
-    }
+    // 이 함수는 더 이상 사용되지 않음
+    // RecentActivities 컴포넌트가 직접 데이터를 로드함
+    console.log('주의: loadRecentActivitiesForDate는 더 이상 사용되지 않습니다.');
   };
 
   // 컴포넌트 마운트 시 초기 데이터 로드
@@ -574,7 +517,7 @@ const Home = () => {
               justifyContent: 'space-between',
               alignItems: 'center',
               height: '200px',              
-              marginBottom: 3,
+              marginBottom: 0, // 완전히 제거
               paddingTop: 1
             }}>
               <Box sx={{
@@ -597,7 +540,7 @@ const Home = () => {
               display: 'grid',
               gridTemplateColumns: '1fr 1fr 1fr',
               gap: 2,
-              padding: `0 0 2.5 0`
+              padding: `0 0 0 0` // 패딩도 완전히 제거
             }}>
               {/* 바이탈 사인 차트 */}
               <VitalSignsChart 
@@ -605,10 +548,10 @@ const Home = () => {
                 selectedDate={selectedDate}
               />
 
-              {/* 최근 활동 현황 */}
+              {/* 오늘의 일정 */}
               <RecentActivities 
-                recentActivitiesData={recentActivitiesData}
-                activitiesLoading={activitiesLoading}
+                selectedDate={selectedDate}
+                selectedSenior={selectedSenior}
               />
 
               {/* 관리 대상자 정보 */}
@@ -621,7 +564,7 @@ const Home = () => {
                 overflow: 'auto',
                 boxShadow: 2
               }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ flexShrink: 0 }}>
                   📊 관리 대상자 항목
                 </Typography>
                 
@@ -648,30 +591,44 @@ const Home = () => {
           </Box>
 
           {/* 오른쪽 세로 긴 박스 - 달력과 날씨 */}
-          <Paper sx={{
-            width: '320px',
-            backgroundColor: '#ffffff',
-            border: theme => `1px solid ${theme.palette.divider}`,
-            borderRadius: 2,
-            padding: 2,
-            display: 'flex',
-            flexDirection: 'column',
-            boxShadow: 2,
-            transition: 'all 0.3s ease-in-out',
-          }}
+          <Paper
+            sx={{
+              width: '320px',
+              height: '705px', // ✅ 전체 높이 고정
+              backgroundColor: '#ffffff',
+              border: (theme) => `1px solid ${theme.palette.divider}`,
+              borderRadius: 2,
+              padding: 2,
+              display: 'flex',
+              flexDirection: 'column',              
+              boxShadow: 2,
+              transition: 'all 0.3s ease-in-out',
+              overflow: 'hidden', // 혹시 넘칠 경우 대비
+            }}
           >
-          <Typography variant="h6" fontWeight="bold" gutterBottom>
-            📅 조회 날짜
-          </Typography>
-
-          <Box sx={{ width: '100%', marginBottom: 2 }}>
-            <CalendarWidget
-              selectedDate={selectedDate}
-              onDateChange={handleDateChange}
-            />
-          </Box>
-
-          <WeatherWidget selectedDate={selectedDate} />
+            {/* 제목 */}
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              📅 조회 날짜
+            </Typography>
+            {/* 달력 영역 - 상단 고정 */}
+            <Box sx={{
+              height: '280px', // 달력 6주 표시 시 최대 높이에 맞춰 고정
+              flexShrink: 0, // 크기 고정
+              marginBottom: 2
+            }}>
+              <CalendarWidget
+                selectedDate={selectedDate}
+                onDateChange={handleDateChange}
+              />
+            </Box>
+            
+            {/* 날씨 위젯 - 하단 고정 */}
+            <Box sx={{ 
+              flexShrink: 0,
+              marginTop: 'flex' // 하단에 배치
+            }}>
+              <WeatherWidget selectedDate={selectedDate} />
+            </Box>
           </Paper>
         </Box>
       </Paper>

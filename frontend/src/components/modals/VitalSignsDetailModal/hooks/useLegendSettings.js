@@ -1,37 +1,38 @@
 import { useState, useEffect } from 'react';
 import { getMainChartLegendSettings, saveMainChartLegendSetting } from '../../../../api/apiClient';
+import { getAuthToken } from '../../../../utils/auth';
 
-// 기본 범례 설정 (영어 키 사용)
+// 기본 범례 설정 (DB 저장 형식에 맞춤 키 사용)
 const DEFAULT_LEGEND_SETTINGS = {
-  'systolic_bp': true,      // 수축기 혈압
-  'diastolic_bp': true,     // 이완기 혈압
-  'heart_rate': true,       // 심박수
-  'temperature': true,      // 체온
-  'blood_sugar': true       // 혈당
+  'legend_systolic_bp': true,      // 수축기 혈압
+  'legend_diastolic_bp': true,     // 이완기 혈압
+  'legend_heart_rate': true,       // 심박수
+  'legend_temperature': true,      // 체온
+  'legend_blood_sugar': true       // 혈당
 };
 
 // 키 변환 함수들
 const convertToSafeKey = (displayKey) => {
-  // 표시용 키를 영어 키로 변환하는 매핑
+  // 표시용 키를 DB 저장용 키로 변환하는 매핑
   const keyMapping = {
-    '수축기 혈압 (mmHg)': 'systolic_bp',
-    '이완기 혈압 (mmHg)': 'diastolic_bp',
-    '심박수 (bpm)': 'heart_rate',
-    '체온 (°C)': 'temperature',
-    '혈당 (mg/dL)': 'blood_sugar'
+    '수축기 혈압 (mmHg)': 'legend_systolic_bp',
+    '이완기 혈압 (mmHg)': 'legend_diastolic_bp',
+    '심박수 (bpm)': 'legend_heart_rate',
+    '체온 (°C)': 'legend_temperature',
+    '혈당 (mg/dL)': 'legend_blood_sugar'
   };
   
   return keyMapping[displayKey] || displayKey;
 };
 
 const convertToDisplayKey = (safeKey) => {
-  // 영어 키를 원래 표시용 키로 변환하는 매핑
+  // DB 저장용 키를 표시용 키로 변환하는 매핑
   const keyMapping = {
-    'systolic_bp': '수축기 혈압 (mmHg)',
-    'diastolic_bp': '이완기 혈압 (mmHg)',
-    'heart_rate': '심박수 (bpm)',
-    'temperature': '체온 (°C)',
-    'blood_sugar': '혈당 (mg/dL)'
+    'legend_systolic_bp': '수축기 혈압 (mmHg)',
+    'legend_diastolic_bp': '이완기 혈압 (mmHg)',
+    'legend_heart_rate': '심박수 (bpm)',
+    'legend_temperature': '체온 (°C)',
+    'legend_blood_sugar': '혈당 (mg/dL)'
   };
   
   return keyMapping[safeKey] || safeKey;
@@ -55,7 +56,24 @@ export const useLegendSettings = () => {
     const loadLegendSettings = async () => {
       try {
         setLoading(true);
-        const savedSettings = await getMainChartLegendSettings();
+        // 인증 토큰에서 guardianId 추출
+        const token = getAuthToken();
+        if (!token) {
+          console.warn('인증 토큰이 없어 기본값 사용');
+          return;
+        }
+        
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        let guardianId = payload.guardianId || payload.guardian_id || payload.id;
+        
+        // guardianId가 없으면 오류 발생
+        if (!guardianId) {
+          console.error('❌ JWT에 guardianId가 없음 - payload:', payload);
+          throw new Error('JWT에 guardianId가 포함되지 않았습니다. 다시 로그인해주세요.');
+        }
+        
+        // DB에서 범례 설정 조회
+        const savedSettings = await getMainChartLegendSettings(guardianId, 'vital_detail');
         
         // 저장된 설정이 있으면 병합, 없으면 기본값 사용
         if (Object.keys(savedSettings).length > 0) {
@@ -67,14 +85,14 @@ export const useLegendSettings = () => {
             displaySettings[displayKey] = value;
           });
           
-          // 저장된 설정으로 덮어쓰기
-          Object.entries(savedSettings).forEach(([safeKey, value]) => {
-            const displayKey = convertToDisplayKey(safeKey);
+          // 저장된 설정으로 덮어쓰기 (DB 키를 표시용 키로 변환)
+          Object.entries(savedSettings).forEach(([dbKey, value]) => {
+            const displayKey = convertToDisplayKey(dbKey);
             displaySettings[displayKey] = value;
           });
           
           setLegendSettings(displaySettings);
-          console.log('💾 저장된 범례 설정 로드:', displaySettings);
+          console.log('💾 DB에서 범례 설정 로드:', displaySettings);
         } else {
           console.log('🆕 저장된 범례 설정 없음, 기본값 사용');
         }
@@ -98,21 +116,28 @@ export const useLegendSettings = () => {
         [displayKey]: isVisible
       }));
       
-      // 서버에 저장 (안전한 키로 변환해서 저장)
-      await saveMainChartLegendSetting(displayKey, isVisible);
-      console.log(`✅ 범례 설정 저장 성공: ${displayKey} = ${isVisible}`);
+      // 서버에 저장 (displayKey를 그대로 전달, 백엔드에서 DB 키로 변환)
+      await saveMainChartLegendSetting(displayKey, isVisible, 'vital_detail');
+      console.log(`✅ 범례 설정 DB 저장 성공: ${displayKey} = ${isVisible}`);
       
     } catch (error) {
       console.error('범례 설정 저장 실패:', error);
       
-      // 저장 실패 시 이전 상태로 복구
+      // 서버 오류 타입에 따라 다른 처리
+      if (error.response?.status === 500) {
+        console.warn('🚨 서버 내부 오류: 범례 설정 임시 로컬 저장만 수행');
+        // UI는 업데이트된 상태로 유지 (로컬 저장만)
+        return; // 상태 될리기하지 않음
+      }
+      
+      // 그 외 오류는 이전 상태로 복구
       setLegendSettings(prev => ({
         ...prev,
         [displayKey]: !isVisible
       }));
       
       // 사용자에게 알림 (선택사항)
-      alert('범례 설정 저장에 실패했습니다. 다시 시도해주세요.');
+      console.warn('⚠️ 범례 설정 저장에 실패했지만 임시로 로컬에서 유지됩니다.');
     }
   };
 

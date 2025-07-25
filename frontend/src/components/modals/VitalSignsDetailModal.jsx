@@ -108,21 +108,50 @@ const VitalSignsDetailModal = ({
     window.location.href = url;
   };
 
-  // 🎯 간단한 커스텀 범례 클릭 핸들러
   // 🎯 범례 클릭 핸들러 (측정분포 연동 + 서버 저장) - 안전한 처리
   const handleLegendClick = (event, legendItem, legend) => {
-    console.log('🔄 범례 클릭 시작:', legendItem);
+    console.log('🔄 범례 클릭 시작:', { event, legendItem, legend });
     
-    // ❗ Chart.js 기본 동작을 안전하게 차단
-    if (event && typeof event.preventDefault === 'function') {
-      event.preventDefault();
+    // ❗ Chart.js 기본 동작을 안전하게 차단 (향상된 이벤트 처리)
+    try {
+      if (event) {
+        // 이벤트 객체가 제대로 된 이벤트인지 확인
+        if (typeof event === 'object' && event.constructor && event.constructor.name === 'Event') {
+          if (typeof event.preventDefault === 'function') {
+            event.preventDefault();
+          }
+          if (typeof event.stopPropagation === 'function') {
+            event.stopPropagation();
+          }
+          if (typeof event.stopImmediatePropagation === 'function') {
+            event.stopImmediatePropagation();
+          }
+        }
+      }
+    } catch (eventError) {
+      console.warn('⚠️ 이벤트 처리 중 오류:', eventError);
     }
-    if (event && typeof event.stopPropagation === 'function') {
-      event.stopPropagation();
+    
+    // 필수 파라미터 안전성 확인
+    if (!legend || !legend.chart) {
+      console.warn('❌ legend 또는 legend.chart가 없음:', { legend });
+      return false;
+    }
+    
+    if (!legendItem || typeof legendItem.datasetIndex !== 'number') {
+      console.warn('❌ legendItem 또는 datasetIndex가 없음:', { legendItem });
+      return false;
     }
     
     const chart = legend.chart;
     const datasetIndex = legendItem.datasetIndex;
+    
+    // 데이터셋 유효성 확인
+    if (!chart.data || !chart.data.datasets || !chart.data.datasets[datasetIndex]) {
+      console.warn('❌ 데이터셋이 없음:', { datasetIndex, datasets: chart.data?.datasets });
+      return false;
+    }
+    
     const datasetLabel = chart.data.datasets[datasetIndex].label;
     
     console.log('🔍 Chart info:', {
@@ -140,24 +169,45 @@ const VitalSignsDetailModal = ({
     });
     
     // 상태 전환
-    if (isCurrentlyVisible) {
-      chart.hide(datasetIndex);
-      console.log(`👁️ ${datasetLabel} 숨김`);
-    } else {
-      chart.show(datasetIndex);
-      console.log(`👁️ ${datasetLabel} 표시`);
+    try {
+      if (isCurrentlyVisible) {
+        chart.hide(datasetIndex);
+        console.log(`👁️ ${datasetLabel} 숨김`);
+      } else {
+        chart.show(datasetIndex);
+        console.log(`👁️ ${datasetLabel} 표시`);
+      }
+    } catch (error) {
+      console.error('❌ 차트 상태 전환 오류:', error);
+      return false;
     }
     
     const newVisibility = chart.isDatasetVisible(datasetIndex);
     
-    console.log('🔍 상태 전환 완룼:', { 
+    console.log('🔍 상태 전환 완료:', { 
       before: isCurrentlyVisible,
       after: newVisibility,
       datasetLabel
     });
     
+    // 범례 스타일 업데이트 (숨겨진 데이터셋의 범례 표시 변경)
+    try {
+      // Chart.js의 legend.update()는 오류를 발생시킬 수 있으므로
+      // 차트 전체를 업데이트하여 범례 상태 반영
+      if (typeof chart.update === 'function') {
+        chart.update('none'); // 애니메이션 없이 즐시 업데이트
+      }
+    } catch (error) {
+      console.error('❌ 차트 업데이트 오류 (무시함):', error);
+      // 오류가 발생해도 계속 진행
+    }
+    
     // 서버에 저장
-    handleLegendSettingChange(datasetLabel, newVisibility);
+    try {
+      handleLegendSettingChange(datasetLabel, newVisibility);
+    } catch (error) {
+      console.error('❌ 범례 설정 저장 중 오류:', error);
+    }
     
     console.log('📊 범례 클릭 결과:', datasetLabel, '상태:', newVisibility);
     
@@ -344,8 +394,53 @@ const VitalSignsDetailModal = ({
           },
           legend: {
             position: 'top',
-            labels: { usePointStyle: true, padding: 20 },
-            onClick: handleLegendClick  // 🎯 범례 클릭 핸들러 추가
+            labels: {
+              usePointStyle: true,
+              padding: 20,
+              // 숨겨진 데이터셋의 범례 스타일 커스터마이징
+              generateLabels: function(chart) {
+                const original = Chart.defaults.plugins.legend.labels.generateLabels;
+                const labels = original.call(this, chart);
+                
+                labels.forEach((label, index) => {
+                  const dataset = chart.data.datasets[index];
+                  const isVisible = chart.isDatasetVisible(index);
+                  
+                  if (!isVisible) {
+                    // 숨겨진 데이터셋의 범례 스타일 변경
+                    label.fillStyle = 'rgba(128, 128, 128, 0.3)'; // 회색으로 변경
+                    label.strokeStyle = 'rgba(128, 128, 128, 0.3)';
+                    label.lineWidth = 1;
+                    // 범례 텍스트도 흐리게 표시
+                    label.fontColor = 'rgba(128, 128, 128, 0.6)';
+                  } else {
+                    // 보이는 데이터셋은 원래 색상 유지
+                    label.fillStyle = dataset.borderColor;
+                    label.strokeStyle = dataset.borderColor;
+                    label.lineWidth = 2;
+                    label.fontColor = '#000';
+                  }
+                });
+                
+                return labels;
+              }
+            },
+            onClick: function(event, legendItem, legend) {
+              // 🛡️ 최대한 안전하게 처리 - Chart.js 오류 방지
+              try {
+                // 우리의 핸들러만 호출하고 Chart.js 기본 동작 완전 차단
+                if (legendItem && legend) {
+                  handleLegendClick(event, legendItem, legend);
+                }
+                
+                // Chart.js 내부 처리 완전 차단
+                return false;
+                
+              } catch (error) {
+                console.warn('⚠️ 범례 클릭 오류 무시:', error);
+                return false;
+              }
+            }  // 🛡️ 안전한 범례 핸들러
           },
           tooltip: {
             filter: function(tooltipItem) {

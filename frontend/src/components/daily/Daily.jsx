@@ -242,6 +242,10 @@ const Daily = () => {
         if (Array.isArray(data)) {
           console.log('데이터가 배열입니다.');
           activitiesArray = data;
+        } else if (data && data.dailyActivities && Array.isArray(data.dailyActivities)) {
+          console.log('데이터가 dailyActivities 구조입니다.');
+          // 새로운 SeniorDailyDto 구조에서 dailyActivities 추출
+          activitiesArray = data.dailyActivities;
         } else if (data && data.seniors && Array.isArray(data.seniors)) {
           console.log('데이터가 seniors 구조입니다.');
           // SeniorDailyListDto 구조에서 dailyActivities 추출

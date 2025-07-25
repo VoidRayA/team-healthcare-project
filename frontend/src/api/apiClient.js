@@ -899,70 +899,86 @@ export const saveThresholdDisplaySetting = async (thresholdKey, isVisible) => {
 };
 
 // =================================================================
-// 메인 차트 범례 설정 관련 API 함수들 (2025.07.25 신규 추가)
+// Chart Legend Settings 관련 API 함수들 (2025.07.25 신규 추가) - 이동됨
 // =================================================================
 
 /**
- * 메인 차트 범례 설정 조회
- * @returns {Promise} 범례 표시 설정 오브젝트
+ * 차트 범례 설정 조회
+ * @param {number} guardianId - Guardian ID
+ * @param {string} chartType - 차트 타입 (기본값: 'vital_detail')
+ * @returns {Promise<Object>} 범례 설정 데이터
  */
-export const getMainChartLegendSettings = async () => {
+export const getMainChartLegendSettings = async (guardianId, chartType = 'vital_detail') => {
   try {
-    const response = await getUserSettingsByCategory('main_chart');  // 카테고리: 'main_chart'
-    
-    // 배열을 오브젝트로 변환
-    const legendSettings = {};
-    if (Array.isArray(response)) {
-      response.forEach(setting => {
-        // legend_ 로 시작하는 설정만 필터링
-        if (setting.subCategory.startsWith('legend_')) {
-          const cleanKey = setting.subCategory.replace('legend_', '');
-          legendSettings[cleanKey] = setting.values === 'true';
+    // guardianId가 전달되지 않았다면 JWT에서 추출
+    if (!guardianId) {
+      const token = getAuthToken();
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        guardianId = payload.guardianId || payload.guardian_id || payload.id;
+        
+        if (!guardianId && payload.sub) {
+          console.warn('⚠️ JWT에 guardianId가 없음. 사용자 이름:', payload.sub);
+          throw new Error('JWT에 guardianId가 포함되지 않았습니다. 다시 로그인해주세요.');
         }
-      });
+      }
+      
+      if (!guardianId) {
+        console.error('❌ guardianId가 없음 - JWT payload:', payload);
+        throw new Error('JWT에서 guardianId를 추출할 수 없습니다. 다시 로그인해주세요.');
+      }
     }
     
-    console.log('📊 로드된 범례 설정:', legendSettings);
-    return legendSettings;
+    const response = await apiClient.get(`/api/user-settings/chart-legend`, {
+      params: { guardianId, chartType }
+    });
+    return response.data.data || {}; // { "legend_systolic_bp": true, "legend_heart_rate": false, ... }
   } catch (error) {
     console.error('범례 설정 조회 실패:', error);
-    throw error;
+    return {}; // 오류 시 빈 객체 반환
   }
 };
 
 /**
- * 메인 차트 범례 설정 저장
- * @param {string} legendKey - 범례 키 ('수축기 혈압 (mmHg)' 등)
- * @param {boolean} isVisible - 표시 여부
- * @returns {Promise} 저장된 설정 데이터
+ * 차트 범례 설정 저장
+ * @param {string} datasetLabel - 데이터셋 라벨
+ * @param {boolean} isVisible - 가시성 여부
+ * @param {string} chartType - 차트 타입 (기본값: 'vital_detail')
+ * @returns {Promise} 저장 결과
  */
-export const saveMainChartLegendSetting = async (legendKey, isVisible) => {
+export const saveMainChartLegendSetting = async (datasetLabel, isVisible, chartType = 'vital_detail') => {
   try {
-    // 표시용 키를 영어 키로 변환
-    const keyMapping = {
-      '수축기 혈압 (mmHg)': 'systolic_bp',
-      '이완기 혈압 (mmHg)': 'diastolic_bp',
-      '심박수 (bpm)': 'heart_rate',
-      '체온 (°C)': 'temperature',
-      '혈당 (mg/dL)': 'blood_sugar'
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('인증 토큰이 없습니다.');
+    }
+    
+    // JWT 토큰에서 payload 추출
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    console.log('🔑 JWT payload:', payload); // 디버깅
+    
+    // guardianId 추출 시도 - 임시로 고정값 사용
+    let guardianId = payload.guardianId || payload.guardian_id || payload.id;
+    
+    if (!guardianId) {
+      console.error('❌ JWT에 guardianId가 없음 - payload:', payload);
+      throw new Error('JWT에 guardianId가 포함되지 않았습니다. 다시 로그인해주세요.');
+    }
+    
+    const requestData = {
+      guardianId,
+      chartType,
+      datasetLabel,
+      isVisible
     };
     
-    const safeKey = keyMapping[legendKey] || legendKey;
+    console.log('📤 API 요청 데이터:', requestData); // 디버깅
     
-    const settingData = {
-      category: 'main_chart',  // 카테고리: 'main_chart'
-      subCategory: `legend_${safeKey}`,  // 서브카테고리: 'legend_systolic_bp' 등
-      values: isVisible.toString()
-    };
+    const response = await apiClient.post('/api/user-settings/chart-legend', requestData);
     
-    console.log('💾 범례 설정 저장 시도:', { originalKey: legendKey, safeKey, settingData });
-    
-    const response = await saveUserSetting(settingData);
-    console.log(`✅ 범례 설정 저장 성공: ${legendKey} = ${isVisible}`);
-    return response;
+    return response.data;
   } catch (error) {
-    console.error('❌ 범례 설정 저장 실패:', error);
-    console.error('❌ 에러 상세:', error.response?.data || error.message);
+    console.error('범례 설정 저장 실패:', error);
     throw error;
   }
 };

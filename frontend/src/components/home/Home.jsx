@@ -112,10 +112,9 @@ const Home = () => {
       console.log('로드된 Senior 목록:', seniorsList);
       setSeniors(seniorsList);
       
-      // 테스트 할머니(ID 34) 우선 선택, 없으면 첫 번째 Senior 선택
+      // 첫 번째 Senior 자동 선택
       if (seniorsList.length > 0 && !selectedSenior) {
-        const testGrandma = seniorsList.find(senior => senior.id === 34);
-        const targetSenior = testGrandma || seniorsList[0];
+        const targetSenior = seniorsList[0];
         
         console.log('기본 선택된 Senior:', targetSenior);
         setSelectedSenior(targetSenior);
@@ -518,7 +517,7 @@ const Home = () => {
               justifyContent: 'space-between',
               alignItems: 'center',
               height: '200px',              
-              marginBottom: 3,
+              marginBottom: 0, // 완전히 제거
               paddingTop: 1
             }}>
               <Box sx={{
@@ -541,7 +540,7 @@ const Home = () => {
               display: 'grid',
               gridTemplateColumns: '1fr 1fr 1fr',
               gap: 2,
-              padding: `0 0 2.5 0`
+              padding: `0 0 0 0` // 패딩도 완전히 제거
             }}>
               {/* 바이탈 사인 차트 */}
               <VitalSignsChart 
@@ -565,7 +564,7 @@ const Home = () => {
                 overflow: 'auto',
                 boxShadow: 2
               }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ flexShrink: 0 }}>
                   📊 관리 대상자 항목
                 </Typography>
                 
@@ -592,30 +591,44 @@ const Home = () => {
           </Box>
 
           {/* 오른쪽 세로 긴 박스 - 달력과 날씨 */}
-          <Paper sx={{
-            width: '320px',
-            backgroundColor: '#ffffff',
-            border: theme => `1px solid ${theme.palette.divider}`,
-            borderRadius: 2,
-            padding: 2,
-            display: 'flex',
-            flexDirection: 'column',
-            boxShadow: 2,
-            transition: 'all 0.3s ease-in-out',
-          }}
+          <Paper
+            sx={{
+              width: '320px',
+              height: '705px', // ✅ 전체 높이 고정
+              backgroundColor: '#ffffff',
+              border: (theme) => `1px solid ${theme.palette.divider}`,
+              borderRadius: 2,
+              padding: 2,
+              display: 'flex',
+              flexDirection: 'column',              
+              boxShadow: 2,
+              transition: 'all 0.3s ease-in-out',
+              overflow: 'hidden', // 혹시 넘칠 경우 대비
+            }}
           >
-          <Typography variant="h6" fontWeight="bold" gutterBottom>
-            📅 조회 날짜
-          </Typography>
-
-          <Box sx={{ width: '100%', marginBottom: 2 }}>
-            <CalendarWidget
-              selectedDate={selectedDate}
-              onDateChange={handleDateChange}
-            />
-          </Box>
-
-          <WeatherWidget selectedDate={selectedDate} />
+            {/* 제목 */}
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              📅 조회 날짜
+            </Typography>
+            {/* 달력 영역 - 상단 고정 */}
+            <Box sx={{
+              height: '280px', // 달력 6주 표시 시 최대 높이에 맞춰 고정
+              flexShrink: 0, // 크기 고정
+              marginBottom: 2
+            }}>
+              <CalendarWidget
+                selectedDate={selectedDate}
+                onDateChange={handleDateChange}
+              />
+            </Box>
+            
+            {/* 날씨 위젯 - 하단 고정 */}
+            <Box sx={{ 
+              flexShrink: 0,
+              marginTop: 'flex' // 하단에 배치
+            }}>
+              <WeatherWidget selectedDate={selectedDate} />
+            </Box>
           </Paper>
         </Box>
       </Paper>

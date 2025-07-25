@@ -3,6 +3,8 @@ import { Box, Typography, Paper, Button, Chip, Grid } from '@mui/material';
 import { TrendingUp, Warning, CheckCircle, Visibility } from '@mui/icons-material';
 import { getVitalSignsByDate } from '../../api/apiClient';
 import VitalSignsDetailModal from '../modals/VitalSignsDetailModal';
+import UserSettingService from '../../services/userSettingService';
+import { getUserInfo } from '../../utils/auth';
 
 // 로컬 시간대 기준 날짜 문자열 생성 함수
 const getLocalDateString = (date) => {
@@ -19,6 +21,7 @@ const VitalSignsChart = ({
   const [vitalSignsData, setVitalSignsData] = useState([]);
   const [vitalSignsLoading, setVitalSignsLoading] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [vitalSignSettings, setVitalSignSettings] = useState(null); // Guardian의 기준선 설정
 
   // 최신 측정값 계산
   const getLatestVitals = (data) => {
@@ -38,34 +41,77 @@ const VitalSignsChart = ({
     };
   };
 
-  // 상태 분석 (간단 버전)
+  // 상태 분석 (Guardian의 개별 설정 기준선 사용)
   const analyzeStatus = (data) => {
     if (!data || data.length === 0) return { status: 'no-data', message: '데이터 없음' };
+    if (!vitalSignSettings) {
+      console.log('⚠️ Guardian 기준선 설정이 아직 로드되지 않음');
+      return { status: 'loading', message: '설정 로딩 중...' };
+    }
 
     const latest = data[data.length - 1];
+    const settings = vitalSignSettings;
     
-    // 위험 수치 판정
-    if (latest.bloodPressureHigh >= 180 || latest.bloodPressureHigh <= 90 ||
-        latest.bloodPressureLow >= 110 || latest.bloodPressureLow <= 60 ||
-        latest.heartRate >= 100 || latest.heartRate <= 50 ||
-        latest.bodyTemperature >= 38.0 || latest.bodyTemperature <= 35.5 ||
-        latest.bloodSugar >= 250 || latest.bloodSugar <= 70) {
+    console.log('📊 바이탈 사인 분석 시작:');
+    console.log('   최신 측정값:', latest);
+    console.log('   적용된 기준선:', settings);
+    
+    // 위험(attention) 수치 판정
+    if (latest.bloodPressureHigh >= settings.bloodPressure.attentionMax || 
+        latest.bloodPressureHigh <= settings.bloodPressure.attentionMin ||
+        latest.bloodPressureLow >= settings.bloodPressure.diastolicAttentionMax || 
+        latest.bloodPressureLow <= settings.bloodPressure.diastolicAttentionMin ||
+        latest.heartRate >= settings.heartRate.attentionMax || 
+        latest.heartRate <= settings.heartRate.attentionMin ||
+        latest.bodyTemperature >= settings.bodyTemperature.attentionMax || 
+        latest.bodyTemperature <= settings.bodyTemperature.attentionMin ||
+        latest.bloodSugar >= settings.bloodSugar.attentionMax || 
+        latest.bloodSugar <= settings.bloodSugar.attentionMin) {
+      console.log('🚨 위험 수치 감지!');
       return { status: 'danger', message: '즉시 확인 필요' };
     }
     
-    // 경고 수치 판정
-    if (latest.bloodPressureHigh >= 140 || latest.bloodPressureHigh <= 100 ||
-        latest.bloodPressureLow >= 90 || latest.bloodPressureLow <= 65 ||
-        latest.heartRate >= 90 || latest.heartRate <= 60 ||
-        latest.bodyTemperature >= 37.5 || latest.bodyTemperature <= 36.0 ||
-        latest.bloodSugar >= 180 || latest.bloodSugar <= 80) {
+    // 주의(caution) 수치 판정
+    if (latest.bloodPressureHigh >= settings.bloodPressure.cautionMax || 
+        latest.bloodPressureHigh <= settings.bloodPressure.cautionMin ||
+        latest.bloodPressureLow >= settings.bloodPressure.diastolicCautionMax || 
+        latest.bloodPressureLow <= settings.bloodPressure.diastolicCautionMin ||
+        latest.heartRate >= settings.heartRate.cautionMax || 
+        latest.heartRate <= settings.heartRate.cautionMin ||
+        latest.bodyTemperature >= settings.bodyTemperature.cautionMax || 
+        latest.bodyTemperature <= settings.bodyTemperature.cautionMin ||
+        latest.bloodSugar >= settings.bloodSugar.cautionMax || 
+        latest.bloodSugar <= settings.bloodSugar.cautionMin) {
+      console.log('⚠️ 주의 수치 감지!');
       return { status: 'warning', message: '주의 관찰' };
     }
     
+    console.log('✅ 정상 수치 범위');
     return { status: 'normal', message: '정상 범위' };
   };
 
-  // 바이탈 사인 데이터 로드
+  // Guardian의 바이탈 사인 기준선 설정 로드
+  const loadVitalSignSettings = async () => {
+    try {
+      const userInfo = getUserInfo();
+      if (!userInfo || !userInfo.guardianId) {
+        console.warn('⚠️ 사용자 정보가 없어서 기본 설정을 사용합니다.');
+        console.log('사용자 정보:', userInfo);
+        setVitalSignSettings(UserSettingService.getDefaultVitalSignSettings());
+        return;
+      }
+      
+      console.log('🔧 Guardian 기준선 설정 로드 시작:', userInfo.guardianId);
+      const settings = await UserSettingService.getVitalSignSettings(userInfo.guardianId);
+      
+      console.log('✅ Guardian 기준선 설정 로드 성공:', settings);
+      setVitalSignSettings(settings);
+    } catch (error) {
+      console.error('❌ Guardian 기준선 설정 로드 실패:', error);
+      // 에러 시 기본 설정 사용
+      setVitalSignSettings(UserSettingService.getDefaultVitalSignSettings());
+    }
+  };
   const loadVitalSignsData = async (seniorId, date = null) => {
     try {
       setVitalSignsLoading(true);
@@ -102,13 +148,21 @@ const VitalSignsChart = ({
     }
   };
 
+  // 컴포넌트 마운트 시 Guardian 설정 로드
+  useEffect(() => {
+    console.log('🚀 VitalSignsChart 컴포넌트 마운트');
+    loadVitalSignSettings();
+  }, []); // 컴포넌트 마운트 시 한 번만 실행
+
   // selectedDate 또는 selectedSenior가 변경될 때마다 데이터 로드
   useEffect(() => {
     console.log('🔄 VitalSignsChart useEffect 트리거됨!');
     console.log('   - selectedSenior:', selectedSenior?.seniorName);
     console.log('   - selectedDate:', selectedDate);
+    console.log('   - vitalSignSettings 존재:', !!vitalSignSettings);
     
-    if (selectedSenior && selectedSenior.id && selectedDate) {
+    // Guardian 기준선 설정과 Senior 정보가 모두 있을 때만 데이터 로드
+    if (selectedSenior && selectedSenior.id && selectedDate && vitalSignSettings) {
       const dateString = getLocalDateString(selectedDate);
       console.log(`🔄 바이탈 데이터 로드 시작: ${dateString}`);
       
@@ -119,9 +173,18 @@ const VitalSignsChart = ({
       return () => clearTimeout(timeout);
     } else {
       console.log('🚫 조건 미충족 - 데이터 초기화');
+      if (!vitalSignSettings) {
+        console.log('   - Guardian 설정이 아직 로드되지 않음');
+      }
+      if (!selectedSenior?.id) {
+        console.log('   - Senior가 선택되지 않음');
+      }
+      if (!selectedDate) {
+        console.log('   - 날짜가 선택되지 않음');
+      }
       setVitalSignsData([]);
     }
-  }, [selectedDate, selectedSenior]);
+  }, [selectedDate, selectedSenior, vitalSignSettings]); // vitalSignSettings 의존성 추가
 
   const latestVitals = getLatestVitals(vitalSignsData);
   const statusAnalysis = analyzeStatus(vitalSignsData);
@@ -176,14 +239,16 @@ const VitalSignsChart = ({
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
               <Chip
               icon={
-              statusAnalysis.status === 'attention' ? <Warning /> :
-              statusAnalysis.status === 'caution' ? <TrendingUp /> :
+              statusAnalysis.status === 'danger' ? <Warning /> :
+              statusAnalysis.status === 'warning' ? <TrendingUp /> :
+              statusAnalysis.status === 'loading' ? <TrendingUp /> :
               <CheckCircle />
               }
               label={statusAnalysis.message}
               color={
-              statusAnalysis.status === 'attention' ? 'warning' :
-              statusAnalysis.status === 'caution' ? 'info' :
+              statusAnalysis.status === 'danger' ? 'error' :
+              statusAnalysis.status === 'warning' ? 'warning' :
+              statusAnalysis.status === 'loading' ? 'info' :
               'success'
               }
               variant="filled"

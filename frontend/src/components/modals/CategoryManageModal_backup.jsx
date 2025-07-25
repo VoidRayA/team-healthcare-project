@@ -100,32 +100,16 @@ const CategoryManageModal = ({ open, onClose, onUpdate }) => {
     }
   };
 
-  // 항목 삭제 (사용 여부 체크 추가)
+  // 항목 삭제
   const handleDeleteItem = async (itemId, itemValue) => {
+    if (!window.confirm(`"${itemValue}" 항목을 삭제하시겠습니까?`)) {
+      return;
+    }
+
     try {
       setSubmitting(true);
       setError('');
       
-      // 먼저 항목 사용 여부를 체크
-      console.log('🔍 항목 사용 여부 체크 시작:', itemId, itemValue);
-      const usageCheck = await checkItemUsage(itemId);
-      
-      if (!usageCheck.success) {
-        setError('항목 사용 여부를 확인할 수 없습니다.');
-        return;
-      }
-      
-      // 사용 중인 항목이면 삭제 불가
-      if (!usageCheck.canDelete) {
-        setError(`⚠️ "${itemValue}" 항목은 현재 ${usageCheck.usageCount}개의 활동 기록에서 사용 중이므로 삭제할 수 없습니다.`);
-        return;
-      }
-      
-      // 사용 안되는 항목이면 삭제 확인
-      if (!window.confirm(`"${itemValue}" 항목을 삭제하시겠습니까?\n\n이 항목은 현재 사용되지 않고 있어 안전하게 삭제할 수 있습니다.`)) {
-        return;
-      }
-
       const result = await deleteScheduleItem(itemId);
       
       if (result.success) {

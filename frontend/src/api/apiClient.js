@@ -18,6 +18,25 @@ export const getVitalSigns = async (seniorId) => {
 };
 
 /**
+ * 드롭다운 항목 사용 여부 체크
+ * @param {number} itemId - 체크할 항목 ID
+ * @returns {Promise} 사용 여부 체크 결과
+ */
+export const checkItemUsage = async (itemId) => {
+  try {
+    console.log('🔍 항목 사용 여부 체크 시도:', itemId);
+    
+    const response = await apiClient.get(`/api/user-settings/dropdown-item/${itemId}/usage-check`);
+    
+    console.log('✅ 항목 사용 여부 체크 결과:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ 항목 사용 여부 체크 실패:', error);
+    throw error;
+  }
+};
+
+/**
  * 특정 날짜의 생체 기록 조회
  * @param {number} seniorId - Senior ID
  * @param {string} date - 날짜 (YYYY-MM-DD 형식)
@@ -874,6 +893,75 @@ export const saveThresholdDisplaySetting = async (thresholdKey, isVisible) => {
     return response;
   } catch (error) {
     console.error('❌ 기준선 표시 설정 저장 실패:', error);
+    console.error('❌ 에러 상세:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// =================================================================
+// 메인 차트 범례 설정 관련 API 함수들 (2025.07.25 신규 추가)
+// =================================================================
+
+/**
+ * 메인 차트 범례 설정 조회
+ * @returns {Promise} 범례 표시 설정 오브젝트
+ */
+export const getMainChartLegendSettings = async () => {
+  try {
+    const response = await getUserSettingsByCategory('main_chart');  // 카테고리: 'main_chart'
+    
+    // 배열을 오브젝트로 변환
+    const legendSettings = {};
+    if (Array.isArray(response)) {
+      response.forEach(setting => {
+        // legend_ 로 시작하는 설정만 필터링
+        if (setting.subCategory.startsWith('legend_')) {
+          const cleanKey = setting.subCategory.replace('legend_', '');
+          legendSettings[cleanKey] = setting.values === 'true';
+        }
+      });
+    }
+    
+    console.log('📊 로드된 범례 설정:', legendSettings);
+    return legendSettings;
+  } catch (error) {
+    console.error('범례 설정 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 메인 차트 범례 설정 저장
+ * @param {string} legendKey - 범례 키 ('수축기 혈압 (mmHg)' 등)
+ * @param {boolean} isVisible - 표시 여부
+ * @returns {Promise} 저장된 설정 데이터
+ */
+export const saveMainChartLegendSetting = async (legendKey, isVisible) => {
+  try {
+    // 표시용 키를 영어 키로 변환
+    const keyMapping = {
+      '수축기 혈압 (mmHg)': 'systolic_bp',
+      '이완기 혈압 (mmHg)': 'diastolic_bp',
+      '심박수 (bpm)': 'heart_rate',
+      '체온 (°C)': 'temperature',
+      '혈당 (mg/dL)': 'blood_sugar'
+    };
+    
+    const safeKey = keyMapping[legendKey] || legendKey;
+    
+    const settingData = {
+      category: 'main_chart',  // 카테고리: 'main_chart'
+      subCategory: `legend_${safeKey}`,  // 서브카테고리: 'legend_systolic_bp' 등
+      values: isVisible.toString()
+    };
+    
+    console.log('💾 범례 설정 저장 시도:', { originalKey: legendKey, safeKey, settingData });
+    
+    const response = await saveUserSetting(settingData);
+    console.log(`✅ 범례 설정 저장 성공: ${legendKey} = ${isVisible}`);
+    return response;
+  } catch (error) {
+    console.error('❌ 범례 설정 저장 실패:', error);
     console.error('❌ 에러 상세:', error.response?.data || error.message);
     throw error;
   }

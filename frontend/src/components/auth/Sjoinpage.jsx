@@ -15,11 +15,7 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText,
-  Checkbox,
-  Select,
-  InputLabel,
-  MenuItem
+  ListItemText
 } from '@mui/material';
 import {
   DashboardOutlined,
@@ -66,12 +62,7 @@ const Sjoinpage = () => {
     medicalConditions: '',
     medications: '',
     specialNotes: '',
-    deviceSettings: {
-      galaxyWatch: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
-      appleWatch: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
-      miBand: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
-      customDevice: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' }
-    }
+
   });
   
   const [loading, setLoading] = useState(false);
@@ -115,12 +106,7 @@ const Sjoinpage = () => {
           medicalConditions: response.chronicDiseases || '',
           medications: response.medications || '',
           specialNotes: response.notes || '',
-          deviceSettings: response.deviceSettings || {
-            galaxyWatch: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
-            appleWatch: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
-            miBand: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
-            customDevice: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' }
-          }
+
         });
       }
       
@@ -144,19 +130,7 @@ const Sjoinpage = () => {
     setError('');
   };
 
-  // 기기 설정 뚀들러 함수
-  const handleDeviceChange = (deviceType, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      deviceSettings: {
-        ...prev.deviceSettings,
-        [deviceType]: {
-          ...prev.deviceSettings[deviceType],
-          [field]: value
-        }
-      }
-    }));
-  };
+
 
   const validateForm = () => {
     if (!formData.seniorName.trim()) {
@@ -207,8 +181,7 @@ const Sjoinpage = () => {
         emergencyContact: formData.emergencyContact,
         chronicDiseases: formData.medicalConditions || null,
         medications: formData.medications || null,
-        notes: formData.specialNotes || null,
-        deviceSettings: formData.deviceSettings || null
+        notes: formData.specialNotes || null
       };
 
       console.log('Senior 등록/수정 데이터:', submitData);
@@ -238,13 +211,7 @@ const Sjoinpage = () => {
           emergencyContact: '',
           medicalConditions: '',
           medications: '',
-          specialNotes: '',
-          deviceSettings: {
-            galaxyWatch: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
-            appleWatch: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
-            miBand: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' },
-            customDevice: { enabled: false, deviceModel: '', deviceId: '', connectionType: 'bluetooth' }
-          }
+          specialNotes: ''
         });
       }
       
@@ -901,363 +868,7 @@ const Sjoinpage = () => {
               </Box>
             </Box>
 
-            {/* 스마트 워치 연동 섹션 */}
-            <Box sx={{ height: '8px', backgroundColor: '#0869CC', margin: '20px 0' }} />
-            
-            <Typography sx={{
-              fontFamily: 'Pretendard',
-              fontWeight: 700,
-              fontSize: '24px',
-              color: '#000000',
-              textAlign: 'center',
-              marginBottom: '8px'
-            }}>
-              ⌚ 스마트 워치 연동 설정
-            </Typography>
-            
-            <Typography sx={{
-              fontFamily: 'Pretendard',
-              fontWeight: 400,
-              fontSize: '14px',
-              color: '#666',
-              textAlign: 'center',
-              marginBottom: '20px'
-            }}>
-              스마트 워치를 통해 혈압, 심박수, 체온, 산소포화도 등을 자동으로 측정할 수 있습니다
-            </Typography>
 
-            <Box>
-              {/* 갤럭시 워치 */}
-              <Box sx={{
-                display: 'flex',
-                alignItems: 'center',
-                minHeight: '100px',
-                borderBottom: '1px solid #0869CC',
-                borderTop: '2px solid #0869CC'
-              }}>
-                <Box sx={{
-                  width: '200px',
-                  height: '100%',
-                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'Pretendard',
-                  fontWeight: 700,
-                  fontSize: '16px',
-                  color: '#000000',
-                  minHeight: '100px',
-                  flexDirection: 'column',
-                  gap: '4px'
-                }}>
-                  ⌚ 갤럭시 워치
-                  <Typography sx={{ fontSize: '12px', color: '#666', fontWeight: 400 }}>
-                    (Samsung)
-                  </Typography>
-                </Box>
-                <Box sx={{
-                  flex: 1,
-                  backgroundColor: '#FFFFFF',
-                  padding: '16px 24px',
-                  minHeight: '100px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px'
-                }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox 
-                        checked={formData.deviceSettings?.galaxyWatch?.enabled || false}
-                        onChange={(e) => handleDeviceChange('galaxyWatch', 'enabled', e.target.checked)}
-                      />
-                    }
-                    label="갤럭시 워치 연동 사용"
-                    sx={{ '& .MuiFormControlLabel-label': { fontFamily: 'Pretendard', fontWeight: 500, fontSize: '16px' } }}
-                  />
-                  <Typography sx={{ fontSize: '12px', color: '#888', marginTop: '-8px' }}>
-                    • 측정 항목: 심박수, 혈압, 체온, 산소포화도, 스트레스 지수
-                  </Typography>
-                  {formData.deviceSettings?.galaxyWatch?.enabled && (
-                    <Box sx={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <TextField
-                        placeholder="Galaxy Watch 5 Pro"
-                        value={formData.deviceSettings?.galaxyWatch?.deviceModel || ''}
-                        onChange={(e) => handleDeviceChange('galaxyWatch', 'deviceModel', e.target.value)}
-                        size="small"
-                        sx={{ flex: 1, minWidth: '200px' }}
-                        label="워치 모델명"
-                      />
-                      <TextField
-                        placeholder="R920NXXU1AWE1"
-                        value={formData.deviceSettings?.galaxyWatch?.deviceId || ''}
-                        onChange={(e) => handleDeviceChange('galaxyWatch', 'deviceId', e.target.value)}
-                        size="small"
-                        sx={{ flex: 1, minWidth: '200px' }}
-                        label="디바이스 ID"
-                      />
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <InputLabel>연결 방식</InputLabel>
-                        <Select
-                          value={formData.deviceSettings?.galaxyWatch?.connectionType || 'bluetooth'}
-                          onChange={(e) => handleDeviceChange('galaxyWatch', 'connectionType', e.target.value)}
-                          label="연결 방식"
-                        >
-                          <MenuItem value="bluetooth">블루투스</MenuItem>
-                          <MenuItem value="wifi">WiFi</MenuItem>
-                          <MenuItem value="samsung_health">삼성 헬스</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-
-              {/* 애플 워치 */}
-              <Box sx={{
-                display: 'flex',
-                alignItems: 'center',
-                minHeight: '100px',
-                borderBottom: '1px solid #0869CC'
-              }}>
-                <Box sx={{
-                  width: '200px',
-                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'Pretendard',
-                  fontWeight: 700,
-                  fontSize: '16px',
-                  color: '#000000',
-                  minHeight: '100px',
-                  flexDirection: 'column',
-                  gap: '4px'
-                }}>
-                  🍎 애플 워치
-                  <Typography sx={{ fontSize: '12px', color: '#666', fontWeight: 400 }}>
-                    (Apple)
-                  </Typography>
-                </Box>
-                <Box sx={{
-                  flex: 1,
-                  backgroundColor: '#FFFFFF',
-                  padding: '16px 24px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px'
-                }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox 
-                        checked={formData.deviceSettings?.appleWatch?.enabled || false}
-                        onChange={(e) => handleDeviceChange('appleWatch', 'enabled', e.target.checked)}
-                      />
-                    }
-                    label="애플 워치 연동 사용"
-                    sx={{ '& .MuiFormControlLabel-label': { fontFamily: 'Pretendard', fontWeight: 500, fontSize: '16px' } }}
-                  />
-                  <Typography sx={{ fontSize: '12px', color: '#888', marginTop: '-8px' }}>
-                    • 측정 항목: 심박수, 혈압, 체온, 산소포화도, ECG
-                  </Typography>
-                  {formData.deviceSettings?.appleWatch?.enabled && (
-                    <Box sx={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <TextField
-                        placeholder="Apple Watch Ultra 2"
-                        value={formData.deviceSettings?.appleWatch?.deviceModel || ''}
-                        onChange={(e) => handleDeviceChange('appleWatch', 'deviceModel', e.target.value)}
-                        size="small"
-                        sx={{ flex: 1, minWidth: '200px' }}
-                        label="워치 모델명"
-                      />
-                      <TextField
-                        placeholder="ABCD1234WXYZ5678"
-                        value={formData.deviceSettings?.appleWatch?.deviceId || ''}
-                        onChange={(e) => handleDeviceChange('appleWatch', 'deviceId', e.target.value)}
-                        size="small"
-                        sx={{ flex: 1, minWidth: '200px' }}
-                        label="디바이스 ID"
-                      />
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <InputLabel>연결 방식</InputLabel>
-                        <Select
-                          value={formData.deviceSettings?.appleWatch?.connectionType || 'bluetooth'}
-                          onChange={(e) => handleDeviceChange('appleWatch', 'connectionType', e.target.value)}
-                          label="연결 방식"
-                        >
-                          <MenuItem value="bluetooth">블루투스</MenuItem>
-                          <MenuItem value="wifi">WiFi</MenuItem>
-                          <MenuItem value="health_kit">헬스킷</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-
-              {/* 샤오미 밴드 */}
-              <Box sx={{
-                display: 'flex',
-                alignItems: 'center',
-                minHeight: '100px',
-                borderBottom: '1px solid #0869CC'
-              }}>
-                <Box sx={{
-                  width: '200px',
-                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'Pretendard',
-                  fontWeight: 700,
-                  fontSize: '16px',
-                  color: '#000000',
-                  minHeight: '100px',
-                  flexDirection: 'column',
-                  gap: '4px'
-                }}>
-                  📱 샤오미 밴드
-                  <Typography sx={{ fontSize: '12px', color: '#666', fontWeight: 400 }}>
-                    (Mi Band)
-                  </Typography>
-                </Box>
-                <Box sx={{
-                  flex: 1,
-                  backgroundColor: '#FFFFFF',
-                  padding: '16px 24px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px'
-                }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox 
-                        checked={formData.deviceSettings?.miBand?.enabled || false}
-                        onChange={(e) => handleDeviceChange('miBand', 'enabled', e.target.checked)}
-                      />
-                    }
-                    label="샤오미 밴드 연동 사용"
-                    sx={{ '& .MuiFormControlLabel-label': { fontFamily: 'Pretendard', fontWeight: 500, fontSize: '16px' } }}
-                  />
-                  <Typography sx={{ fontSize: '12px', color: '#888', marginTop: '-8px' }}>
-                    • 측정 항목: 심박수, 수면 패턴, 활동량, 스트레스
-                  </Typography>
-                  {formData.deviceSettings?.miBand?.enabled && (
-                    <Box sx={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <TextField
-                        placeholder="Mi Band 8"
-                        value={formData.deviceSettings?.miBand?.deviceModel || ''}
-                        onChange={(e) => handleDeviceChange('miBand', 'deviceModel', e.target.value)}
-                        size="small"
-                        sx={{ flex: 1, minWidth: '200px' }}
-                        label="밴드 모델명"
-                      />
-                      <TextField
-                        placeholder="XMABC1234DEF"
-                        value={formData.deviceSettings?.miBand?.deviceId || ''}
-                        onChange={(e) => handleDeviceChange('miBand', 'deviceId', e.target.value)}
-                        size="small"
-                        sx={{ flex: 1, minWidth: '200px' }}
-                        label="디바이스 ID"
-                      />
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <InputLabel>연결 방식</InputLabel>
-                        <Select
-                          value={formData.deviceSettings?.miBand?.connectionType || 'bluetooth'}
-                          onChange={(e) => handleDeviceChange('miBand', 'connectionType', e.target.value)}
-                          label="연결 방식"
-                        >
-                          <MenuItem value="bluetooth">블루투스</MenuItem>
-                          <MenuItem value="mi_fit">Mi Fit 앱</MenuItem>
-                          <MenuItem value="mi_health">Mi Health</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-
-              {/* 기타 웨어러블 */}
-              <Box sx={{
-                display: 'flex',
-                alignItems: 'center',
-                minHeight: '100px',
-                borderBottom: '1px solid #0869CC'
-              }}>
-                <Box sx={{
-                  width: '200px',
-                  backgroundColor: 'rgba(51, 153, 255, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'Pretendard',
-                  fontWeight: 700,
-                  fontSize: '16px',
-                  color: '#000000',
-                  minHeight: '100px',
-                  flexDirection: 'column',
-                  gap: '4px'
-                }}>
-                  🔧 기타 기기
-                  <Typography sx={{ fontSize: '12px', color: '#666', fontWeight: 400 }}>
-                    (Custom)
-                  </Typography>
-                </Box>
-                <Box sx={{
-                  flex: 1,
-                  backgroundColor: '#FFFFFF',
-                  padding: '16px 24px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px'
-                }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox 
-                        checked={formData.deviceSettings?.customDevice?.enabled || false}
-                        onChange={(e) => handleDeviceChange('customDevice', 'enabled', e.target.checked)}
-                      />
-                    }
-                    label="기타 웨어러블 기기 연동"
-                    sx={{ '& .MuiFormControlLabel-label': { fontFamily: 'Pretendard', fontWeight: 500, fontSize: '16px' } }}
-                  />
-                  <Typography sx={{ fontSize: '12px', color: '#888', marginTop: '-8px' }}>
-                    • Fitbit, Garmin, Huawei Watch 등 기타 웨어러블 기기
-                  </Typography>
-                  {formData.deviceSettings?.customDevice?.enabled && (
-                    <Box sx={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <TextField
-                        placeholder="Fitbit Versa 4"
-                        value={formData.deviceSettings?.customDevice?.deviceModel || ''}
-                        onChange={(e) => handleDeviceChange('customDevice', 'deviceModel', e.target.value)}
-                        size="small"
-                        sx={{ flex: 1, minWidth: '200px' }}
-                        label="기기 모델명"
-                      />
-                      <TextField
-                        placeholder="FB1234WXYZ"
-                        value={formData.deviceSettings?.customDevice?.deviceId || ''}
-                        onChange={(e) => handleDeviceChange('customDevice', 'deviceId', e.target.value)}
-                        size="small"
-                        sx={{ flex: 1, minWidth: '200px' }}
-                        label="디바이스 ID"
-                      />
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <InputLabel>연결 방식</InputLabel>
-                        <Select
-                          value={formData.deviceSettings?.customDevice?.connectionType || 'bluetooth'}
-                          onChange={(e) => handleDeviceChange('customDevice', 'connectionType', e.target.value)}
-                          label="연결 방식"
-                        >
-                          <MenuItem value="bluetooth">블루투스</MenuItem>
-                          <MenuItem value="wifi">WiFi</MenuItem>
-                          <MenuItem value="app_sync">앱 동기화</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-            </Box>
 
             {/* 버튼 영역 */}
             <Box sx={{

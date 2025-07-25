@@ -117,7 +117,26 @@ export const getUserInfo = () => {
   // Access Token이 없어도 Refresh Token이 있으면 사용자 정보 반환
   if (!token && !refreshToken) return null;
   
+  // JWT 토큰에서 guardianId 추출 시도
+  let guardianId = null;
+  if (token) {
+    const payload = parseJwt(token);
+    if (payload) {
+      // JWT payload에서 guardianId 추출
+      guardianId = payload.guardianId;
+      console.log('JWT payload:', payload);
+      console.log('추출된 guardianId:', guardianId);
+    }
+  }
+  
+  // guardianId가 없으면 기본값 사용 (개발용)
+  if (!guardianId) {
+    console.warn('JWT에서 guardianId를 찾을 수 없어 기본값(1)을 사용합니다.');
+    guardianId = 1; // 개발용 기본값
+  }
+  
   return {
+    guardianId: guardianId,
     name: sessionStorage.getItem('guardianName'),
     loginId: sessionStorage.getItem('loginId'),
     role: sessionStorage.getItem('role')

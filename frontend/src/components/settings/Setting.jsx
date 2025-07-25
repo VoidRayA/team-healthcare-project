@@ -36,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import userImage from '../../images/user.png';
 import { getUserInfo, clearAuthData } from '../../utils/auth';
+import UserSettingService from '../../services/userSettingService';
 
 const Setting = () => {
   const navigate = useNavigate();
@@ -142,15 +143,31 @@ const Setting = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    // LocalStorage에서 설정 불러오기 (백엔드 API 구현 전까지 임시)
-    const savedSettings = localStorage.getItem('monitoringSettings');
-    if (savedSettings) {
+    // 백엔드에서 바이탈 사인 설정 불러오기
+    const loadVitalSignSettings = async () => {
       try {
-        setMonitoringSettings(JSON.parse(savedSettings));
+        setLoading(true);
+        const userInfo = getUserInfo();
+        if (userInfo && userInfo.guardianId) {
+          const settings = await UserSettingService.getVitalSignSettings(userInfo.guardianId);
+          setMonitoringSettings(settings);
+          console.log('바이탈 사인 설정 로드 완료:', settings);
+        } else {
+          console.warn('guardianId가 없어 기본 설정을 사용합니다.');
+          const defaultSettings = UserSettingService.getDefaultVitalSignSettings();
+          setMonitoringSettings(defaultSettings);
+        }
       } catch (error) {
-        console.error('저장된 설정을 불러오는데 실패했습니다:', error);
+        console.error('바이탈 사인 설정 로드 실패:', error);
+        setError('설정을 불러오는데 실패했습니다. 기본 설정을 사용합니다.');
+        const defaultSettings = UserSettingService.getDefaultVitalSignSettings();
+        setMonitoringSettings(defaultSettings);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    loadVitalSignSettings();
   }, []);
 
   const handleLogout = () => {
@@ -203,53 +220,39 @@ const Setting = () => {
   };
 
   // 바이탈 사인 설정 초기화 (알림 설정 포함)
-  const resetMonitoringSettings = () => {
-    setMonitoringSettings({
-      bloodPressure: {
-        attentionMax: 180,
-        attentionMin: 90,
-        cautionMax: 140,
-        cautionMin: 100,
-        diastolicAttentionMax: 110,
-        diastolicAttentionMin: 60,
-        diastolicCautionMax: 90,
-        diastolicCautionMin: 65
-      },
-      heartRate: {
-        attentionMax: 100,
-        attentionMin: 50,
-        cautionMax: 90,
-        cautionMin: 60
-      },
-      bodyTemperature: {
-        attentionMax: 38.0,
-        attentionMin: 35.5,
-        cautionMax: 37.5,
-        cautionMin: 36.0
-      },
-      bloodSugar: {
-        attentionMax: 250,
-        attentionMin: 70,
-        cautionMax: 180,
-        cautionMin: 80
-      },
-      // 알림 설정도 초기화
-      alertSettings: {
-        attentionRatioThreshold: 10,
-        cautionRatioThreshold: 30,
-        attentionCountThreshold: 3,
-        cautionCountThreshold: 5,
-        emergencyCountThreshold: 1,
-        useRatioThreshold: true,
-        useCountThreshold: true,
-        useEmergencyAlert: true
+  const resetMonitoringSettings = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // 기본값으로 리셋
+      const defaultSettings = UserSettingService.getDefaultVitalSignSettings();
+      setMonitoringSettings(defaultSettings);
+      
+      // 사용자가 있으면 백엔드에도 저장
+      const userInfo = getUserInfo();
+      if (userInfo && userInfo.guardianId) {
+        await UserSettingService.saveVitalSignSettings(userInfo.guardianId, defaultSettings);
+        console.log('기본 설정으로 초기화 완료');
       }
-    });
-    
-    // 기본값 리셋 시에도 이벤트 발생
-    setTimeout(() => {
-      window.dispatchEvent(new Event('monitoringSettingsChanged'));
-    }, 100);
+      
+      // localStorage에도 저장
+      localStorage.setItem('monitoringSettings', JSON.stringify(defaultSettings));
+      
+      // 기본값 리셋 시에도 이벤트 발생
+      setTimeout(() => {
+        window.dispatchEvent(new Event('monitoringSettingsChanged'));
+      }, 100);
+      
+      setSuccess('기본값으로 초기화되었습니다.');
+      setTimeout(() => setSuccess(null), 3000);
+      
+    } catch (error) {
+      console.error('초기화 실패:', error);
+      setError('초기화에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 알림 설정 변경 핸들러
@@ -862,17 +865,47 @@ const Setting = () => {
         <Button
           variant="contained"
           sx={{ fontWeight: 'bold', backgroundColor: '#1976d2' }}
-          onClick={() => {
-            localStorage.setItem('monitoringSettings', JSON.stringify(monitoringSettings));
-            
-            // 커스텀 이벤트 발생으로 다른 컴포넌트에 알림
-            window.dispatchEvent(new Event('monitoringSettingsChanged'));
-            
-            setSuccess('바이탈 사인 설정 및 알림 설정이 모두 저장되었습니다.');
-            setTimeout(() => setSuccess(null), 3000);
+  // 바이탈 사인 설정 저장 버튼 클릭 이벤트
+          onClick={async () => {
+            try {
+              setLoading(true);
+              setError(null);
+              
+              const userInfo = getUserInfo();
+              console.log('사용자 정보:', userInfo);
+              
+              if (!userInfo || !userInfo.guardianId) {
+                throw new Error('사용자 정보를 찾을 수 없습니다.');
+              }
+
+              console.log('바이탈 사인 설정 저장 시작:', {
+                guardianId: userInfo.guardianId,
+                settings: monitoringSettings
+              });
+
+              // 백엔드 API 호출로 설정 저장
+              await UserSettingService.saveVitalSignSettings(userInfo.guardianId, monitoringSettings);
+              
+              // localStorage에도 백업 저장 (오프라인 대응)
+              localStorage.setItem('monitoringSettings', JSON.stringify(monitoringSettings));
+              
+              // 커스텀 이벤트 발생으로 다른 컴포넌트에 알림
+              window.dispatchEvent(new Event('monitoringSettingsChanged'));
+              
+              setSuccess('바이탈 사인 설정 및 알림 설정이 모두 저장되었습니다.');
+              setTimeout(() => setSuccess(null), 3000);
+              
+              console.log('바이탈 사인 설정 저장 완료:', monitoringSettings);
+            } catch (error) {
+              console.error('바이탈 사인 설정 저장 실패:', error);
+              setError(error.message || '설정 저장에 실패했습니다.');
+            } finally {
+              setLoading(false);
+            }
           }}
+          disabled={loading}
         >
-          설정 저장
+          {loading ? '저장 중...' : '설정 저장'}
         </Button>
       </Box>
     </Box>

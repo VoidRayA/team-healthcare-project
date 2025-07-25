@@ -40,6 +40,7 @@ import MeasurementStats from './VitalSignsDetailModal/components/MeasurementStat
 // 훅들
 import { useVitalData } from './VitalSignsDetailModal/hooks/useVitalData';
 import { useThresholdLines } from './VitalSignsDetailModal/hooks/useThresholdLines';
+import { useLegendSettings } from './VitalSignsDetailModal/hooks/useLegendSettings';
 
 // 유틸들
 import { processVitalDataFor24Hours, getLocalDateString } from './VitalSignsDetailModal/utils/dateHelpers';
@@ -83,20 +84,18 @@ const VitalSignsDetailModal = ({
     loading: thresholdLoading
   } = useThresholdLines();
 
+  const {
+    legendSettings: visibleDatasets,
+    setLegendSettings: setVisibleDatasets,
+    handleLegendClick: handleLegendSettingChange,
+    loading: legendLoading
+  } = useLegendSettings();
+
   // 로컬 state
   const [chartInstances, setChartInstances] = useState({});
   const [userSettings, setUserSettings] = useState(null);
   const [allSeniors, setAllSeniors] = useState([]);
   const [seniorsLoading, setSeniorsLoading] = useState(false);
-  
-  // 🎯 범례 표시 상태 관리 (측정분포 연동용)
-  const [visibleDatasets, setVisibleDatasets] = useState({
-    '수축기 혈압 (mmHg)': true,
-    '이완기 혈압 (mmHg)': true,
-    '심박수 (bpm)': true,
-    '체온 (°C)': true,
-    '혈당 (mg/dL)': true
-  });
 
   // Chart refs
   const mainChartRef = useRef(null);
@@ -109,9 +108,18 @@ const VitalSignsDetailModal = ({
     window.location.href = url;
   };
 
-  // 🎯 범례 클릭 핸들러 (측정분포 연동) - 최종 버전
+  // 🎯 간단한 커스텀 범례 클릭 핸들러
+  // 🎯 범례 클릭 핸들러 (측정분포 연동 + 서버 저장) - 안전한 처리
   const handleLegendClick = (event, legendItem, legend) => {
     console.log('🔄 범례 클릭 시작:', legendItem);
+    
+    // ❗ Chart.js 기본 동작을 안전하게 차단
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
+    if (event && typeof event.stopPropagation === 'function') {
+      event.stopPropagation();
+    }
     
     const chart = legend.chart;
     const datasetIndex = legendItem.datasetIndex;
@@ -124,29 +132,37 @@ const VitalSignsDetailModal = ({
     });
     
     // 현재 상태 확인
-    const meta = chart.getDatasetMeta(datasetIndex);
-    console.log('🔍 현재 meta:', meta.hidden);
+    const isCurrentlyVisible = chart.isDatasetVisible(datasetIndex);
     
-    // Chart.js 기본 동작 수행 - 이벤트를 막지 않음
-    // Chart.js가 자체적으로 처리하도록 함
+    console.log('🔍 현재 상태:', { 
+      isCurrentlyVisible,
+      datasetLabel
+    });
     
-    // 단순히 visibleDatasets 상태만 업데이트
-    setTimeout(() => {
-      const updatedMeta = chart.getDatasetMeta(datasetIndex);
-      const isVisible = updatedMeta.hidden !== true;
-      
-      console.log('🔍 업데이트 후 meta:', updatedMeta.hidden, '보이는지:', isVisible);
-      
-      setVisibleDatasets(prev => {
-        const updated = {
-          ...prev,
-          [datasetLabel]: isVisible
-        };
-        console.log('📊 범례 클릭 결과:', datasetLabel, '상태:', isVisible);
-        console.log('📊 업데이트된 visibleDatasets:', updated);
-        return updated;
-      });
-    }, 50); // 50ms 후 상태 확인
+    // 상태 전환
+    if (isCurrentlyVisible) {
+      chart.hide(datasetIndex);
+      console.log(`👁️ ${datasetLabel} 숨김`);
+    } else {
+      chart.show(datasetIndex);
+      console.log(`👁️ ${datasetLabel} 표시`);
+    }
+    
+    const newVisibility = chart.isDatasetVisible(datasetIndex);
+    
+    console.log('🔍 상태 전환 완룼:', { 
+      before: isCurrentlyVisible,
+      after: newVisibility,
+      datasetLabel
+    });
+    
+    // 서버에 저장
+    handleLegendSettingChange(datasetLabel, newVisibility);
+    
+    console.log('📊 범례 클릭 결과:', datasetLabel, '상태:', newVisibility);
+    
+    // 기본 동작 완전 차단
+    return false;
   };
 
   // 사용자 설정 조회 (바이탈 설정 포함)
@@ -178,13 +194,14 @@ const VitalSignsDetailModal = ({
 
       // 2. 바이탈 사인 설정 조회 (새로 추가)
       try {
-        const vitalConfig = await getVitalSettings();
-        console.log('🩺 바이탈 설정 조회 성공:', vitalConfig);
+        // 바이탈 설정 API가 아직 구현되지 않아서 주석 처리
+        // const vitalConfig = await getVitalSettings();
+        // console.log('🩺 바이탈 설정 조회 성공:', vitalConfig);
         
-        // 바이탈 설정을 userSettings에 저장
+        // 임시로 기본값 사용
         setUserSettings(prevSettings => ({
           ...prevSettings,
-          ...vitalConfig
+          ...DEFAULT_VITAL_SETTINGS
         }));
         
       } catch (error) {
@@ -250,13 +267,23 @@ const VitalSignsDetailModal = ({
 
   // 메인 차트 생성
   const createMainChart = (processedData, lastMeasurementHour, seniorInfo = currentSelectedSenior) => {
-    if (!mainChartRef.current) return;
+    if (!mainChartRef.current) {
+      console.warn('메인 차트 ref가 없음');
+      return;
+    }
 
     const ctx = mainChartRef.current.getContext('2d');
     
+    // 기존 차트 파기
     const existingChart = Chart.getChart(mainChartRef.current);
     if (existingChart) {
       existingChart.destroy();
+    }
+
+    // DOM 요소가 여전히 연결되어 있는지 확인
+    if (!mainChartRef.current.parentNode) {
+      console.warn('메인 차트 DOM 요소가 연결되지 않음');
+      return;
     }
 
     const allLabels = processedData.map(item => item.time);
@@ -317,8 +344,8 @@ const VitalSignsDetailModal = ({
           },
           legend: {
             position: 'top',
-            labels: { usePointStyle: true, padding: 20 }
-            // onClick 제거 - 차트 사라짐 문제 해결을 위해 일시 비활성화
+            labels: { usePointStyle: true, padding: 20 },
+            onClick: handleLegendClick  // 🎯 범례 클릭 핸들러 추가
           },
           tooltip: {
             filter: function(tooltipItem) {
@@ -389,18 +416,66 @@ const VitalSignsDetailModal = ({
       }
     });
 
+    // 차트 인스턴스 저장 (안전하게)
     setChartInstances(prev => ({ ...prev, mainChart: chart }));
+    
+    // 차트 준비 완료 표시
+    console.log('🎉 차트 생성 완룉!');
+    
+    // 🎯 저장된 범례 설정 적용 (더 안전한 방식)
+    setTimeout(() => {
+      try {
+        // DOM 요소가 여전히 존재하는지 확인
+        if (!chart.canvas || !chart.canvas.parentNode) {
+          console.warn('😨 차트 DOM 요소가 제거됨 - 범례 설정 적용 중단');
+          return;
+        }
+        
+        // 차트가 아직 유효한지 확인
+        if (chart.destroyed) {
+          console.warn('😨 차트가 이미 파기됨 - 범례 설정 적용 중단');
+          return;
+        }
+        
+        // 범례 설정 적용
+        chart.data.datasets.forEach((dataset, index) => {
+          const isVisible = visibleDatasets[dataset.label];
+          if (isVisible === false) {
+            chart.getDatasetMeta(index).hidden = true;
+            console.log('👁️ 저장된 설정 적용:', dataset.label, '숨김');
+          }
+        });
+        
+        // DOM 요소가 여전히 존재하는 경우에만 업데이트
+        if (chart.canvas && chart.canvas.parentNode && !chart.destroyed) {
+          chart.update('none'); // 애니메이션 없이 업데이트
+          console.log('🎯 저장된 범례 설정 적용 완료');
+        }
+      } catch (error) {
+        console.warn('😨 범례 설정 적용 중 오류:', error);
+      }
+    }, 150); // 시간을 좀 더 여유롭게
   };
 
   // 요약 차트 생성 (🎯 항목별 분석 데이터 합산 사용)
   const createSummaryChart = (statusAnalysis) => {
-    if (!summaryChartRef.current) return;
+    if (!summaryChartRef.current) {
+      console.warn('요약 차트 ref가 없음');
+      return;
+    }
 
     const ctx = summaryChartRef.current.getContext('2d');
     
+    // 기존 차트 파기
     const existingChart = Chart.getChart(summaryChartRef.current);
     if (existingChart) {
       existingChart.destroy();
+    }
+
+    // DOM 요소가 여전히 연결되어 있는지 확인
+    if (!summaryChartRef.current.parentNode) {
+      console.warn('요약 차트 DOM 요소가 연결되지 않음');
+      return;
     }
 
     // 🎯 항목별 분석 데이터를 합산한 분포 사용
@@ -576,27 +651,32 @@ const VitalSignsDetailModal = ({
     }
   }, [open, selectedSenior, selectedDate]);
 
-  // 차트 업데이트 (🎯 visibleDatasets 변경시 측정분포만 업데이트)
+  // 차트 업데이트 (중복 생성 방지)
   useEffect(() => {
-    if (vitalData.length > 0) {
-      setTimeout(() => {
-        const result = processVitalDataFor24Hours(vitalData);
-        const { processedData, lastMeasurementHour } = result;
-        const statusAnalysis = analyzeVitalStatus(vitalData, userSettings, alertSettings);
-        
-        createMainChart(processedData, lastMeasurementHour, currentSelectedSenior);
-        createSummaryChart(statusAnalysis);
-      }, 100);
+    if (vitalData.length > 0 && !loading && !legendLoading) {
+      const timeoutId = setTimeout(() => {
+        try {
+          console.log('📊 차트 업데이트 조건 충족 - 차트 생성 시작');
+          const result = processVitalDataFor24Hours(vitalData);
+          const { processedData, lastMeasurementHour } = result;
+          const statusAnalysis = analyzeVitalStatus(vitalData, userSettings, alertSettings);
+          
+          createMainChart(processedData, lastMeasurementHour, currentSelectedSenior);
+          createSummaryChart(statusAnalysis);
+        } catch (error) {
+          console.error('차트 업데이트 오류:', error);
+        }
+      }, 150);
+      
+      return () => clearTimeout(timeoutId);
+    } else {
+      console.log('📊 차트 업데이트 조건 미충족:', {
+        hasVitalData: vitalData.length > 0,
+        loading,
+        legendLoading
+      });
     }
-  }, [vitalData, thresholdLines, userSettings]); // visibleDatasets 의존성 제거
-  
-  // 🎯 visibleDatasets 변경시 측정분포만 업데이트
-  useEffect(() => {
-    if (vitalData.length > 0 && userSettings) {
-      const statusAnalysis = analyzeVitalStatus(vitalData, userSettings, alertSettings);
-      createSummaryChart(statusAnalysis);
-    }
-  }, [visibleDatasets]);
+  }, [vitalData, thresholdLines, userSettings]); // visibleDatasets 의존성 제거로 중복 방지
 
   // 차트 정리
   useEffect(() => {
@@ -820,12 +900,12 @@ const VitalSignsDetailModal = ({
               {/* 메인 차트와 요약 정보를 한 박스에 통합 */}
               <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
                 {/* 상단: 메인 차트 (60% 높이) */}
-                <Box sx={{ height: '55%', mb: 2 }}>
+                <Box sx={{ height: '60%', mb: 2 }}>
                   <canvas ref={mainChartRef} style={{ width: '100%', height: '100%' }} />
                 </Box>
 
                 {/* 하단: 요약 정보들 (40% 높이) - 3등분 */}
-                <Box sx={{ height: '50%', display: 'flex', gap: 3, alignItems: 'stretch', mt: 2, pb: 4 }}>
+                <Box sx={{ height: '40%', display: 'flex', gap: 3, alignItems: 'stretch', mt: 2, pb: 4 }}>
                   {/* 왼쪽: 측정 분포 차트 */}
                   <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', p: 1, border: '1px solid #e0e0e0', borderRadius: 1 }}>
                     <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 'bold', mb: 1, color: '#333' }}>

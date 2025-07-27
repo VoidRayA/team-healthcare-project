@@ -299,7 +299,8 @@ public class DailyController {
             @PathVariable Integer id, // seniors의 id
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sort
+            @RequestParam(defaultValue = "createdAt") String sort,
+            @RequestParam(required = false) String date // 날짜 파라미터 추가
     ){
         try {
             Guardians guardian = currentUser.getGuardians();
@@ -325,9 +326,17 @@ public class DailyController {
             }
             // =================================================================
 
-            // 전체 활동 기록 목록 조회
-            SeniorDto.SeniorDailyListDto dailyListDto = dailyActivitiesService.getListDaily(id, guardian);
-            return ResponseEntity.ok(dailyListDto);
+            // 날짜 파라미터가 있으면 특정 날짜의 활동만 조회
+            if (date != null && !date.trim().isEmpty()) {
+                System.out.println("특정 날짜 활동 조회: " + date);
+                SeniorDto.SeniorDailyDto dailyDto = dailyActivitiesService.getDailyActivitiesOnDate(id, date, guardian);
+                return ResponseEntity.ok(dailyDto);
+            } else {
+                // 전체 활동 기록 목록 조회
+                System.out.println("전체 활동 기록 조회");
+                SeniorDto.SeniorDailyListDto dailyListDto = dailyActivitiesService.getListDaily(id, guardian);
+                return ResponseEntity.ok(dailyListDto);
+            }
 
         } catch (Exception e) {
             System.err.println("활동 기록 목록 조회 중 오류 발생: " + e.getMessage());
@@ -369,19 +378,15 @@ public class DailyController {
             // 활동 날짜 결정: DTO에 날짜가 없으면 오늘 날짜 사용
             LocalDate activityDate = dto.getActivityDate() != null ? dto.getActivityDate() : today;
             
-            // ★ 핵심 추가 기능: 중복 기록 사전 체크
-            // 이 부분이 AUTO_INCREMENT 낭비를 방지하는 핵심 로직
-            boolean isDuplicate = dailyActivitiesService.isDuplicateRecord(seniorId, activityDate, guardian);
-
-            if (isDuplicate) {
-                // 중복이 발견되면 DB에 INSERT하지 않고 즉시 409 오류 반환
-                // 이로 인해 AUTO_INCREMENT 값이 소모되지 않음
-                System.out.println("중복 감지! Senior " + seniorId + ", Date: " + activityDate);
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body("해당 날짜(" + activityDate + ")의 활동 기록이 이미 존재합니다.");
-            }
+            // 중복 기록 사전 체크 제거 (하루에 여러 개 활동 기록 허용)
+            // boolean isDuplicate = dailyActivitiesService.isDuplicateRecord(seniorId, activityDate, guardian);
+            // if (isDuplicate) {
+            //     System.out.println("중복 감지! Senior " + seniorId + ", Date: " + activityDate);
+            //     return ResponseEntity.status(HttpStatus.CONFLICT)
+            //             .body("해당 날짜(" + activityDate + ")의 활동 기록이 이미 존재합니다.");
+            // }
             
-            System.out.println("중복 없음 - 진행");
+            System.out.println("중복 체크 건너뛰기 - 하루에 여러 활동 기록 허용");
             
             // 중복이 없으면 기존 코드와 동일하게 DB에 저장
             SeniorDto.SeniorDailyDto dailyDto = dailyActivitiesService.createDaily(seniorId, dto, guardian);
@@ -439,11 +444,28 @@ public class DailyController {
     
     // 활동기록 수정
     @PutMapping("/api/seniors/{id}/dailyActivities/{activityId}")
-    public ResponseEntity<SeniorDto.SeniorUpdateDailyDto> updateDailyActivity(
-            @PathVariable Integer seniorId,
+    public ResponseEntity<?> updateDailyActivity(
+            @PathVariable("id") Integer seniorId,  // {id}를 seniorId로 매핑
             @PathVariable Integer activityId,
-            @RequestBody SeniorDto.SeniorUpdateDailyDto updateDto){
-        SeniorDto.SeniorUpdateDailyDto result = dailyActivitiesService.updateDaily(seniorId, activityId, updateDto);
+            @RequestBody DailyActivitiesDto updateDto){  // 단순한 DTO 사용
+        
+        System.out.println("=== PUT 수정 API 호출 ====");
+        System.out.println("Senior ID: " + seniorId);
+        System.out.println("Activity ID: " + activityId);
+        System.out.println("Update Data: " + updateDto);
+        
+        // 수정용 DTO로 변환 (직접 생성)
+        SeniorDto.SeniorUpdateDailyDto convertedDto = new SeniorDto.SeniorUpdateDailyDto(
+                null, // id
+                null, // activitiesId
+                null, // senior
+                updateDto.getActivityDate(), // activityDate
+                updateDto.getActivityCategory(),
+                updateDto.getDailyNotes(),
+                null  // updatedAt
+        );
+                
+        SeniorDto.SeniorUpdateDailyDto result = dailyActivitiesService.updateDaily(seniorId, activityId, convertedDto);
         return ResponseEntity.ok(result);
     }
 }

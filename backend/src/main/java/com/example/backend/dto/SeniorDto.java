@@ -30,7 +30,7 @@ public class SeniorDto {
             String chronicDiseases,     // 지병
             String medications,         // 복용 약물
             String notes,              // 특이사항
-            String phone               // 노인 본인 연락처
+            String phoneNumber         // phone -> phoneNumber로 변경 (노인 본인 연락처)
     ) {}
 
     /**
@@ -45,7 +45,7 @@ public class SeniorDto {
             String chronicDiseases,
             String medications,
             String notes,
-            String phone,
+            String phoneNumber,        // phone -> phoneNumber로 변경
             Boolean isActive           // 활성 상태 변경
     ) {}
 
@@ -59,13 +59,14 @@ public class SeniorDto {
             String guardianName,       // Guardian 이름 (편의상)
             String seniorName,
             LocalDate birthDate,
+            Integer age,               // 나이 필드 추가
             Character gender,
             String address,
             String emergencyContact,
             String chronicDiseases,
             String medications,
             String notes,
-            String phone,
+            String phoneNumber,        // phone -> phoneNumber로 변경
             String dailyActivities,
             Boolean isActive,
             LocalDateTime createdAt,
@@ -82,13 +83,14 @@ public class SeniorDto {
                     .guardianName(entity.getGuardian().getGuardianName())
                     .seniorName(entity.getSeniorName())
                     .birthDate(entity.getBirthDate())
+                    .age(calculateAge(entity.getBirthDate()))  // 나이 계산
                     .gender(entity.getGender())
                     .address(entity.getAddress())
                     .emergencyContact(entity.getEmergencyContact())
                     .chronicDiseases(entity.getChronicDiseases())
                     .medications(entity.getMedications())
                     .notes(entity.getNotes())
-                    .phone(entity.getPhone())
+                    .phoneNumber(entity.getPhone())  // 필드명 phoneNumber로 변경
                     .dailyActivities(entity.getDailyActivities())
                     .isActive(entity.getIsActive())
                     .createdAt(entity.getCreatedAt())
@@ -98,6 +100,26 @@ public class SeniorDto {
                                     .map(ActivityResponseDto::from)
                                     .collect(Collectors.toList()) : null)
                     .build();
+        }
+        
+        /**
+         * 생년월일로부터 만 나이 계산
+         */
+        private static Integer calculateAge(LocalDate birthDate) {
+            if (birthDate == null) {
+                return null;
+            }
+            
+            LocalDate today = LocalDate.now();
+            int age = today.getYear() - birthDate.getYear();
+            
+            // 아직 생일이 지나지 않았다면 나이 1 감소
+            if (today.getMonthValue() < birthDate.getMonthValue() || 
+                (today.getMonthValue() == birthDate.getMonthValue() && today.getDayOfMonth() < birthDate.getDayOfMonth())) {
+                age--;
+            }
+            
+            return age >= 0 ? age : null; // 음수 나이는 null 반환
         }
     }
 
@@ -157,7 +179,7 @@ public class SeniorDto {
             String seniorName,
             LocalDate birthDate,
             Character gender,
-            String phone,
+            String phoneNumber,        // phone -> phoneNumber로 변경
             Boolean isActive
     ) {
         public static SeniorSimpleDto from(Seniors entity) {
@@ -166,7 +188,7 @@ public class SeniorDto {
                     .seniorName(entity.getSeniorName())
                     .birthDate(entity.getBirthDate())
                     .gender(entity.getGender())
-                    .phone(entity.getPhone())
+                    .phoneNumber(entity.getPhone())  // 필드명 phoneNumber로 변경
                     .isActive(entity.getIsActive())
                     .build();
         }

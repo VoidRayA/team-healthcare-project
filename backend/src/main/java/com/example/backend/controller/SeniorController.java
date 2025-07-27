@@ -181,6 +181,14 @@ public class SeniorController {
                 return ResponseEntity.notFound().build();
             }
 
+        } catch (IllegalStateException e) {
+            // 관련 데이터 존재로 인한 삭제 불가 오류
+            log.warn("Senior 삭제 실패: 관련 데이터 존재 - ID {}, 메시지: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of(
+                        "error", e.getMessage(),
+                        "code", "RELATED_DATA_EXISTS"
+                    ));
         } catch (Exception e) {
             log.error("Senior 삭제 중 오류 발생: ID {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

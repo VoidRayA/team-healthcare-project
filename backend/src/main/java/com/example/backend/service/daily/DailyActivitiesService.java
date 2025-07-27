@@ -183,6 +183,34 @@ public class DailyActivitiesService {
         return convertToSeniorDailyDto(senior);
     }
 
+    // 특정 날짜의 활동 조회 (새로 추가)
+    public SeniorDto.SeniorDailyDto getDailyActivitiesOnDate(Integer seniorId, String dateString, Guardians guardian) {
+        try {
+            System.out.println("=== 특정 날짜 활동 조회 시작 ===");
+            System.out.println("Senior ID: " + seniorId);
+            System.out.println("Date: " + dateString);
+            System.out.println("Guardian ID: " + guardian.getId());
+            
+            // 문자열을 LocalDate로 변환
+            LocalDate activityDate = LocalDate.parse(dateString);
+            
+            // 기존 Repository 메서드 사용 (안전하게)
+            Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
+            
+            // 특정 날짜의 활동만 필터링
+            SeniorDto.SeniorDailyDto result = convertToSeniorDailyDtoWithDateFilter(senior, activityDate);
+            
+            System.out.println("활동 기록 개수: " + result.dailyActivities().size());
+            return result;
+            
+        } catch (Exception e) {
+            System.err.println("특정 날짜 활동 조회 오류: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("특정 날짜 활동 조회 중 오류가 발생했습니다.");
+        }
+    }
+
     // 활동 기록 삭제
     public SeniorDto.SeniorDailyDto deleteDaily(Integer seniorId, Integer activityId, Guardians guardian) {
         // 특정 senior 정보 조회
@@ -232,6 +260,31 @@ public class DailyActivitiesService {
                 .id(senior.getId())
                 .seniorName(senior.getSeniorName())
                 .dailyActivities(activitiesDto) // Entity 대신 DTO 사용
+                .build();
+    }
+
+    // 특정 날짜로 필터링하여 변환하는 메서드
+    private SeniorDto.SeniorDailyDto convertToSeniorDailyDtoWithDateFilter(Seniors senior, LocalDate targetDate) {
+        // 특정 날짜의 활동만 필터링
+        List<SeniorDto.ActivityResponseDto> filteredActivitiesDto = Optional.ofNullable(senior.getActivities())
+                .orElse(new ArrayList<>())
+                .stream()
+                .filter(activity -> activity.getActivityDate().equals(targetDate)) // 날짜 필터링
+                .sorted(Comparator.comparing(DailyActivities::getCreatedAt).reversed()) // 생성일 기준 내림차순 정렬
+                .map(activity -> SeniorDto.ActivityResponseDto.builder()
+                        .id(activity.getId())
+                        .seniorId(activity.getSenior().getId())
+                        .activityDate(activity.getActivityDate())
+                        .activityCategory(activity.getActivityCategory())
+                        .dailyNotes(activity.getDailyNotes())
+                        .createdAt(activity.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return SeniorDto.SeniorDailyDto.builder()
+                .id(senior.getId())
+                .seniorName(senior.getSeniorName())
+                .dailyActivities(filteredActivitiesDto)
                 .build();
     }
     // 업데이트 날 추가

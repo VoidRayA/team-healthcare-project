@@ -37,7 +37,7 @@ public class SeniorController {
      * @param currentUser 현재 인증된 사용자 정보
      * @param page 페이지 번호 (0부터 시작)
      * @param size 페이지 크기
-     * @param sort 정렬 기준
+     * @param sort 정렬 기준 (예: "seniorName,asc" 또는 "birthDate,desc")
      * @return Senior 목록
      */
     @GetMapping
@@ -45,11 +45,18 @@ public class SeniorController {
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sort) {
+            @RequestParam(defaultValue = "createdAt,desc") String sort) {
 
         try {
             Guardians guardian = currentUser.getGuardians();
-            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sort));
+            
+            // 정렬 파라미터 파싱
+            String[] sortParams = sort.split(",");
+            String sortField = sortParams[0];
+            Sort.Direction direction = sortParams.length > 1 && "desc".equalsIgnoreCase(sortParams[1]) 
+                ? Sort.Direction.DESC : Sort.Direction.ASC;
+            
+            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
 
             Page<SeniorDto.SeniorResponseDto> seniorDtoPage = seniorService.getMySeniors(guardian, pageable);
 
@@ -228,4 +235,5 @@ public class SeniorController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
 }

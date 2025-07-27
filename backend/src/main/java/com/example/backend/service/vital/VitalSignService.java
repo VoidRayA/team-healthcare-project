@@ -1,0 +1,182 @@
+package com.example.backend.service.vital;
+
+import com.example.backend.DB.Guardians;
+import com.example.backend.DB.MonitoringSettings;
+import com.example.backend.DB.Seniors;
+import com.example.backend.DB.VitalSigns;
+import com.example.backend.DB.care.VitalSignsThreshold;
+import com.example.backend.dto.SeniorDto;
+import com.example.backend.dto.seviceDto.VitalSignsDto;
+import com.example.backend.repository.SeniorRepository;
+import com.example.backend.repository.VitalSignRepository;
+import com.example.backend.service.MonitoringSettingsService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class VitalSignService {
+
+    private final SeniorRepository seniorRepository;
+    private final VitalSignRepository vitalSignRepository;
+    private final MonitoringSettingsService monitoringSettingsService;
+
+    // 생성 서비스
+    @Transactional
+    public SeniorDto.SeniorVitalDto createVital(Integer seniorId, VitalSignsDto.VitalCreateDto dto, Guardians guardian){
+        // senior 조회
+        Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId,guardian.getId())
+                .orElseThrow(() -> new EntityNotFoundException("해당 노인을 찾을수 없습니다"));
+        // 사용자 모니터링 설정 조회
+        MonitoringSettings settings = monitoringSettingsService.getSettingsEntity(guardian);
+        
+        // 생체 기록 생성
+        VitalSigns vitalSigns = VitalSigns.builder()
+                .senior(senior)
+                .measurementTime(dto.measurementTime())
+                .bloodPressureHigh(dto.bloodPressureHigh())
+                .bloodPressureLow(dto.bloodPressureLow())
+                .heartRate(dto.heartRate())
+                .bloodSugar(dto.bloodSugar())
+                .bodyTemperature(dto.bodyTemperature())
+                .notes(dto.notes())
+                .build();
+        
+        // 사용자 설정 기준으로 정상 여부 계산
+        String alertType = VitalSignsThreshold.determineAlertType(vitalSigns, settings);
+        vitalSigns.setNormal("INFO".equals(alertType));
+
+        senior.addVitalSign(vitalSigns);
+
+        seniorRepository.save(senior);
+
+        return convertToSeniorVitalDto(senior);
+    }
+
+    // 조회 서비스
+    public SeniorDto.SeniorVitalDto searchVital(Integer seniorId, Guardians guardian){
+        Seniors seniors = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
+                .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
+
+        return convertToSeniorVitalDto(seniors);
+    }
+
+    // 특정 날짜 조회 서비스
+    public VitalSignsDto.VitalSearchDto getVital(Integer seniorId, Guardians guardian, VitalSigns vitalSigns){
+        Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
+                .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
+
+        List<VitalSigns> vitalSignsList  = vitalSignRepository.findByMeasurementTime(vitalSigns.getMeasurementTime());
+
+        VitalSigns targetVitalSign  = vitalSignsList.stream()
+                .filter(vs -> vs.getSenior().getId().equals(seniorId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("해당 Senior의 측정시간에 해당하는 VitalSign을 찾을 수 없습니다."));
+
+        return VitalSignsDto.VitalSearchDto.builder()
+                .id(targetVitalSign.getId())
+                .measurementTime(targetVitalSign.getMeasurementTime())
+                .bloodPressureHigh(targetVitalSign.getBloodPressureHigh())
+                .bloodPressureLow(targetVitalSign.getBloodPressureLow())
+                .heartRate(targetVitalSign.getHeartRate())
+                .bloodSugar(targetVitalSign.getBloodSugar())
+                .bodyTemperature(targetVitalSign.getBodyTemperature())
+                .isNormal(targetVitalSign.isNormal())
+                .notes(targetVitalSign.getNotes())
+                .build();
+    }
+
+
+    // 삭제 서비스
+    @Transactional
+    public SeniorDto.SeniorVitalDto deleteVital(Integer seniorId, Long vitalId, Guardians guardian){
+        Seniors seniors = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
+                .orElseThrow(() -> new EntityNotFoundException("해당 Senior를 찾을 수 없습니다."));
+        List<VitalSigns> vitalSigns = Optional.ofNullable(seniors.getVitalSigns())
+                .orElse(new ArrayList<>());
+
+        VitalSigns vitalSignDelete = vitalSigns.stream()
+                .filter(a -> a.getId().equals(vitalId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("해당 생체기록을 찾을 수 없습니다."));
+
+        seniors.getVitalSigns().remove(vitalSignDelete);
+        vitalSignDelete.setSenior(null);
+
+        seniorRepository.save(seniors);
+
+        return convertToSeniorVitalDto(seniors);
+    }
+    // 수정 서비스
+    @Transactional
+    public SeniorDto.SeniorVitalDto updateVital(Integer seniorId, Long vitalId, VitalSignsDto.VitalUpdateDto updateDto, Guardians guardian){
+        Seniors senior = seniorRepository.findByIdAndGuardianId(seniorId, guardian.getId())
+                .orElseThrow(() -> new SecurityException("해당 노인에 대한 접근 권한이 없습니다."));
+
+        VitalSigns vitalSign = senior.getVitalSigns().stream()
+                .filter(vital -> vital.getId().equals(vitalId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("해당 생체기록을 찾을 수 없습니다."));
+
+        // 사용자 모니터링 설정 조회
+        MonitoringSettings settings = monitoringSettingsService.getSettingsEntity(guardian);
+        
+        // 수정 로직 (필요한 필드만 업데이트)
+        if (updateDto.measurementTime() != null) {
+            vitalSign.setMeasurementTime(updateDto.measurementTime());
+        }
+        if (updateDto.bloodPressureHigh() != null) {
+            vitalSign.setBloodPressureHigh(updateDto.bloodPressureHigh());
+        }
+        if (updateDto.bloodPressureLow() != null) {
+            vitalSign.setBloodPressureLow(updateDto.bloodPressureLow());
+        }
+        if (updateDto.heartRate() != null) {
+            vitalSign.setHeartRate(updateDto.heartRate());
+        }
+        if (updateDto.bloodSugar() != null) {
+            vitalSign.setBloodSugar(updateDto.bloodSugar());
+        }
+        if (updateDto.bodyTemperature() != null) {
+            vitalSign.setBodyTemperature(updateDto.bodyTemperature());
+        }
+        if (updateDto.notes() != null) {
+            vitalSign.setNotes(updateDto.notes());
+        }
+        
+        // 사용자 설정 기준으로 정상 여부 재계산
+        String alertType = VitalSignsThreshold.determineAlertType(vitalSign, settings);
+        vitalSign.setNormal("INFO".equals(alertType));
+
+        seniorRepository.save(senior);
+
+        return convertToSeniorVitalDto(senior);
+    }
+
+
+    // 생체기록용 변환 메서드
+    private SeniorDto.SeniorVitalDto convertToSeniorVitalDto(Seniors senior) {
+        // 생체기록들을 DTO로 변환
+        List<VitalSignsDto.VitalSearchDto> vitalSignsDto = Optional.ofNullable(senior.getVitalSigns())
+                .orElse(new ArrayList<>())
+                .stream()
+                .sorted(Comparator.comparing(VitalSigns::getMeasurementTime).reversed()) // 측정시간 기준 내림차순
+                .map(VitalSignsDto.VitalSearchDto::from) // from() 메서드 활용
+                .collect(Collectors.toList());
+
+        return SeniorDto.SeniorVitalDto.builder()
+                .id(senior.getId())
+                .seniorName(senior.getSeniorName())
+                .vitalSigns(vitalSignsDto)
+                .build();
+    }
+}

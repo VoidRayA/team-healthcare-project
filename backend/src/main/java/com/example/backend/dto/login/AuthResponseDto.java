@@ -18,6 +18,7 @@ import java.util.List;
 public class AuthResponseDto {
 
     private String accessToken;     // JWT 토큰
+    private String refreshToken;    // Refresh 토큰
     private String tokenType;       // 토큰 타입 (Bearer)
     private String loginId;         // 사용자 로그인 ID
     private String guardianName;    // 사용자 이름

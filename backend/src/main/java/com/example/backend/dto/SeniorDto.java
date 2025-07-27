@@ -2,6 +2,7 @@ package com.example.backend.dto;
 
 import com.example.backend.DB.DailyActivities;
 import com.example.backend.DB.Seniors;
+import com.example.backend.dto.seviceDto.VitalSignsDto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 
@@ -111,10 +112,7 @@ public class SeniorDto {
             @JsonFormat(pattern = "yyyy-MM-dd")
             LocalDate activityDate,
 
-            Integer mealCount,
-            Byte medicationTaken,
-            Byte outdoorActivity,
-            String sleepQuality,
+            String activityCategory,
             String dailyNotes,
 
             @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -128,10 +126,7 @@ public class SeniorDto {
                     .id(entity.getId())
                     .seniorId(entity.getSenior().getId())
                     .activityDate(entity.getActivityDate())
-                    .mealCount(entity.getMealCount())
-                    .medicationTaken(entity.getMedicationTaken())
-                    .outdoorActivity(entity.getOutdoorActivity())
-                    .sleepQuality(entity.getSleepQuality())
+                    .activityCategory(entity.getActivityCategory())
                     .dailyNotes(entity.getDailyNotes())
                     .createdAt(entity.getCreatedAt())
                     .build();
@@ -216,10 +211,7 @@ public class SeniorDto {
             Integer activitiesId,           // 고유 ID
             Seniors senior,                 // senior 참조
             LocalDate activityDate,         // 활동 날짜
-            int mealCount,                  // 식사 횟수
-            Byte medicationTaken,           // 약 복용 여부
-            Byte outdoorActivity,           // 외출 여부
-            String sleepQuality,            // 수면상태
+            String activityCategory,        // 비고
             String dailyNotes,              // 일일 특이사항
             LocalDateTime updatedAt
     ){
@@ -229,13 +221,17 @@ public class SeniorDto {
                     entity.getId(), // activitiesId
                     entity.getSenior(),
                     entity.getActivityDate(),
-                    entity.getMealCount(),
-                    entity.getMedicationTaken(),
-                    entity.getOutdoorActivity(),
-                    entity.getSleepQuality(),
+                    entity.getActivityCategory(),
                     entity.getDailyNotes(),
                     entity.getUpdatedAt()
             );
         }
     }
+    // 생체 기록 관련 Dto
+    @Builder
+    public record SeniorVitalDto(
+            Integer id,
+            String seniorName,
+            List<VitalSignsDto.VitalSearchDto> vitalSigns
+    ) {}
 }

@@ -25,6 +25,11 @@ public class CustomUserDetails implements UserDetails {
         return guardians.getGuardianName();
     }
 
+    // getGuardian() 메서드 추가 (호환성을 위해)
+    public Guardians getGuardian() {
+        return guardians;
+    }
+
     @Override
     public String getPassword() {
         return guardians.getLoginPw();

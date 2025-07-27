@@ -2,24 +2,22 @@ package com.example.backend.DB;
 
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 /*
 * 알림 관리 테이블
-*
-* seniors 테이블 참조
-* 알림 타입 emergency/warning/info
-* 알림 제목
-* 알림 내용
-* 생체 신호 테이블 참조
-* 확인여부
-* 확인한 보호자
-* 확인 시간
-* 알림 생성 시각
 * */
 @Entity
 @Table(name = "alerts")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Alerts {
 
     @Id
@@ -45,7 +43,8 @@ public class Alerts {
     private boolean isConfirmed;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "guardian_id")
+//    @JoinColumn(name = "guardian_id")
+    @JoinColumn(name = "confirmed_by")
     private Guardians confirmedBy;
 
     @Column(name = "confirmed_at")
@@ -53,4 +52,10 @@ public class Alerts {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    // guardian_id를 seniors를 통해 가져올 수 있도록 getter 추가
+    @Transient
+    public Integer getGuardianId() {
+        return seniors != null && seniors.getGuardian() != null ? seniors.getGuardian().getId() : null;
+    }
 }

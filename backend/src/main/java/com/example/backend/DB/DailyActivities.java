@@ -1,5 +1,6 @@
 package com.example.backend.DB;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,6 +33,7 @@ public class DailyActivities {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "senior_id")
     private Seniors senior;
@@ -39,17 +41,8 @@ public class DailyActivities {
     @Column(name = "activity_date")
     private LocalDate activityDate;
 
-    @Column(name = "meal_count")
-    private int mealCount;
-
-    @Column(name = "medication_taken")
-    private Byte medicationTaken;
-
-    @Column(name = "outdoor_activity")
-    private Byte outdoorActivity;
-
-    @Column(name = "sleep_quality")
-    private String sleepQuality;
+    @Column(name = "activity_category")
+    private String activityCategory;
 
     @Column(name = "daily_notes")
     private String dailyNotes;

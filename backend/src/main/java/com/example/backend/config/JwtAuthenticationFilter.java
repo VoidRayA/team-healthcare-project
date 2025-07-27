@@ -31,6 +31,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
+        // permitAll 경로는 JWT 인증 건너뛰기
+        String requestURI = request.getRequestURI();
+        if (shouldSkipFilter(requestURI)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
             // 요청 헤더에서 JWT 토큰 추출
             String jwt = getJwtFromRequest(request);
@@ -80,5 +87,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         return null;
+    }
+
+    /**
+     * JWT 인증을 건너뛸 경로인지 확인
+     */
+    private boolean shouldSkipFilter(String requestURI) {
+        // permitAll 경로들
+        return requestURI.startsWith("/api/auth/") ||
+               requestURI.startsWith("/api/public/") ||
+               requestURI.startsWith("/api/hospital/route/") ||
+               requestURI.startsWith("/api/hospital/kakao/") ||
+               requestURI.equals("/api/hospital/busan") ||
+               requestURI.equals("/health") ||
+               requestURI.startsWith("/actuator/");
     }
 }

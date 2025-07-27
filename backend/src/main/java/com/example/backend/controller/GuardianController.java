@@ -4,6 +4,7 @@ import com.example.backend.DB.Guardians;
 import com.example.backend.config.CustomUserDetails;
 import com.example.backend.dto.login.GuardianDto;
 import com.example.backend.repository.GuardianRepository;
+import com.example.backend.service.auth.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,6 +34,7 @@ public class GuardianController {
 
     private final GuardianRepository guardianRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * 현재 인증된 사용자의 정보 조회
@@ -178,6 +180,43 @@ public class GuardianController {
     }
 
     /**
+     * 현재 사용자 비밀번호 확인
+     * @param currentUser 현재 인증된 사용자
+     * @param passwordRequest 비밀번호 확인 요청
+     * @return 확인 결과
+     */
+    @PostMapping("/me/verify-password")
+    public ResponseEntity<?> verifyPassword(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestBody Map<String, String> passwordRequest) {
+
+        try {
+            String password = passwordRequest.get("password");
+
+            if (password == null || password.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "비밀번호를 입력해주세요."));
+            }
+
+            Guardians guardian = currentUser.getGuardians();
+
+            // 비밀번호 확인
+            if (!passwordEncoder.matches(password, guardian.getLoginPw())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "비밀번호가 올바르지 않습니다."));
+            }
+
+            log.info("비밀번호 확인 성공: {}", guardian.getLoginId());
+            return ResponseEntity.ok(Map.of("message", "비밀번호 확인이 완료되었습니다."));
+
+        } catch (Exception e) {
+            log.error("비밀번호 확인 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "비밀번호 확인 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
      * 현재 사용자 비밀번호 변경
      * @param currentUser 현재 인증된 사용자
      * @param passwordChangeRequest 비밀번호 변경 요청
@@ -209,9 +248,15 @@ public class GuardianController {
             guardian.setLoginPw(passwordEncoder.encode(newPassword));
             guardian.setUpdatedAt(LocalDateTime.now());
             guardianRepository.save(guardian);
+            
+            // 비밀번호 변경 시 모든 리프레시 토큰 무효화 (보안)
+            refreshTokenService.revokeAllTokensForUser(guardian.getId());
 
             log.info("비밀번호 변경 완료: {}", guardian.getLoginId());
-            return ResponseEntity.ok(Map.of("message", "비밀번호가 성공적으로 변경되었습니다."));
+            return ResponseEntity.ok(Map.of(
+                "message", "비밀번호가 성공적으로 변경되었습니다. 보안을 위해 다시 로그인해주세요.",
+                "requiresLogin", true
+            ));
 
         } catch (Exception e) {
             log.error("비밀번호 변경 중 오류 발생", e);
@@ -232,6 +277,9 @@ public class GuardianController {
             guardian.setIsActive(false);
             guardian.setUpdatedAt(LocalDateTime.now());
             guardianRepository.save(guardian);
+            
+            // 계정 비활성화 시 모든 토큰 무효화
+            refreshTokenService.revokeAllTokensForUser(guardian.getId());
 
             log.info("계정 비활성화 완료: {}", guardian.getLoginId());
             return ResponseEntity.ok(Map.of("message", "계정이 비활성화되었습니다."));

@@ -1,5 +1,6 @@
 package com.example.backend.DB;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -25,6 +26,7 @@ public class Seniors {
     private Integer id;
 
     // Guardian과의 관계 - ManyToOne
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "guardian_id", nullable = false)
     private Guardians guardian;
@@ -69,13 +71,16 @@ public class Seniors {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "senior", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<GuardianSenior> guardianSeniors = new ArrayList<>();
 
     // 활동기록 저장용 컬럼
     @Column(name = "daily_activities")
     private String dailyActivities;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "senior", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @Builder.Default
     private List<DailyActivities> activities = new ArrayList<>();
 
     // 활동기록 저장용 도우미 메서드
@@ -84,6 +89,22 @@ public class Seniors {
         dailyActivity.setSenior(this);
     }
 
+    // 생체기록 저장용 컬럼
+    @OneToMany(mappedBy = "senior", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @Builder.Default
+    private List<VitalSigns> vitalSigns = new ArrayList<>();
+    // 생체 기록 저장용 도우미 메서드
+    public void addVitalSign(VitalSigns vitalSign) {
+        this.vitalSigns.add(vitalSign);
+        vitalSign.setSenior(this);
+    }
+    // 생체 기록 삭제용 도우미 메서드
+    public void removeVitalSign(VitalSigns vitalSign) {
+        this.vitalSigns.remove(vitalSign);
+        vitalSign.setSenior(null);
+    }
+
+    //
     /**
      * 엔티티 저장 전 실행되는 메서드들은 아래에 작성
      */

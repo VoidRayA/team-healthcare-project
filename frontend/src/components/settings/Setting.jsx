@@ -148,12 +148,17 @@ const Setting = () => {
       try {
         setLoading(true);
         const userInfo = getUserInfo();
+        console.log('🚀 loadVitalSignSettings 시작 - 사용자 정보:', userInfo);
+        
         if (userInfo && userInfo.guardianId) {
+          console.log('🔍 UserSettingService.getVitalSignSettings 호출:', userInfo.guardianId);
           const settings = await UserSettingService.getVitalSignSettings(userInfo.guardianId);
+          console.log('✅ 바이탈 사인 설정 로드 완료:', settings);
           setMonitoringSettings(settings);
-          console.log('바이탈 사인 설정 로드 완료:', settings);
+          console.log('📦 monitoringSettings state 업데이트 완료');
         } else {
           console.warn('guardianId가 없어 기본 설정을 사용합니다.');
+          console.log('사용자 정보:', userInfo);
           const defaultSettings = UserSettingService.getDefaultVitalSignSettings();
           setMonitoringSettings(defaultSettings);
         }

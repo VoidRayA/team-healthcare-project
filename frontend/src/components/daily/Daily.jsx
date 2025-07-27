@@ -95,8 +95,15 @@ const Daily = () => {
   const [activitySortDirection, setActivitySortDirection] = useState('asc');
   
   // 드롭다운 관련 상태
-  const [dropdownItems, setDropdownItems] = useState([]);
-  const [selectedItems, setSelectedItems] = useState({});
+  const [dropdownItems, setDropdownItems] = useState(['식사', '운동', '약물복용', '외출', '휴식', '기타']); // 기본값 설정
+  const [selectedItems, setSelectedItems] = useState({
+    '식사': '',
+    '운동': '',
+    '약물복용': '',
+    '외출': '',
+    '휴식': '',
+    '기타': ''
+  }); // 기본값도 초기화
   
   // 수정 관련 상태 추가
   const [isEditing, setIsEditing] = useState(false);
@@ -119,6 +126,18 @@ const Daily = () => {
       // 초기에는 일정 데이터를 로드하지 않음 (보호대상자와 날짜가 선택되면 로드)
     // fetchDailyActivities();
   }, []);
+
+  // dropdownItems가 변경될 때 selectedItems 초기화
+  useEffect(() => {
+    if (dropdownItems.length > 0) {
+      const initialSelected = {};
+      dropdownItems.forEach(item => {
+        initialSelected[item] = '';
+      });
+      setSelectedItems(initialSelected);
+      console.log('드롭다운 아이템 변경으로 selectedItems 초기화:', initialSelected);
+    }
+  }, [dropdownItems]);
 
   // 정렬 함수 - displayedSeniors보다 먼저 정의해야 함
   const sortSeniors = useCallback((data, column, direction) => {
@@ -187,7 +206,7 @@ const Daily = () => {
         id: `empty-${displayed.length}`, 
         isEmpty: true,
         seniorName: '', 
-        age: '', 
+        age: '',  // 나이 필드 추가
         phoneNumber: '', 
         address: '', 
         emergencyContact: '', 
@@ -287,40 +306,43 @@ const Daily = () => {
 
   // selectedSenior나 selectedDate가 변경될 때 일정 데이터 로드
   useEffect(() => {
+    console.log('=== selectedSenior 또는 selectedDate 변경 감지 ===');
+    console.log('selectedSenior:', selectedSenior?.seniorName);
+    console.log('selectedDate:', selectedDate.toISOString().split('T')[0]);
+    
     if (selectedSenior?.id && selectedDate) {
       console.log('일정 데이터 로드:', selectedSenior.seniorName, selectedDate.toISOString().split('T')[0]);
       fetchDailyActivities(selectedSenior.id, selectedDate);
     } else {
       setDailyActivities([]);
     }
+    
+    // 보호 대상자나 날짜가 변경되면 활동 기록 폼 초기화
+    console.log('=== 보호 대상자/날짜 변경으로 인한 폼 초기화 ===');
+    
+    // 수정 모드 초기화
+    setIsEditing(false);
+    setEditingActivity(null);
+    
+    // 드롭다운 선택 초기화
+    setSelectedItems(prev => {
+      const reset = {};
+      Object.keys(prev).forEach(key => {
+        reset[key] = '';
+      });
+      return reset;
+    });
+    
+    // 특이사항 입력 초기화
+    setFormData(prev => ({
+      ...prev,
+      specialNotes: ''
+    }));
+    
+    console.log('폼 초기화 완료');
   }, [selectedSenior, selectedDate]);
   
-  // 날짜가 변경될 때 수정 모드 초기화
-  useEffect(() => {
-    if (isEditing) {
-      console.log('날짜 변경으로 인한 수정 모드 초기화');
-      
-      // 수정 모드 초기화
-      setIsEditing(false);
-      setEditingActivity(null);
-      
-      // 입력 필드 초기화
-      setSelectedItems(prev => {
-        const reset = {};
-        Object.keys(prev).forEach(key => {
-          reset[key] = '';
-        });
-        return reset;
-      });
-      
-      setFormData(prev => ({
-        ...prev,
-        specialNotes: ''
-      }));
-      
-      console.log('날짜 변경 초기화 완료');
-    }
-  }, [selectedDate]);
+
 
   // 일정 관리 정보 표시
   const displayedDailyActivities = useMemo(() => {
@@ -421,6 +443,14 @@ const Daily = () => {
         // Spring Boot 페이지네이션 응답 처리
         if (data.content && Array.isArray(data.content)) {
           // 페이지네이션 데이터가 있는 경우
+          console.log('백엔드에서 받은 Senior 데이터 샘플:', data.content[0]); // 첫 번째 데이터 로그
+          if (data.content[0]) {
+            console.log('첫 번째 Senior의 전화번호 필드:', {
+              phoneNumber: data.content[0].phoneNumber,
+              phone: data.content[0].phone,
+              '전체 필드': Object.keys(data.content[0])
+            });
+          }
           setSeniors(data.content);
           setCurrentPage(data.number + 1); // Spring은 0부터 시작
           setTotalPages(data.totalPages);
@@ -485,8 +515,15 @@ const Daily = () => {
       const token = getAuthToken();
       if (!token) {
         console.log('JWT 토큰이 없습니다.');
-        setDropdownItems([]);
-        setSelectedItems({});
+        // 임시 해결책: 디폴트 데이터 사용
+        const defaultItems = ['식사', '운동', '약물복용', '외출', '휴식', '기타'];
+        setDropdownItems(defaultItems);
+        const initialSelected = {};
+        defaultItems.forEach(itemValue => {
+          initialSelected[itemValue] = '';
+        });
+        setSelectedItems(initialSelected);
+        console.log('디폴트 드롭다운 아이템 사용:', defaultItems);
         return;
       }
 
@@ -539,7 +576,130 @@ const Daily = () => {
     }));
   };
 
-  // 폼 체크박스 핸들러
+  // 삭제 핸들러
+  const handleDelete = async (activity) => {
+    if (!activity || activity.isEmpty) return;
+    
+    console.log('=== 삭제 함수 시작 ===');
+    console.log('삭제할 활동:', activity);
+    
+    // 삭제 확인
+    if (!window.confirm(`정말로 이 활동 기록을 삭제하시겠습니까?\n\n카테고리: ${activity.activityCategory || '비어있음'}\n특이사항: ${activity.dailyNotes || '비어있음'}`)) {
+      console.log('삭제 취소');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const token = getAuthToken();
+      
+      if (!token) {
+        console.error('토큰이 없습니다!');
+        setError('로그인이 필요합니다.');
+        
+        // 에러 메시지 5초 후 자동 숨김
+        setTimeout(() => {
+          setError('');
+        }, 5000);
+        
+        return;
+      }
+      
+      if (!selectedSenior?.id) {
+        console.error('선택된 대상자가 없습니다!');
+        setError('보호 대상자를 선택해주세요.');
+        
+        // 에러 메시지 5초 후 자동 숨김
+        setTimeout(() => {
+          setError('');
+        }, 5000);
+        
+        return;
+      }
+      
+      const deleteUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/seniors/${selectedSenior.id}/dailyActivities/${activity.id}`;
+      
+      console.log('=== 삭제 API 호출 ===');
+      console.log('URL:', deleteUrl);
+      console.log('Method: DELETE');
+      
+      const response = await fetch(deleteUrl, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('=== 삭제 API 응답 ===');
+      console.log('response status:', response.status);
+      console.log('response ok:', response.ok);
+      
+      if (response.ok) {
+        console.log('=== 삭제 성공 ===');
+        setSuccess('활동 기록이 삭제되었습니다.');
+        
+        // 성공 메시지 3초 후 자동 숨김
+        setTimeout(() => {
+          setSuccess('');
+        }, 3000);
+        
+        // 삭제 후 일정 데이터 새로고침
+        if (selectedSenior?.id && selectedDate) {
+          console.log('삭제 후 일정 데이터 새로고침');
+          fetchDailyActivities(selectedSenior.id, selectedDate);
+        }
+        
+        // 수정 모드였다면 초기화
+        if (isEditing && editingActivity?.id === activity.id) {
+          setIsEditing(false);
+          setEditingActivity(null);
+          
+          // 입력 필드 초기화
+          setSelectedItems(prev => {
+            const reset = {};
+            Object.keys(prev).forEach(key => {
+              reset[key] = '';
+            });
+            return reset;
+          });
+          
+          setFormData(prev => ({
+            ...prev,
+            specialNotes: ''
+          }));
+          
+          console.log('삭제 후 수정 모드 초기화 완료');
+        }
+        
+      } else {
+        console.error('=== 삭제 실패 ===');
+        console.error('status:', response.status);
+        
+        const errorText = await response.text();
+        console.error('error body:', errorText);
+        
+        setError(`삭제에 실패했습니다. (${response.status})`);
+        
+        // 에러 메시지 5초 후 자동 숨김
+        setTimeout(() => {
+          setError('');
+        }, 5000);
+      }
+      
+    } catch (error) {
+      console.error('=== 삭제 예외 발생 ===');
+      console.error('error:', error);
+      setError('삭제에 실패했습니다.');
+      
+      // 에러 메시지 5초 후 자동 숨김
+      setTimeout(() => {
+        setError('');
+      }, 5000);
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleCheckboxChange = (event) => {
     setFormData({
       ...formData,
@@ -555,21 +715,47 @@ const Daily = () => {
     });
   };
 
-  // 저장 핸들러
+  // 저장 핸들러 (디버깅 강화)
   const handleSave = async () => {
+    console.log('=== 저장 함수 시작 ===');
+    console.log('selectedSenior:', selectedSenior);
+    console.log('selectedDate:', selectedDate);
+    console.log('selectedItems:', selectedItems);
+    console.log('formData:', formData);
+    
     try {
       setLoading(true);
       const token = getAuthToken();
       
+      console.log('=== 토큰 확인 ===');
+      console.log('token exists:', !!token);
+      console.log('token length:', token ? token.length : 0);
+      
       if (!token) {
+        console.error('토큰이 없습니다!');
         setError('로그인이 필요합니다.');
+        
+        // 에러 메시지 5초 후 자동 숨김
+        setTimeout(() => {
+          setError('');
+        }, 5000);
+        
         return;
       }
 
       if (!selectedSenior?.id) {
+        console.error('선택된 대상자가 없습니다!');
         setError('보호 대상자를 선택해주세요.');
+        
+        // 에러 메시지 5초 후 자동 숨김
+        setTimeout(() => {
+          setError('');
+        }, 5000);
+        
         return;
       }
+
+      console.log('=== 유효성 검사 통과 ===');
 
       // 선택된 항목 중 실제 값이 있는 것만 저장
       const validSelectedItems = Object.entries(selectedItems)
@@ -579,22 +765,60 @@ const Daily = () => {
           return acc;
         }, {});
 
+      console.log('=== 유효한 선택 항목 ===');
+      console.log('validSelectedItems:', validSelectedItems);
+      console.log('첫 번째 값:', Object.values(validSelectedItems)[0]);
+      console.log('특이사항:', formData.specialNotes);
+      
+      // 활동 카테고리는 필수, 특이사항은 선택
+      const hasCategory = Object.values(validSelectedItems).length > 0 && Object.values(validSelectedItems)[0].trim() !== '';
+      const hasNotes = formData.specialNotes && formData.specialNotes.trim() !== '';
+      
+      console.log('=== 입력 내용 검사 ===');
+      console.log('카테고리 있음:', hasCategory);
+      console.log('특이사항 있음:', hasNotes);
+      
+      // 활동 카테고리는 반드시 선택해야 함
+      if (!hasCategory) {
+        console.error('활동 카테고리가 선택되지 않았습니다!');
+        setError('활동 카테고리를 선택해주세요.');
+        
+        // 에러 메시지 5초 후 자동 숨김
+        setTimeout(() => {
+          setError('');
+        }, 5000);
+        
+        return;
+      }
+
       const saveData = {
-        seniorId: selectedSenior.id,
-        activityCategory: Object.values(validSelectedItems)[0] || '', // 선택된 카테고리
-        dailyNotes: formData.specialNotes || '', // 실제 입력한 특이사항
-        date: getKoreanDateString(selectedDate), // 한국 시간 기준
+        activityCategory: Object.values(validSelectedItems)[0] || '',
+        dailyNotes: formData.specialNotes || '',
+        activityDate: getKoreanDateString(selectedDate), // 문자열로 변환
       };
       
-      console.log('저장할 데이터:', saveData);
-      console.log('수정 모드:', isEditing);
-      console.log('수정대상 ID:', editingActivity?.id);
+      console.log('=== 최종 저장 데이터 ===');
+      console.log('saveData:', saveData);
+      console.log('JSON:', JSON.stringify(saveData));
+
+      const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/seniors/${selectedSenior.id}/dailyActivities`;
+      
+      console.log('=== API 호출 정보 ===');
+      console.log('URL:', url);
+      console.log('Method: POST');
+      console.log('Headers:', {
+        'Authorization': `Bearer ${token.substring(0, 20)}...`,
+        'Content-Type': 'application/json'
+      });
 
       let response;
       
       if (isEditing && editingActivity?.id) {
-        // 수정 모드: PUT 요청
-        response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/daily-activities/${editingActivity.id}/update`, {
+        console.log('=== 수정 모드 ===');
+        const editUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/seniors/${selectedSenior.id}/dailyActivities/${editingActivity.id}`;
+        console.log('Edit URL:', editUrl);
+        
+        response = await fetch(editUrl, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -603,8 +827,9 @@ const Daily = () => {
           body: JSON.stringify(saveData)
         });
       } else {
-        // 새로 생성 모드: POST 요청
-        response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/daily-activities/save`, {
+        console.log('=== 새로 생성 모드 ===');
+        
+        response = await fetch(url, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -614,9 +839,15 @@ const Daily = () => {
         });
       }
 
+      console.log('=== API 응답 ===');
+      console.log('response status:', response.status);
+      console.log('response ok:', response.ok);
+      console.log('response headers:', response.headers);
+
       if (response.ok) {
         const result = await response.json();
-        console.log('저장 성공:', result);
+        console.log('=== 저장 성공 ===');
+        console.log('result:', result);
         setSuccess('활동 기록이 저장되었습니다.');
         
         // 저장 후 입력 필드 초기화
@@ -646,13 +877,32 @@ const Daily = () => {
           fetchDailyActivities(selectedSenior.id, selectedDate);
         }
       } else {
-        console.error('저장 API 오류:', response.status, response.statusText);
-        setError('저장에 실패했습니다.');
+        console.error('=== 저장 실패 ===');
+        console.error('status:', response.status);
+        console.error('statusText:', response.statusText);
+        
+        const errorText = await response.text();
+        console.error('error body:', errorText);
+        
+        setError(`저장에 실패했습니다. (${response.status})`);
+        
+        // 에러 메시지 5초 후 자동 숨김
+        setTimeout(() => {
+          setError('');
+        }, 5000);
       }
       
     } catch (error) {
-      console.error('저장 오류:', error);
+      console.error('=== 예외 발생 ===');
+      console.error('error:', error);
+      console.error('error message:', error.message);
+      console.error('error stack:', error.stack);
       setError('저장에 실패했습니다.');
+      
+      // 에러 메시지 5초 후 자동 숨김
+      setTimeout(() => {
+        setError('');
+      }, 5000);
     } finally {
       setLoading(false);
     }
@@ -1106,36 +1356,73 @@ const Daily = () => {
 
                 <Box sx={{ display: 'flex', gap: '10px' }}>
                   {isEditing && (
-                    <Button
-                      onClick={() => {
-                        setIsEditing(false);
-                        setEditingActivity(null);
-                        setSelectedItems(prev => {
-                          const reset = {};
-                          Object.keys(prev).forEach(key => {
-                            reset[key] = '';
+                    <>
+                      <Button
+                        onClick={() => {
+                          console.log('=== 취소 버튼 클릭 ===');
+                          
+                          // 수정 모드 초기화
+                          setIsEditing(false);
+                          setEditingActivity(null);
+                          
+                          // 드롭다운 선택 초기화
+                          setSelectedItems(prev => {
+                            const reset = {};
+                            Object.keys(prev).forEach(key => {
+                              reset[key] = '';
+                            });
+                            console.log('취소 - 드롭다운 초기화:', reset);
+                            return reset;
                           });
-                          return reset;
-                        });
-                        setFormData(prev => ({
-                          ...prev,
-                          specialNotes: ''
-                        }));
-                      }}
-                      sx={{
-                        backgroundColor: '#757575',
-                        color: 'white',
-                        fontFamily: 'Pretendard',
-                        fontSize: '14px',
-                        padding: '10px 20px',
-                        borderRadius: '8px',
-                        '&:hover': {
-                          backgroundColor: '#616161'
-                        }
-                      }}
-                    >
-                      취소
-                    </Button>
+                          
+                          // 특이사항 입력 초기화
+                          setFormData(prev => {
+                            const newFormData = {
+                              ...prev,
+                              specialNotes: ''
+                            };
+                            console.log('취소 - 특이사항 초기화:', newFormData.specialNotes);
+                            return newFormData;
+                          });
+                          
+                          console.log('취소 버튼 - 모든 폼 초기화 완료');
+                        }}
+                        sx={{
+                          backgroundColor: '#757575',
+                          color: 'white',
+                          fontFamily: 'Pretendard',
+                          fontSize: '14px',
+                          padding: '10px 20px',
+                          borderRadius: '8px',
+                          '&:hover': {
+                            backgroundColor: '#616161'
+                          }
+                        }}
+                      >
+                        취소
+                      </Button>
+                      
+                      <Button
+                        onClick={() => {
+                          if (editingActivity) {
+                            handleDelete(editingActivity);
+                          }
+                        }}
+                        sx={{
+                          backgroundColor: '#f44336',
+                          color: 'white',
+                          fontFamily: 'Pretendard',
+                          fontSize: '14px',
+                          padding: '10px 20px',
+                          borderRadius: '8px',
+                          '&:hover': {
+                            backgroundColor: '#d32f2f'
+                          }
+                        }}
+                      >
+                        삭제
+                      </Button>
+                    </>
                   )}
 
                   <Button
@@ -1157,29 +1444,35 @@ const Daily = () => {
                 </Box>
               </Box>
 
-              {/* 드롭다운 */}
-              {dropdownItems && dropdownItems.length > 0 && (
-                <Box>
-                  <FormControl fullWidth>
-                    <Select
-                      value={selectedItems[dropdownItems[0]] || ''}
-                      onChange={(e) => handleItemChange(dropdownItems[0], e.target.value)}
-                      displayEmpty
-                      sx={{
-                        fontFamily: 'Pretendard',
-                        fontSize: '14px'
-                      }}
-                    >
-                      <MenuItem value="">선택하세요</MenuItem>
-                      {dropdownItems.map((itemValue, index) => (
-                        <MenuItem key={index} value={itemValue}>
-                          {itemValue}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-              )}
+              {/* 드롭다운 - 강제 표시 */}
+              <Box sx={{ marginBottom: '20px' }}>
+                <Typography sx={{
+                  fontFamily: 'Pretendard',
+                  fontWeight: 700,
+                  fontSize: '16px',
+                  marginBottom: '10px'
+                }}>
+                  활동 카테고리 선택 <span style={{ color: '#f44336' }}>*</span>
+                </Typography>
+                <FormControl fullWidth>
+                  <Select
+                    value={selectedItems[dropdownItems[0]] || ''}
+                    onChange={(e) => handleItemChange(dropdownItems[0], e.target.value)}
+                    displayEmpty
+                    sx={{
+                      fontFamily: 'Pretendard',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <MenuItem value="">선택하세요</MenuItem>
+                    {dropdownItems.map((itemValue, index) => (
+                      <MenuItem key={index} value={itemValue}>
+                        {itemValue}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
 
               {/* 일일 특이사항 */}
               <Box sx={{ flex: 1 }}>
@@ -1193,7 +1486,7 @@ const Daily = () => {
                 </Typography>
                 <TextField
                   multiline
-                  rows={5}
+                  rows={3}
                   value={formData.specialNotes}
                   onChange={handleInputChange}
                   name="specialNotes"
@@ -1665,7 +1958,7 @@ const Daily = () => {
                       <TableRow 
                         key={activity.id}
                         className={activity.isEmpty ? "" : "data-row"}
-                        onClick={() => handleActivityClick(activity)}
+                        onClick={() => handleActivityClick(activity)} // 행 전체 클릭으로 수정 모드 진입
                         sx={{
                           cursor: activity.isEmpty ? 'default' : 'pointer',
                           '& .MuiTableCell-root': {

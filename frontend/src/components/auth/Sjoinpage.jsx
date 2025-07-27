@@ -15,7 +15,12 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider
 } from '@mui/material';
 import {
   DashboardOutlined,
@@ -26,11 +31,14 @@ import {
   MessageOutlined,
   LogoutOutlined,
   EditOutlined,
-  SettingsOutlined
+  SettingsOutlined,
+  WarningAmber,
+  Close,
+  DeleteOutlined
 } from '@mui/icons-material';
 import userImage from '../../images/user.png';
 import { getUserInfo, clearAuthData, getAuthToken } from '../../utils/auth';
-import { getSeniorById, createSenior, updateSenior } from '../../api/apiClient';
+import { getSeniorById, createSenior, updateSenior, deleteSenior } from '../../api/apiClient';
 
 const Sjoinpage = () => {
   const navigate = useNavigate();
@@ -65,9 +73,16 @@ const Sjoinpage = () => {
 
   });
   
+  // 나이 계산 후 상태
+  const [calculatedAge, setCalculatedAge] = useState('');
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // 삭제 모달 관련 상태
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     // 수정 모드일 때 기존 데이터 로드
@@ -108,6 +123,12 @@ const Sjoinpage = () => {
           specialNotes: response.notes || '',
 
         });
+        
+        // 나이 계산 (수정 모드일 때)
+        if (response.birthDate) {
+          const birthDateFormatted = response.birthDate.replace(/-/g, '');
+          calculateAge(birthDateFormatted);
+        }
       }
       
     } catch (err) {
@@ -123,11 +144,62 @@ const Sjoinpage = () => {
   };
 
   const handleChange = (event) => {
+    const { name, value } = event.target;
+    
     setFormData({
       ...formData,
-      [event.target.name]: event.target.value,
+      [name]: value,
     });
     setError('');
+    
+    // 생년월일 입력 시 나이 자동 계산
+    if (name === 'birthDate') {
+      calculateAge(value);
+    }
+  };
+
+  // 나이 계산 함수
+  const calculateAge = (birthDateString) => {
+    if (!birthDateString || birthDateString.length < 8) {
+      setCalculatedAge('');
+      return;
+    }
+    
+    try {
+      // YYYYMMDD 형식의 문자열을 Date로 변환
+      const year = parseInt(birthDateString.substring(0, 4));
+      const month = parseInt(birthDateString.substring(4, 6));
+      const day = parseInt(birthDateString.substring(6, 8));
+      
+      // 유효성 검사
+      if (year < 1900 || year > new Date().getFullYear() || 
+          month < 1 || month > 12 || 
+          day < 1 || day > 31) {
+        setCalculatedAge('');
+        return;
+      }
+      
+      const birthDate = new Date(year, month - 1, day); // month는 0부터 시작
+      const today = new Date();
+      
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      // 아직 생일이 지나지 않았다면 나이 1 감소
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      
+      // 나이가 음수이거나 120세 초과시 비워둑기
+      if (age < 0 || age > 120) {
+        setCalculatedAge('');
+      } else {
+        setCalculatedAge(`${age}세`);
+      }
+      
+    } catch (error) {
+      setCalculatedAge('');
+    }
   };
 
 
@@ -213,6 +285,7 @@ const Sjoinpage = () => {
           medications: '',
           specialNotes: ''
         });
+        setCalculatedAge('');
       }
       
       // 2초 후 보호 대상자 리스트로 이동
@@ -229,6 +302,58 @@ const Sjoinpage = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 삭제 확인 모달 열기
+  const handleDeleteClick = () => {
+    setDeleteModalOpen(true);
+  };
+
+  // 삭제 확인 모달 닫기
+  const handleDeleteModalClose = () => {
+    setDeleteModalOpen(false);
+  };
+
+  // 실제 삭제 실행
+  const handleDeleteConfirm = async () => {
+    setDeleteLoading(true);
+    setError('');
+
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        setError('로그인이 필요합니다.');
+        return;
+      }
+
+      const response = await deleteSenior(id);
+      console.log('삭제 API 응답:', response);
+
+      setDeleteModalOpen(false);
+      setSuccess('보호 대상자가 성공적으로 삭제되었습니다.');
+
+      // 2초 후 보호 대상자 리스트로 이동
+      setTimeout(() => {
+        navigate('/seniors');
+      }, 2000);
+
+    } catch (err) {
+      console.error('Senior 삭제 오류:', err);
+      
+      // 관련 데이터 존재 오류 처리
+      if (err.response?.status === 409 && err.response?.data?.code === 'RELATED_DATA_EXISTS') {
+        setError(err.response.data.error);
+        setDeleteModalOpen(false); // 모달 닫기
+      } else if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('삭제 중 오류가 발생했습니다.');
+      }
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -562,6 +687,30 @@ const Sjoinpage = () => {
                       variant="outlined"
                       sx={{ ...textFieldSx, flex: 1 }}
                     />
+                    
+                    {/* 나이 표시 영역 */}
+                    {calculatedAge && (
+                      <Box sx={{
+                        minWidth: '60px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#e3f2fd',
+                        borderRadius: '6px',
+                        border: '1px solid #1976d2'
+                      }}>
+                        <Typography sx={{
+                          fontFamily: 'Pretendard',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          color: '#1976d2'
+                        }}>
+                          {calculatedAge}
+                        </Typography>
+                      </Box>
+                    )}
+                    
                     <FormControl component="fieldset">
                       <RadioGroup
                         name="calendarType"
@@ -904,6 +1053,35 @@ const Sjoinpage = () => {
                 {loading ? (isEditMode ? '수정 중...' : '등록 중...') : (isEditMode ? '수정하기' : '등록하기')}
               </Button>
               
+              {/* 수정 모드일 때만 삭제 버튼 표시 */}
+              {isEditMode && (
+                <Button
+                  variant="contained"
+                  onClick={handleDeleteClick}
+                  disabled={loading || deleteLoading}
+                  startIcon={<DeleteOutlined />}
+                  sx={{
+                    width: '200px',
+                    height: '60px',
+                    backgroundColor: '#dc3545',
+                    borderRadius: '30px',
+                    fontFamily: 'Pretendard',
+                    fontWeight: 700,
+                    fontSize: '20px',
+                    color: '#FFFFFF',
+                    textTransform: 'none',
+                    '&:hover': {
+                      backgroundColor: '#c82333'
+                    },
+                    '&:disabled': {
+                      backgroundColor: '#f5c6cb'
+                    }
+                  }}
+                >
+                  삭제하기
+                </Button>
+              )}
+              
               {/* 돌아가기 버튼 */}
               <Button
                 variant="outlined"
@@ -943,6 +1121,243 @@ const Sjoinpage = () => {
           </Box>
         </Box>
       </Paper>
+
+      {/* 삭제 확인 모달 */}
+      <Dialog 
+        open={deleteModalOpen} 
+        onClose={handleDeleteModalClose}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)'
+          }
+        }}
+      >
+        <DialogTitle sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: '#fff3e0',
+          color: '#e65100',
+          fontFamily: 'Pretendard',
+          fontWeight: 700,
+          fontSize: '18px',
+          padding: '16px 24px',
+          borderBottom: '1px solid #ffcc80'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <WarningAmber sx={{ fontSize: '24px', color: '#ff9800' }} />
+            보호 대상자 삭제 확인
+          </Box>
+        </DialogTitle>
+
+        <DialogContent sx={{ padding: '24px' }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontFamily: 'Pretendard',
+                fontWeight: 600,
+                fontSize: '16px',
+                color: '#d32f2f',
+                mb: 1
+              }}
+            >
+              다음 보호 대상자를 정말 삭제하시겠습니까?
+            </Typography>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                fontFamily: 'Pretendard',
+                color: '#666',
+                fontSize: '14px'
+              }}
+            >
+              삭제된 데이터는 복구할 수 없습니다.
+            </Typography>
+          </Box>
+
+          <Divider sx={{ mb: 2 }} />
+
+          {/* 삭제할 Senior 정보 표시 */}
+          <Box sx={{
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px',
+            padding: '16px',
+            border: '1px solid #e9ecef'
+          }}>
+            <Box sx={{ display: 'flex', mb: 1 }}>
+              <Typography sx={{ 
+                fontFamily: 'Pretendard', 
+                fontWeight: 600, 
+                fontSize: '14px',
+                minWidth: '80px',
+                color: '#495057'
+              }}>
+                이름:
+              </Typography>
+              <Typography sx={{ 
+                fontFamily: 'Pretendard', 
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#1976d2'
+              }}>
+                {formData.seniorName}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', mb: 1 }}>
+              <Typography sx={{ 
+                fontFamily: 'Pretendard', 
+                fontWeight: 600, 
+                fontSize: '14px',
+                minWidth: '80px',
+                color: '#495057'
+              }}>
+                생년월일:
+              </Typography>
+              <Typography sx={{ 
+                fontFamily: 'Pretendard', 
+                fontSize: '14px',
+                color: '#343a40'
+              }}>
+                {formData.birthDate}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', mb: 1 }}>
+              <Typography sx={{ 
+                fontFamily: 'Pretendard', 
+                fontWeight: 600, 
+                fontSize: '14px',
+                minWidth: '80px',
+                color: '#495057'
+              }}>
+                성별:
+              </Typography>
+              <Typography sx={{ 
+                fontFamily: 'Pretendard', 
+                fontSize: '14px',
+                color: '#343a40'
+              }}>
+                {formData.gender}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', mb: formData.address ? 1 : 0 }}>
+              <Typography sx={{ 
+                fontFamily: 'Pretendard', 
+                fontWeight: 600, 
+                fontSize: '14px',
+                minWidth: '80px',
+                color: '#495057'
+              }}>
+                주소:
+              </Typography>
+              <Typography sx={{ 
+                fontFamily: 'Pretendard', 
+                fontSize: '14px',
+                color: '#343a40',
+                wordBreak: 'break-word'
+              }}>
+                {formData.address}
+              </Typography>
+            </Box>
+
+            {formData.emergencyContact && (
+              <Box sx={{ display: 'flex' }}>
+                <Typography sx={{ 
+                  fontFamily: 'Pretendard', 
+                  fontWeight: 600, 
+                  fontSize: '14px',
+                  minWidth: '80px',
+                  color: '#495057'
+                }}>
+                  비상연락처:
+                </Typography>
+                <Typography sx={{ 
+                  fontFamily: 'Pretendard', 
+                  fontSize: '14px',
+                  color: '#343a40'
+                }}>
+                  {formData.emergencyContact}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                fontFamily: 'Pretendard',
+                color: '#d32f2f',
+                fontSize: '12px',
+                fontWeight: 500,
+                lineHeight: 1.5
+              }}
+            >
+              ⚠️ 주의: 등록된 일정이나 생체 기록이 있는 보호 대상자는 삭제할 수 없습니다.<br />
+              관련 데이터를 먼저 정리한 후 삭제해주세요.
+            </Typography>
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ 
+          padding: '16px 24px',
+          backgroundColor: '#fafafa',
+          gap: 1
+        }}>
+          <Button
+            onClick={handleDeleteModalClose}
+            disabled={deleteLoading}
+            sx={{
+              minWidth: '80px',
+              height: '36px',
+              backgroundColor: '#6c757d',
+              color: '#fff',
+              borderRadius: '6px',
+              fontFamily: 'Pretendard',
+              fontWeight: 600,
+              fontSize: '14px',
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#5a6268'
+              },
+              '&:disabled': {
+                backgroundColor: '#adb5bd'
+              }
+            }}
+          >
+            취소
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            disabled={deleteLoading}
+            sx={{
+              minWidth: '80px',
+              height: '36px',
+              backgroundColor: '#dc3545',
+              color: '#fff',
+              borderRadius: '6px',
+              fontFamily: 'Pretendard',
+              fontWeight: 600,
+              fontSize: '14px',
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#c82333'
+              },
+              '&:disabled': {
+                backgroundColor: '#f5c6cb'
+              }
+            }}
+          >
+            {deleteLoading ? '삭제 중...' : '삭제'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

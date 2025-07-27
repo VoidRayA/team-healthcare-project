@@ -81,10 +81,25 @@ class UserSettingService {
       if (category) params.category = category;
       if (subCategory) params.subCategory = subCategory;
 
+      console.log('🔍 getUserSettings API 호출:', {
+        guardianId,
+        category,
+        subCategory,
+        params
+      });
+
       const response = await apiClient.get('/api/user-settings', { params });
+      
+      console.log('📊 getUserSettings API 응답:', response.data);
+      
       return response.data;
     } catch (error) {
-      console.error('설정 조회 실패:', error);
+      console.error('❌ getUserSettings API 오류:', error);
+      console.error('오류 상세:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
       throw new Error(error.response?.data?.message || '설정 조회에 실패했습니다.');
     }
   }
@@ -158,18 +173,26 @@ class UserSettingService {
    */
   async getVitalSignSettings(guardianId) {
     try {
+      console.log('🔍 UserSettingService.getVitalSignSettings 시작:', guardianId);
+      
       const response = await this.getUserSettings(guardianId, '설정');
+      console.log('📊 getUserSettings 응답:', response);
       
       if (!response.success || !response.data || response.data.length === 0) {
-        // 기본값 반환
+        console.log('⚠️ 저장된 설정이 없어 기본값 반환');
         return this.getDefaultVitalSignSettings();
       }
 
+      console.log(`✅ 저장된 설정 데이터 ${response.data.length}건 발견`);
+      
       // 데이터를 monitoringSettings 형태로 변환
       const settingsMap = {};
       response.data.forEach(setting => {
+        console.log(`📄 설정 아이템: ${setting.subCategory} = ${setting.values}`);
         settingsMap[setting.subCategory] = parseFloat(setting.values) || setting.values;
       });
+      
+      console.log('🗺️ 변환된 settingsMap:', settingsMap);
       
       // 각 카테고리별로 설정 조합
       const settings = {

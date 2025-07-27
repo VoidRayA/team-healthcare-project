@@ -79,7 +79,23 @@ const RecentActivities = ({
         console.log('✨ 새로운 코드 적용됨!');
         
         // 백엔드에서 반환하는 새로운 구조에 맞게 데이터 추출
-        let schedulesArray = data.dailyActivities || [];
+        let schedulesArray = [];
+        
+        if (Array.isArray(data)) {
+          schedulesArray = data;
+        } else if (data && data.dailyActivities && Array.isArray(data.dailyActivities)) {
+          schedulesArray = data.dailyActivities;
+        } else if (data && data.seniors && Array.isArray(data.seniors)) {
+          const firstSenior = data.seniors[0];
+          if (firstSenior && firstSenior.dailyActivities) {
+            schedulesArray = firstSenior.dailyActivities;
+          }
+        } else if (data && data.seniorDtos && Array.isArray(data.seniorDtos)) {
+          const firstSenior = data.seniorDtos[0];
+          if (firstSenior && firstSenior.dailyActivities) {
+            schedulesArray = firstSenior.dailyActivities;
+          }
+        }
         
         console.log('📋 추출된 일정 배열:', schedulesArray);
         console.log('📋 배열 타입:', Array.isArray(schedulesArray));

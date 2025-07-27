@@ -50,6 +50,26 @@ public class AuthController {
     private final UserSettingService userSettingService;
 
     /**
+     * 생년월일로부터 만 나이 계산
+     */
+    private static Integer calculateAge(java.time.LocalDate birthDate) {
+        if (birthDate == null) {
+            return null;
+        }
+        
+        java.time.LocalDate today = java.time.LocalDate.now();
+        int age = today.getYear() - birthDate.getYear();
+        
+        // 아직 생일이 지나지 않았다면 나이 1 감소
+        if (today.getMonthValue() < birthDate.getMonthValue() || 
+            (today.getMonthValue() == birthDate.getMonthValue() && today.getDayOfMonth() < birthDate.getDayOfMonth())) {
+            age--;
+        }
+        
+        return age >= 0 ? age : null; // 음수 나이는 null 반환
+    }
+
+    /**
      * 회원가입 API
      * @param registerRequest 회원가입 요청 데이터
      * @return 회원가입 결과
@@ -166,13 +186,14 @@ public class AuthController {
                                     .guardianName(seniors1.getGuardian().getGuardianName())
                                     .seniorName(seniors1.getSeniorName())
                                     .birthDate(seniors1.getBirthDate())
+                                    .age(calculateAge(seniors1.getBirthDate()))  // 나이 필드 추가
                                     .gender(seniors1.getGender())
                                     .address(seniors1.getAddress())
                                     .emergencyContact(seniors1.getEmergencyContact())
                                     .chronicDiseases(seniors1.getChronicDiseases())
                                     .medications(seniors1.getMedications())
                                     .notes(seniors1.getNotes())
-                                    .phone(seniors1.getPhone())
+                                    .phoneNumber(seniors1.getPhone())  // phone -> phoneNumber로 변경
                                     .isActive(seniors1.getIsActive())
                                     .build())
                             .collect(Collectors.toList());
@@ -306,13 +327,14 @@ public class AuthController {
                                 .guardianName(senior.getGuardian().getGuardianName())
                                 .seniorName(senior.getSeniorName())
                                 .birthDate(senior.getBirthDate())
+                                .age(calculateAge(senior.getBirthDate()))  // 나이 필드 추가
                                 .gender(senior.getGender())
                                 .address(senior.getAddress())
                                 .emergencyContact(senior.getEmergencyContact())
                                 .chronicDiseases(senior.getChronicDiseases())
                                 .medications(senior.getMedications())
                                 .notes(senior.getNotes())
-                                .phone(senior.getPhone())
+                                .phoneNumber(senior.getPhone())  // phone -> phoneNumber로 변경
                                 .isActive(senior.getIsActive())
                                 .build())
                         .collect(Collectors.toList());

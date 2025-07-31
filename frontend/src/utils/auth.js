@@ -122,9 +122,10 @@ export const getUserInfo = () => {
   if (token) {
     const payload = parseJwt(token);
     if (payload) {
-      // JWT payload에서 guardianId 추출
-      guardianId = payload.guardianId;
+      // JWT payload에서 guardianId 추출 (여러 필드 시도)
+      guardianId = payload.guardianId || payload.id || payload.userId || payload.sub;
       console.log('JWT payload:', payload);
+      console.log('payload의 모든 키:', Object.keys(payload));
       console.log('추출된 guardianId:', guardianId);
     }
   }
@@ -174,3 +175,14 @@ export const getTokenExpirationTime = (token) => {
 
 // getToken 별칭 추가 (호환성을 위해)
 export const getToken = getAuthToken;
+
+// JWT payload에서 guardianId 추출 헬퍼 함수
+export const getGuardianIdFromToken = (token) => {
+  if (!token) return null;
+  
+  const payload = parseJwt(token);
+  if (!payload) return null;
+  
+  // 여러 가능한 필드명에서 guardianId 찾기
+  return payload.guardianId || payload.id || payload.userId || payload.sub;
+};

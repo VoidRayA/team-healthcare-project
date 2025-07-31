@@ -141,16 +141,16 @@ public class AuthController {
                     )
             );
 
-            // 인증 성공 시 JWT 토큰 생성
-            String jwt = jwtTokenProvider.generateToken(loginRequest.getLoginId());
-
             // 사용자 정보 조회
             Guardians guardian = guardianRepository.findByLoginId(loginRequest.getLoginId())
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
+            // 인증 성공 시 JWT 토큰 생성
+            String jwt = jwtTokenProvider.generateToken(loginRequest.getLoginId(), guardian.getId());
+
             // 리프레시 토큰 생성 및 저장
             try {
-                String refreshToken = jwtTokenProvider.generateRefreshToken(loginRequest.getLoginId());
+                String refreshToken = jwtTokenProvider.generateRefreshToken(loginRequest.getLoginId(), guardian.getId());
                 log.info("리프레시 토큰 생성 완료: {}", refreshToken.substring(0, 20) + "...");
                 
                 // 기존 리프레시 토큰 삭제 (중복 방지)
@@ -311,7 +311,7 @@ public class AuthController {
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             
             // 새로운 Access Token 생성
-            String newAccessToken = jwtTokenProvider.generateToken(loginId);
+            String newAccessToken = jwtTokenProvider.generateToken(loginId, guardian.getId());
             
             // 리프레시 토큰 사용 시간 업데이트
             storedToken.setLastUsedAt(LocalDateTime.now());

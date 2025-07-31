@@ -31,14 +31,16 @@ public class JwtTokenProvider {
     /**
      * JWT 토큰 생성
      * @param loginId 사용자 로그인 ID
+     * @param guardianId 가디언 ID
      * @return 생성된 JWT 토큰
      */
-    public String generateToken(String loginId) {
+    public String generateToken(String loginId, Integer guardianId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
                 .setSubject(loginId)                    // 토큰 주체 (사용자 ID)
+                .claim("guardianId", guardianId)        // guardianId 추가
                 .setIssuedAt(now)                       // 토큰 발급 시간
                 .setExpiration(expiryDate)              // 토큰 만료 시간
                 .signWith(secretKey, SignatureAlgorithm.HS512)  // 서명
@@ -46,21 +48,41 @@ public class JwtTokenProvider {
     }
 
     /**
+     * JWT 토큰 생성 (기존 호환성을 위한 오버로드)
+     * @param loginId 사용자 로그인 ID
+     * @return 생성된 JWT 토큰
+     */
+    public String generateToken(String loginId) {
+        return generateToken(loginId, null);
+    }
+
+    /**
      * Refresh 토큰 생성
      * @param loginId 사용자 로그인 ID
+     * @param guardianId 가디언 ID
      * @return 생성된 Refresh 토큰
      */
-    public String generateRefreshToken(String loginId) {
+    public String generateRefreshToken(String loginId, Integer guardianId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7일
 
         return Jwts.builder()
                 .setSubject(loginId)
+                .claim("guardianId", guardianId)        // guardianId 추가
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .claim("type", "refresh")              // 토큰 타입 구분
                 .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
+    }
+
+    /**
+     * Refresh 토큰 생성 (기존 호환성을 위한 오버로드)
+     * @param loginId 사용자 로그인 ID
+     * @return 생성된 Refresh 토큰
+     */
+    public String generateRefreshToken(String loginId) {
+        return generateRefreshToken(loginId, null);
     }
 
     /**

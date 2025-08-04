@@ -31,12 +31,12 @@ public class HomeController {
     private final HospitalLocationService hospitalLocationService;
     
     /**
-     * 현재 Guardian의 시니어들 주소 기반 추천 병원 조회
+     * 현재 Guardian의 시니어들 주소 기반 근처 병원 검색
      * @param currentUser 현재 인증된 사용자
-     * @return 추천 병원 정보
+     * @return 근처 병원 검색 결과 (JSON)
      */
-    @GetMapping("/recommended-hospital")
-    public ResponseEntity<HospitalDetailItem> getRecommendedHospital(
+    @GetMapping("/nearby-hospitals")
+    public ResponseEntity<String> getNearbyHospitals(
             @AuthenticationPrincipal CustomUserDetails currentUser) {
         
         try {
@@ -45,28 +45,24 @@ public class HomeController {
             // 현재 Guardian의 시니어 목록 조회
             List<Seniors> seniors = seniorRepository.findByGuardian(guardian);
             
-            if (seniors.isEmpty()) {
-                // 시니어가 없으면 기본 병원 (부산대병원) 반환
-                HospitalDetailItem defaultHospital = hospitalLocationService.getRecommendedHospital("");
-                return ResponseEntity.ok(defaultHospital);
+            String seniorAddress = "";
+            if (!seniors.isEmpty()) {
+                // 첫 번째 시니어의 주소 사용
+                seniorAddress = seniors.get(0).getAddress();
             }
             
-            // 첫 번째 시니어의 주소 기반으로 병원 추천
-            Seniors firstSenior = seniors.get(0);
-            String seniorAddress = firstSenior.getAddress();
+            log.info("시니어 주소 기반 병원 검색: {}", seniorAddress);
             
-            log.info("시니어 주소 기반 병원 추천: {} -> {}", seniorAddress, "추천 병원");
+            String hospitalSearchResult = hospitalLocationService.searchNearbyHospitals(seniorAddress);
             
-            HospitalDetailItem recommendedHospital = hospitalLocationService.getRecommendedHospital(seniorAddress);
-            
-            return ResponseEntity.ok(recommendedHospital);
+            return ResponseEntity.ok(hospitalSearchResult);
             
         } catch (Exception e) {
-            log.error("추천 병원 조회 중 오류 발생", e);
+            log.error("근처 병원 검색 중 오류 발생", e);
             
-            // 오류 시 기본 병원 반환
-            HospitalDetailItem defaultHospital = hospitalLocationService.getRecommendedHospital("");
-            return ResponseEntity.ok(defaultHospital);
+            // 오류 시 기본 검색 결과 반환
+            String defaultResult = hospitalLocationService.searchNearbyHospitals("");
+            return ResponseEntity.ok(defaultResult);
         }
     }
     
@@ -83,15 +79,15 @@ public class HomeController {
             Guardians guardian = currentUser.getGuardians();
             List<Seniors> seniors = seniorRepository.findByGuardian(guardian);
             
-            // 추천 병원 정보
+            // 근처 병원 검색 결과
             String firstSeniorAddress = seniors.isEmpty() ? "" : seniors.get(0).getAddress();
-            HospitalDetailItem recommendedHospital = hospitalLocationService.getRecommendedHospital(firstSeniorAddress);
+            String nearbyHospitals = hospitalLocationService.searchNearbyHospitals(firstSeniorAddress);
             
             // 요약 정보 구성
             Map<String, Object> summary = Map.of(
                 "totalSeniors", seniors.size(),
                 "activeAlerts", calculateActiveAlerts(seniors),
-                "recommendedHospital", recommendedHospital,
+                "nearbyHospitals", nearbyHospitals,
                 "guardianName", guardian.getGuardianName()
             );
             

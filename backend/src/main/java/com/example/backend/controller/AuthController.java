@@ -33,8 +33,26 @@ import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * 인증 관련 API를 처리하는 컨트롤러
- * 회원가입, 로그인, 토큰 검증 등의 기능을 담당
+ * AuthController.java - 인증 관리 API 컨트롤러 
+ * 
+ * 🔐 주요 기능:
+ * - JWT 기반 이중 토큰 인증 (액세스 + 리프레시)
+ * - 회원가입시 기본 바이탈 설정 자동 생성
+ * - IP 추적 및 디바이스 정보 로깅 (보안 강화)
+ * - 토큰 재발급 및 전체 로그아웃 기능
+ * 
+ * 🔒 보안 체계:
+ * - createDefaultVitalSettings(): 신규 가입자 기본 임계값 설정
+ * - getClientIpAddress(): 프록시 고려한 정확한 IP 주소 추출
+ * - RefreshToken 생명주기 관리 (만료, 비활성화, 삭제)
+ * - 다중 디바이스 로그인 지원 및 전체 로그아웃
+ * 
+ * 📊 API 엔드포인트:
+ * - POST /api/auth/register: 회원가입 + 기본 설정 생성
+ * - POST /api/auth/login: 로그인 + JWT 발급 + 사용자 정보
+ * - POST /api/auth/refresh: 리프레시 토큰으로 액세스 토큰 갱신
+ * - POST /api/auth/logout: 모든 활성 리프레시 토큰 비활성화
+ * - POST /api/auth/validate: JWT 토큰 유효성 검증
  */
 @Slf4j
 @RestController

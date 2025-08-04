@@ -1,3 +1,18 @@
+/**
+ * Home.jsx - 메인 대시보드 화면
+ * 
+ * 🏠 주요 기능:
+ * - 전체 시스템의 중앙 허브 역할
+ * - 보호자 정보, 선택된 노인, 날짜 상태 통합 관리
+ * - 실시간 병원 검색 시스템 (3단계 폴백: T-map → 카카오 → 직선거리)
+ * - 모든 위젯 컴포넌트들 간의 데이터 연동 및 상태 공유
+ * - 현재위치/주소 기반 병원 검색 자동 전환
+ * 
+ * 📊 데이터 흐름:
+ * 1. 사용자 정보 로드 → 2. Senior 목록 조회 → 3. 선택된 Senior의 위치로 병원 검색
+ * 4. 날짜 변경시 모든 위젯 데이터 업데이트 → 5. 실시간 상태 동기화
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper } from '@mui/material';
@@ -19,7 +34,15 @@ import { enhancedAddressSearch, validateSearchResult } from '../../utils/enhance
 import { getUserInfo } from '../../utils/auth';
 import { getCurrentPosition, checkGeolocationSupport } from '../../utils/geolocation';
 
-// 로컬 시간대 기준 날짜 문자열 생성 함수
+/**
+ * 로컬 시간대 기준 날짜 문자열 생성 함수
+ * @param {Date} date - 변환할 Date 객체
+ * @returns {string} YYYY-MM-DD 형식의 날짜 문자열
+ * 
+ * 🕐 용도: API 호출시 서버에서 요구하는 날짜 형식으로 변환
+ * - 시간대 문제 방지를 위해 로컬 시간 기준으로 처리
+ * - 모든 날짜 관련 API 호출에서 일관된 형식 보장
+ */
 const getLocalDateString = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -30,9 +53,23 @@ const getLocalDateString = (date) => {
 const Home = () => {
   const navigate = useNavigate();
   
-  // 기본 state들
+  // ==================== 기본 상태 관리 ====================
+  /**
+   * 선택된 날짜 - 모든 데이터 조회의 기준이 되는 날짜
+   * - VitalSignsChart, RecentActivities 등 모든 위젯에 전달
+   * - 날짜 변경시 전체 데이터 자동 업데이트
+   */
   const [selectedDate, setSelectedDate] = useState(new Date());
+  
+  /**
+   * 현재 활성 메뉴 - 사이드바 네비게이션 상태 관리
+   */
   const [activeMenu, setActiveMenu] = useState('홈');
+  
+  /**
+   * 보호자 정보 - JWT 토큰에서 추출한 사용자 정보
+   * - 기본값으로 초기화 후 useEffect에서 실제 데이터로 대체
+   */
   const [guardianInfo, setGuardianInfo] = useState({
     name: '관리자',
     loginId: 'admin',

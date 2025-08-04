@@ -1,3 +1,25 @@
+/**
+ * SeniorList.jsx - 노인 목록 관리 컴포넌트
+ * 
+ * 👥 주요 기능:
+ * - 등록된 노인 목록 조회/관리
+ * - 실시간 검색 및 필터링 기능
+ * - 노인 정보 수정/삭제 관리
+ * - 페이지네이션 및 정렬 기능
+ * 
+ * 📦 고급 기능:
+ * - 인라인 편집 기능 (테이블 내 직접 수정)
+ * - 정렬 가능한 컴 헤더 (TableSortLabel)
+ * - 반응형 테이블 디자인
+ * - 오류 및 로딩 상태 처리
+ * 
+ * 🎨 UI 특징:
+ * - Material-UI Table 컴포넌트 기반
+ * - Sticky 헤더로 스크롤 시 고정
+ * - 호버 효과 및 선택 상태 표시
+ * - 반응형 모바일 디자인
+ */
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -12,8 +34,7 @@ import {
   TableRow,
   TextField,
   Button,  
-  Pagination,    
-  PaginationItem,
+  Pagination,
   List,
   ListItem,
   ListItemIcon,

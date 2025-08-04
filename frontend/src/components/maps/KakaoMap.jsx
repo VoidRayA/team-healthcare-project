@@ -1,3 +1,36 @@
+/**
+ * KakaoMap.jsx - 카카오맵 통합 컴포넌트
+ * 
+ * 🗺️ 주요 기능:
+ * - 카카오맵 SDK 동적 로딩 및 에러 처리
+ * - MUI 테마 기반 스타일링 (다크모드 지원)
+ * - 반응형 컨트롤 배치 최적화
+ * - 마커 관리 및 인포윈도우 자동 표시
+ * 
+ * 🎨 UI/UX 개선사항:
+ * - 줄 컨트롤: 우측 중앙 수직 정렬 (translateY -50%)
+ * - 지도타입 컨트롤: 우측 하단 (현재위치 마커와 겹침 방지)
+ * - GlobalStyles로 순수 MUI 스타일링 (CSS 파일 없이)
+ * - 컨트롤 버튼 hover 효과 및 box-shadow 전환
+ * 
+ * 🔧 기술적 구현:
+ * - loadKakaoMapScript(): 비동기 SDK 로딩 및 중복 방지
+ * - addMarkers(): 마커 추가 및 인포윈도우 연결
+ * - bounds.extend(): 모든 마커가 보이도록 지도 범위 자동 조정
+ * - cleanup 로직: 컴포넌트 언마운트시 마커 및 맵 인스턴스 정리
+ * 
+ * 📱 반응형 디자인:
+ * - theme.breakpoints.down('md'): 모바일에서 컨트롤 위치 조정
+ * - 지도 컨테이너 크기 동적 조절 (width, height props)
+ * - 로딩 상태와 에러 상태에 대한 사용자 친화적 UI
+ * 
+ * 🔄 상태 만리:
+ * - loading: SDK 로딩 상태 표시
+ * - error: 에러 메시지 및 재시도 버튼
+ * - retryCount: 재시도 횟수 제한
+ * - mapInstance, markersRef: 맵 및 마커 참조 관리
+ */
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, CircularProgress, Alert, Button, GlobalStyles, useTheme } from '@mui/material';
 import { loadKakaoMapScript, isKakaoMapLoaded } from '../../utils/kakaoMapLoader';

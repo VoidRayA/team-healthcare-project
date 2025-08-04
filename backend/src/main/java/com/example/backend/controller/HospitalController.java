@@ -1,5 +1,6 @@
 package com.example.backend.controller;
 
+
 import com.example.backend.dto.HospitalDetailItem;
 import com.example.backend.service.ApiService;
 import com.example.backend.service.KakaoApiService;
@@ -45,18 +46,13 @@ public class HospitalController {
     }
     
     /**
-     * 주소 기반 추천 병원 조회 (2025.07.04 신규 추가)
+     * 주소 기반 근처 병원 검색 (2025.07.04 신규 추가, 수정됨)
      * @param address 시니어 주소 (예: "부산광역시 서구 동대신동")
-     * @return 추천 병원 정보
+     * @return 근처 병원 검색 결과 (JSON)
      */
-    @GetMapping("/recommended")
-    public HospitalDetailItem getRecommendedHospital(@RequestParam(required = false) String address) {
-        if (address == null || address.trim().isEmpty()) {
-            // 주소가 없으면 기본 부산대학교병원 반환
-            address = "부산광역시 서구";
-        }
-        
-        return hospitalLocationService.getRecommendedHospital(address);
+    @GetMapping("/nearby")
+    public String getNearbyHospitals(@RequestParam(required = false) String address) {
+        return hospitalLocationService.searchNearbyHospitals(address);
     }
     
     /**

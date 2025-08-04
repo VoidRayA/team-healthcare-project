@@ -1,3 +1,36 @@
+/**
+ * VitalSignsDetailModal.jsx - 생체신호 상세 분석 모달
+ * 
+ * 📊 주요 기능:
+ * - Chart.js + annotation 플러그인 기반 고급 차트 시스템
+ * - 24시간 생체신호 트렌드 분석 및 시각화
+ * - 실시간 기준선 표시/숨김 제어 (ThresholdMenu)
+ * - 범례 클릭으로 데이터셋 토글 및 선택적 표시
+ * - 측정 분포 도넛 차트 및 통계 분석
+ * 
+ * 🎨 Chart.js 고급 기능:
+ * - 다중 Y축 시스템 (혈압, 심박수, 체온, 혈당)
+ * - 동적 annotation 플러그인으로 임계값 라인 표시
+ * - 커스텀 범례 클릭 이벤트 처리 (handleLegendClick)
+ * - 실시간 차트 업데이트 및 애니메이션 제어
+ * 
+ * 🧠 고급 알고리즘:
+ * - processVitalDataFor24Hours(): 24시간 데이터 보간 및 평균화
+ * - analyzeVitalStatus(): 다차원 상태 분석 (emergency/attention/caution/normal)
+ * - createThresholdAnnotations(): 사용자 설정 기반 동적 기준선 생성
+ * - calculateAggregatedDistribution(): 표시된 데이터셋만 집계하여 측정분포 계산
+ * 
+ * 🔧 커스텀 훅 활용:
+ * - useVitalData: 생체신호 데이터 상태 관리
+ * - useThresholdLines: 기준선 표시 상태 및 설정
+ * - useLegendSettings: 범례 가시성 상태 및 서버 동기화
+ * 
+ * 📱 반응형 모달:
+ * - 95vw x 90vh 크기로 대화면 최적화
+ * - 시니어 선택 드롭다운 및 날짜 선택기
+ * - 상태 배지, 기준선 설정, 닫기 버튼 상단 배치
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,

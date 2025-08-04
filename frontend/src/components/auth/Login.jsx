@@ -1,3 +1,25 @@
+/**
+ * Login.jsx - 로그인 화면 컴포넌트
+ * 
+ * 🔐 주요 기능:
+ * - JWT 기반 인증 처리 (액세스 + 리프레시 토큰)
+ * - 아이디/비밀번호 자동 저장 기능 (localStorage)
+ * - 완전 반응형 디자인 (모바일 최적화)
+ * - 상세한 API 에러 처리 및 사용자 친화적 메시지
+ * 
+ * 🔒 보안 기능:
+ * - 입력값 유효성 검사 (빈 값, 공백 문자 처리)
+ * - 로그인 실패시 구체적 에러 메시지 표시
+ * - 네트워크 에러, 서버 에러 별도 처리
+ * - 세션 만료 감지 및 자동 리다이렉트
+ * 
+ * 🎨 UI/UX 특징:
+ * - Material-UI 기반 현대적 디자인
+ * - 연화색 그라데이션 배경 (#01b1ff)
+ * - 호버 효과 및 마이크로 애니메이션
+ * - 보안 아이콘과 일관성 있는 브랜딩
+ */
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../../api/apiClient';

@@ -1,3 +1,35 @@
+/**
+ * Sidebar.jsx - 전역 네비게이션 사이드바 컴포넌트
+ * 
+ * 📋 주요 기능:
+ * - 전역 네비게이션 메뉴 및 라우팅 관리
+ * - 사용자 정보 표시 (아바타 이미지 + 이름 + 역할)
+ * - 활성 메뉴 상태 관리 및 비주얼 피드백
+ * - 보안 로그아웃 기능 (JWT 토큰 정리)
+ * 
+ * 🎨 UI/UX 디자인:
+ * - position: fixed로 고정 위치 사이드바 (240px 너비)
+ * - Material-UI 기반 현대적 디자인 (색상: #1976d2)
+ * - 호버 효과 및 마이크로 애니메이션 (translateX)
+ * - 아이콘 + 텍스트 조합으로 직관적 인터페이스
+ * 
+ * 🔒 보안 및 인증:
+ * - handleLogout(): JWT 액세스 + 리프레시 토큰 완전 정리
+ * - parseJwt()로 토큰에서 jti 추출 후 서버 로그아웃 요청
+ * - clearAuthData()로 로컬 인증 데이터 전체 삭제
+ * - 새로고침으로 인증 상태 동기화
+ * 
+ * 🗺️ 라우팅 관리:
+ * - 메뉴 클릭시 updateRecentAction()으로 마지막 사용 시간 업데이트
+ * - React Router의 useNavigate로 SPA 라우팅
+ * - 메뉴별 고유 아이콘 및 라우트 매핑
+ * 
+ * 📱 반응형 디자인:
+ * - z-index: 1000으로 다른 요소보다 상단 배치
+ * - boxShadow: 10으로 깊이감 있는 그림자 효과
+ * - 모바일 적응성 고려 (flexShrink: 0)
+ */
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -11,8 +43,7 @@ import {
 } from '@mui/material';
 import {
   DashboardOutlined,
-  PeopleOutlined,
-  SecurityOutlined,  
+  PeopleOutlined,  
   EventOutlined,  
   LogoutOutlined,
   SettingsOutlined,  
@@ -21,7 +52,7 @@ import {
 import userImage from '../../images/user.png';
 import { clearAuthData, getAuthToken, parseJwt } from '../../utils/auth';
 
-const Sidebar = ({ 
+const Sidebar = ({
   guardianInfo, 
   activeMenu, 
   setActiveMenu, 

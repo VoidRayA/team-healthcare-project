@@ -1,4 +1,6 @@
 // 차트 Canvas 강제 리셋 함수 - 완전히 새로운 접근법
+import Chart from 'chart.js/auto';
+
 const forceCanvasReset = () => {
   console.log('🔧 차트 Canvas 강제 리셋 시작');
   

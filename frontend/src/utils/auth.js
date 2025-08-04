@@ -1,6 +1,43 @@
+/**
+ * auth.js - 인증 관리 유틸리티 모듈
+ * 
+ * 🔐 주요 기능:
+ * - JWT 토큰 생명주기 전체 관리
+ * - sessionStorage(액세스) / localStorage(리프레시) 전략 분리
+ * - 토큰 만료 감지 및 자동 갱신 지원
+ * - 사용자 정보 안전 저장 및 추출
+ * 
+ * 💾 저장 전략:
+ * - sessionStorage: JWT 액세스 토큰 + 만료시간 + 사용자정보
+ * - localStorage: 리프레시 토큰 (브라우저 종료 후도 유지)
+ * - 세션 보안 강화: 액세스 토큰은 브라우저 닫으면 삭제
+ * 
+ * 🔒 보안 로직:
+ * - parseJwt(): JWT 페이로드 안전 디코딩
+ * - getGuardianIdFromToken(): 다중 필드에서 ID 추출 시도
+ * - getTokenExpirationTime(): 서버 JWT exp 가늜 우선 사용
+ * - 토큰 만료 체크 및 자동 정리
+ * 
+ * 🔄 사용 흐름:
+ * 1. saveAuthData(): 로그인 성공 시 JWT + 사용자정보 저장
+ * 2. getAuthToken(): API 호출 시 유효한 토큰 반환
+ * 3. updateAccessToken(): 리프레시 후 새 액세스 토큰 저장
+ * 4. clearAuthData(): 로그아웃 시 모든 인증 데이터 정리
+ */
+
 // 인증 관련 유틸리티 함수들 (Stateful JWT 지원 버전)
 
-// 인증 데이터 저장
+/**
+ * 인증 데이터 저장 함수
+ * @param {string} accessToken - JWT 액세스 토큰
+ * @param {string} refreshToken - JWT 리프레시 토큰
+ * @param {Object} userData - 사용자 기본 정보 {loginId, guardianName, role}
+ * 
+ * 💾 저장 전략:
+ * - 액세스 토큰: sessionStorage (브라우저 종료시 삭제)
+ * - 리프레시 토큰: localStorage (영구 저장)
+ * - 만료시간: JWT payload의 exp 값 우선 사용
+ */
 export const saveAuthData = (accessToken, refreshToken, userData) => {
   console.log('saveAuthData 호출됨:', { 
     accessToken: !!accessToken, 

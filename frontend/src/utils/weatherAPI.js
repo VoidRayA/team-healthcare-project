@@ -16,7 +16,7 @@ const getUserLocation = () => {
       return;
     }
     
-    console.log(`🌡️ 날씨 조회 시작 - 위치: ${locationSource}`, targetCoords);
+    console.log('🌡️ 날씨 조회 시작 - GPS 위치 확인 중...');
 
     console.log('📍 GPS 위치 권한 요청 중...');
     
@@ -72,7 +72,6 @@ const CITY_NAME_MAP = {
   'Uijeongbu': '의정부',
   'Siheung': '시흥',
   'Gimpo': '김포',
-  'Gwangju': '광주', // 경기도 광주
   'Gunpo': '군포',
   'Gwangmyeong': '광명',
   'Osan': '오산',
@@ -479,7 +478,7 @@ export const getCurrentWeather = async (apiKey, coords = null) => {
 
     // 좌표 획득 우선순위: 1) GPS 위치 2) 사용자 지정 3) IP 위치 4) 기본값
     let targetCoords;
-    let locationSource = '알 수 없음';
+    let locationSource = '사용자 지정 좌표';
     
     if (coords) {
       targetCoords = coords;

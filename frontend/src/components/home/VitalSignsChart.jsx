@@ -1,3 +1,23 @@
+/**
+ * VitalSignsChart.jsx - 생체신호 실시간 모니터링 컴포넌트
+ * 
+ * 💓 주요 기능:
+ * - 4대 생체신호 실시간 모니터링 (혈압, 심박수, 체온, 혈당)
+ * - 보호자별 개별 임계값 설정 기반 3단계 경고 시스템
+ * - 2x2 그리드 레이아웃으로 직관적 표시
+ * - VitalSignsDetailModal과 연동된 상세 분석 기능
+ * 
+ * 🚨 경고 시스템:
+ * - 위험(빨강): attention 범위 초과 (즉시 확인 필요)
+ * - 주의(노랑): caution 범위 초과 (주의 관찰)
+ * - 정상(초록): 모든 수치 안전 범위 (정상 범위)
+ * 
+ * 📊 데이터 처리:
+ * - Guardian별 설정 동적 로딩 (UserSettingService)
+ * - 실시간 데이터 업데이트 및 히스토리 관리
+ * - analyzeStatus() 알고리즘으로 상태 분석
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Button, Chip, Grid } from '@mui/material';
 import { TrendingUp, Warning, CheckCircle, Visibility } from '@mui/icons-material';
@@ -41,7 +61,24 @@ const VitalSignsChart = ({
     };
   };
 
-  // 상태 분석 (Guardian의 개별 설정 기준선 사용)
+  /**
+   * 생체신호 상태 분석 알고리즘
+   * @param {Array} data - 생체신호 데이터 배열
+   * @returns {Object} 상태 분석 결과 {status, message}
+   * 
+   * 🧠 분석 로직:
+   * 1. 데이터 없음: 'no-data' 상태
+   * 2. Guardian 기준선 설정 로딩 중: 'loading' 상태
+   * 3. attention 범위 초과: 'danger' 상태 (즉시 확인 필요)
+   * 4. caution 범위 초과: 'warning' 상태 (주의 관찰)
+   * 5. 모든 수치 정상: 'normal' 상태 (정상 범위)
+   * 
+   * 📊 체크 항목:
+   * - 혈압: 수축기/이완기 별도 임계값 적용
+   * - 심박수: 연령대별 정상 범위 고려
+   * - 체온: 일중 변화 및 계절 요인 고려
+   * - 혈당: 식사 전후 상태에 따른 기준 적용
+   */
   const analyzeStatus = (data) => {
     if (!data || data.length === 0) return { status: 'no-data', message: '데이터 없음' };
     if (!vitalSignSettings) {

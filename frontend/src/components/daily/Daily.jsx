@@ -1,3 +1,30 @@
+/**
+ * Daily.jsx - 일일 활동 관리 시스템
+ * 
+ * 📋 주요 기능:
+ * - 보호대상자별 일일 활동 기록 CRUD
+ * - React Calendar 기반 날짜 선택 및 데이터 연동
+ * - 카테고리별 활동 분류 (운동, 식사, 약물, 외출 등)
+ * - 페이지네이션 및 테이블 정렬 기능
+ * - 실시간 수정/삭제 및 동적 폼 관리
+ * 
+ * 📦 고급 기능:
+ * - handleDelete, handleSave: 실시간 CRUD 연산
+ * - isEditing state: 수정 모드 토글 및 UI 전환
+ * - CategoryManageModal: 동적 카테고8리 관리
+ * - sortSeniors, sortDailyActivities: 다중 컴리 정렬
+ * - 활동 검색 및 필터링 시스템
+ * 
+ * 🔄 데이터 흐름:
+ * 1. Senior 선택 → 2. 날짜 선택 → 3. 해당 활동 데이터 로드
+ * 4. 활동 입력/수정 → 5. 실시간 UI 업데이트
+ * 
+ * 🎨 UI 특징:
+ * - 좌측: 달력 + 활동 기록 폼
+ * - 우측: 보호대상자 목록 + 일정 목록 테이블
+ * - 반응형 테이블과 페이지네이션
+ */
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {

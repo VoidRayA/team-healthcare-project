@@ -120,11 +120,29 @@ export const deleteVitalSign = async (seniorId, vitalId) => {
   }
 };
 
-// =================================================================
-// API 클라이언트 통합 설정 (2025.07.08 통합 버전)
-// 목적: axios 대신 중앙화된 API 클라이언트 사용
-// 기능: 토큰 자동 관리, 에러 처리, 요청/응답 인터셉터
-// =================================================================
+/**
+ * apiClient.js - 중앙화된 API 통신 모듈
+ * 
+ * 🔌 주요 기능:
+ * - Axios 기반 중앙화된 API 관리 시스템
+ * - JWT 토큰 자동 관리 (액세스 + 리프레시)
+ * - 요청/응답 인터셉터로 전역 에러 처리
+ * - 모든 백엔드 API 호출 함수 중앙 관리
+ * 
+ * 🔒 보안 및 인증:
+ * - refreshPromise로 토큰 갱신 중복 방지
+ * - 401 에러 시 자동 리프레시 토큰 갱신
+ * - 인증 실패시 자동 로그아웃 및 리다이렉트
+ * - API 호출 로깅 및 디버깅 지원
+ * 
+ * 👩‍⚕️ API 카테고리:
+ * - 생체신호: getVitalSignsByDate, createVitalSign
+ * - 노인 관리: getSeniorsWithPagination, updateSenior  
+ * - 보호자: getGuardianProfile, updateGuardianProfile
+ * - 일정 관리: getScheduleDropdownItems, saveTodaySchedule
+ * - 병원 위치: getHospitalsByLocation, searchAddress
+ * - 사용자 설정: getVitalSettings, saveUserSetting
+ */
 
 import axios from 'axios';
 import { getAuthToken, getRefreshToken, updateAccessToken, clearAuthData } from '../utils/auth';
@@ -389,7 +407,7 @@ export const updateGuardianProfile = async (updateData) => {
       });
       
       // 비밀번호 필드 제거 후 기본 정보 업데이트
-      const { currentPassword, newPassword, ...profileData } = updateData;
+      const { currentPassword: _currentPassword, newPassword: _newPassword, ...profileData } = updateData;
       if (Object.keys(profileData).length > 0) {
         // 필드명 매핑: 백엔드에서 기대하는 필드명으로 변경
         const mappedData = {
@@ -924,7 +942,7 @@ export const getMainChartLegendSettings = async (guardianId, chartType = 'vital_
       }
       
       if (!guardianId) {
-        console.error('❌ guardianId가 없음 - JWT payload:', payload);
+        console.error('❌ guardianId가 없음 - JWT');
         throw new Error('JWT에서 guardianId를 추출할 수 없습니다. 다시 로그인해주세요.');
       }
     }

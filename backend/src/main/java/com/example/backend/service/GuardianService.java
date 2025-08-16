@@ -15,6 +15,34 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * GuardianService.java - 보호자 비즈니스 로직 서비스
+ * 
+ * 👥 주요 기능:
+ * - 보호자 CRUD 기능 (생성, 조회, 수정, 삭제)
+ * - PasswordEncoder를 통한 비밀번호 안전 암호화
+ * - 소프트 삭제 구현 (isActive 플래그 활용)
+ * - 페이지네이션 및 다양한 조건 검색 기능
+ * 
+ * 🔍 검색 기능:
+ * - 이름 부분 매칭 검색 (LIKE 연산)
+ * - 역할(Role) 기반 검색 (GUARDIAN, ADMIN 등)
+ * - 관계(relationship) 기반 검색 (자녀, 배우자 등)
+ * - 활성 상태(isActive) 필터링
+ * 
+ * 🔒 보안 및 데이터 무결성:
+ * - 중복 로그인 ID 체크 (createGuardian)
+ * - 비밀번호 암호화 의무 처리
+ * - 소프트 삭제 vs 물리적 삭제 옵션 제공
+ * - Entity ↔ DTO 변환을 통한 데이터 은닉
+ * 
+ * 📊 주요 메서드:
+ * - createGuardian(): 중복 체크 + 암호화 + 엔티티 생성
+ * - searchGuardians(): 다양한 조건으로 보호자 검색
+ * - deleteGuardian(), hardDeleteGuardian(): 소프트 vs 하드 삭제
+ * - convertToDto(): 엔티티 → DTO 변환 (민감정보 제외)
+ */
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -24,7 +52,15 @@ public class GuardianService {
     private final PasswordEncoder passwordEncoder;
 
     /**
-     * Guardian 생성
+     * Guardian 생성 메서드
+     * @param requestDto 회원가입 요청 데이터
+     * @return 생성된 Guardian DTO
+     * 
+     * 🔒 보안 처리:
+     * - 중복 로그인 ID 체크 (IllegalArgumentException 발생)
+     * - PasswordEncoder로 비밀번호 암호화 의무 처리
+     * - Role.GUARDIAN 기본 역할 설정
+     * - isActive=true 기본 활성 상태 설정
      */
     @Transactional
     public GuardianDto createGuardian(GuardiansDto.GuardianCreateRequestDto requestDto) {

@@ -21,6 +21,30 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * VitalController.java - 생체신호 관리 API 컨트롤러
+ * 
+ * 💓 주요 기능:
+ * - 생체신호 CRUD 기능 (생성, 조회, 수정, 삭제)
+ * - 날짜별/기간별 생체신호 조회 기능
+ * - Guardian-Senior 관계 검증 및 권한 체크
+ * - 실시간 데이터 입력 및 임계값 기반 알림 생성
+ * 
+ * 📊 API 엔드포인트:
+ * - GET /api/seniors/{id}/vitalSign: 전체 생체 기록 조회
+ * - GET /api/seniors/{id}/vitalSign/date/{date}: 특정 날짜 조회
+ * - GET /api/seniors/{id}/vitalSign/date/range: 날짜 범위 조회
+ * - POST /api/seniors/{id}/vitalSign: 생체 기록 생성
+ * - PUT /api/seniors/{id}/vitalSign/{vitalId}: 생체 기록 수정
+ * - DELETE /api/seniors/{id}/vitalSign/{vitalId}: 생체 기록 삭제
+ * 
+ * 🔒 보안 처리:
+ * - @AuthenticationPrincipal로 현재 사용자 확인
+ * - Guardian-Senior 관계 검증 (VitalSignService에서 처리)
+ * - SecurityException, EntityNotFoundException 예외 처리
+ * - 민감한 의료 데이터 접근 로깅
+ */
+
 @RestController
 @RequestMapping("/api/seniors/{id}/vitalSign")
 @RequiredArgsConstructor

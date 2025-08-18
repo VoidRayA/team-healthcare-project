@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
-import GJoinpage from './components/auth/GJoinpage';
 import ProfileEdit from './components/profile/ProfileEdit';
 import ProfileManagement from './components/profile/ProfileManagement';
 import Home from './components/home/Home';
@@ -70,10 +69,6 @@ function App() {
         <Route 
           path="/register" 
           element={!authState ? <Register /> : <Navigate to="/home" replace />} 
-        />
-        <Route 
-          path="/gjoin" 
-          element={!authState ? <GJoinpage /> : <Navigate to="/home" replace />} 
         />
         
         {/* Protected Routes */}
